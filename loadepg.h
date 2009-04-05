@@ -258,7 +258,7 @@ class cTaskLoadepg : public cThread
     void LoadFromFile( const char *FileEpg );
     void LoadFromScript( const char *FileScript, const char *FileEpg );
 #endif
-    bool Running() const { return IsRunning; }
+    bool IsLoopRunning() const { return IsRunning; }
 };
 
 #ifndef STANDALONE

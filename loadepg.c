@@ -22,8 +22,11 @@ static const char *MAINMENUENTRY  = "LoadEPG";
 #define esyslog(x, args...) fprintf(stderr, x "\n", ##args)
 #define Dprintf(x, args...) fprintf(stderr, x, ##args)
 #endif
-//#undef DEBUG
-//#define DEBUG 1
+
+#if 1
+#undef DEBUG
+#define DEBUG 1
+#endif
 
 sConfig *Config;
 #ifndef STANDALONE
@@ -36,6 +39,8 @@ static char *ProgName;
 static int adapter = 2;
 static int demuxno = 0;
 static int vdrmode = 0;
+static bool useshortxmlids = false;
+static bool debug = false;
 
 int CurrentProvider;
 int nProviders;
@@ -466,6 +471,59 @@ static int qsortChannels( const void *A, const void *B )
 {
   sChannel *ChannelA = ( sChannel * ) A;
   sChannel *ChannelB = ( sChannel * ) B;
+  if( ChannelA->ChannelId > ChannelB->ChannelId )
+  {
+    return 1;
+  }
+  if( ChannelA->ChannelId < ChannelB->ChannelId )
+  {
+    return -1;
+  }
+  if( ChannelA->ChannelId == ChannelB->ChannelId )
+  {
+    if( ChannelA->Nid > ChannelB->Nid )
+    {
+      return 1;
+    }
+    if( ChannelA->Nid < ChannelB->Nid )
+    {
+      return -1;
+    }
+    if( ChannelA->Nid == ChannelB->Nid )
+    {
+      if( ChannelA->Tid > ChannelB->Tid )
+      {
+        return 1;
+      }
+      if( ChannelA->Tid < ChannelB->Tid )
+      {
+        return -1;
+      }
+      if( ChannelA->Tid == ChannelB->Tid )
+      {
+        if( ChannelA->Sid > ChannelB->Sid )
+	{
+	  return 1;
+	}
+	if( ChannelA->Sid < ChannelB->Sid )
+	{
+	  return -1;
+	}
+      }
+    }
+  }
+  return 0;
+}
+
+static int qsortChannelsBySkyNumber( const void *A, const void *B )
+{
+  sChannel *ChannelA = ( sChannel * ) A;
+  sChannel *ChannelB = ( sChannel * ) B;
+  if( ChannelA->SkyNumber > ChannelB->SkyNumber )
+    return 1;
+  if( ChannelA->SkyNumber < ChannelB->SkyNumber )
+    return -1;
+  // must be == so no test needed
   if( ChannelA->ChannelId > ChannelB->ChannelId )
   {
     return 1;
@@ -1630,26 +1688,40 @@ void cTaskLoadepg::LoadFromSatellite( void )
 char * get_channelident( sChannel *C)
 {
   char *s;
-  asprintf( &s, "%d.tv", C->SkyNumber);
+  if (C->shortname != NULL && useshortxmlids)
+    asprintf( &s, "%s.%s", C->shortname, C->providername);
+  else
+    asprintf( &s, "%d.%s", C->SkyNumber, C->providername);
   return s;
 }
 
 void cTaskLoadepg::CreateXmlChannels( )
 {
   char *ServiceName;
+  qsort( lChannels, nChannels, sizeof( sChannel ), &qsortChannelsBySkyNumber );
   for( int i = 0; i < nChannels; i ++ )
   {
     sChannel *C = ( lChannels + i );
     if( C->Nid > 0 && C->Tid > 0 && C->Sid > 0 )
     {
       tChannelID ChVID = tChannelID( ( lProviders + CurrentProvider )->SourceId, C->Nid, C->Tid, C->Sid );
+      if (C->providername == NULL)
+	continue;
+      if (strcmp(C->providername,"(null)")==0)
+	continue;
+      if (!C->IsEpg)
+	continue;
+      if (!C->IsFound)
+	continue;
       if (C->name)
       {
-	asprintf( &ServiceName, "%s - %s", C->name, C->shortname );
+	//asprintf( &ServiceName, "%s - %s", C->name, C->shortname );
+	asprintf( &ServiceName, "%s", C->name );
       }
       else
       {
-	asprintf( &ServiceName, " " );
+	//asprintf( &ServiceName, " " );
+	continue;
       }
       char * channelid = get_channelident(C);
       if (channelid != NULL)
@@ -4286,7 +4358,7 @@ void EPGGrabber::Grab()
       usleep(1000000);
       time_t now = time(NULL);
       time_t diff = now - starttime;
-      if (Task->Running())
+      if (Task->IsLoopRunning())
       {
 #ifdef DEBUG
 	Dprintf("%d found %d channels %d titles %d summaries\n", diff, nChannels, nTitles, nSummaries);
@@ -4349,13 +4421,19 @@ static int do_options(int arg_count, char **arg_strings) {
 
 	while (1) {
 		//int c = getopt_long(arg_count, arg_strings, "udscmpnht:o:f:Fi:e:", Long_Options, &Option_Index);
-		int c = getopt_long(arg_count, arg_strings, "a:v", Long_Options, &Option_Index);
+		int c = getopt_long(arg_count, arg_strings, "a:dsv", Long_Options, &Option_Index);
 		if (c == EOF)
 			break;
 		switch (c) {
 		case 'a':
 			adapter = atoi(optarg);
 			//sprintf(demux, "/dev/dvb/adapter%d/demux%d",adapter,demuxno);
+			break;
+		case 'd':
+			debug = true;
+			break;
+		case 's':
+			useshortxmlids = true;
 			break;
 		case 'v':
 			vdrmode = 1;
