@@ -6,7 +6,6 @@
 #include <sys/ioctl.h>
 #include <linux/dvb/frontend.h>
 #include <linux/dvb/dmx.h>
-//#include "../../../libsi/section.h"
 #include "libsi/section.h"
 #include "libsi/descriptor.h"
 
@@ -21,11 +20,10 @@
 #define DEBUG_STARTTIME false
 
 #define DVB_DEVICE_DEMUX "/dev/dvb/adapter%i/demux0"
-#define LOADEPG_FILE_CONF "loadepg.conf"
-#define LOADEPG_FILE_EQUIV "loadepg.equiv"
-//#define FILE_EPG_TMP "/tmp/epg.tmp"
-//#define FILE_EPG_ERR "/tmp/epg.err"
-//#define FILE_EPG_CHANNELS "/tmp/epg.channels"
+
+#define LOADEPG_FILE_CONF "epg.conf"
+#define LOADEPG_FILE_EQUIV "epg.equiv"
+
 #define FILE_EPG_TMP "epg.tmp"
 #define FILE_EPG_ERR "epg.err"
 #define FILE_EPG_CHANNELS "epg.channels"
