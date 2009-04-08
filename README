@@ -1,0 +1,61 @@
+This is an xmltv grabber for DVB, Freesat, Sky (AU, UK and IT)
+and MediaHighway EPG data.
+
+
+Mark Spieth took the code from loadepg and made it run standalone.
+Simon Kenyon took the Freesat code from MythTV and added it to tv_grab_dvb.
+At the beginning of April 2009, they decided to collaborate and produce
+a single grabber which would handle various different data sources.
+
+
+It is based on the work of a number of people, for which we are grateful.
+
+Luca De Pieri <dpluca@libero.it> has written a plugin for VDR.
+For further details see http://lukkinosat.altervista.org/
+
+Jean-Claude Repetto <mhwepg@repetto.org> has written a related program
+to parse the data for input to VDR.
+For further details see http://jrepetto.free.fr/
+
+Mark Bryars <dvb@darkskiez.co.uk> has written an xmltv grabber which gets
+its data from a standard DVB data stream.
+For further detailse see http://www.darkskiez.co.uk/
+
+David Matthews <David Matthews <dm@prolingua.co.uk> wrote the code that went
+into MythTV to read the Freesat EPG.
+Fir further details see http://www.mythtv.org/
+
+At the moment you need to use [tsc]zap to point to the correct transponder
+and then tv_grab_eit will convert the EPG data into xmltv format. This can
+then be fed into any number of programs. I use it for MythTV.
+
+We hope you find this useful. The hard work was done by others.
+
+Mark Spieth <mark@digivation.com.au>
+Simon Kenyon <simon@teilifis.com>
+
+
+The configuration files are located in ./conf
+Is possible specify a directory for configuration files with the option '-c'.
+For example:
+
+tv_grab_dvb_plus -c /usr/share/tv_grab_dvb_plus ...
+
+epg.conf       This file contains the list of sources for loading of epg data.
+	       The format is as follows:
+
+For loading epg data sent to Mediahighway (Ver.1) receivers:
+MHW1:<YourDescription>:<Frequency>:<Polarization>:<Source>:<SymbolRate>
+    
+For loading epg data sent to Mediahighway (Ver.2) receivers:
+MHW2:<YourDescription>:<Frequency>:<Polarization>:<Source>:<SymbolRate>
+
+For loading epg data sent to Sky receivers:
+SKY:<YourDescription>:<Frequency>:<Polarization>:<Source>:<SymbolRate>:<DictionaryHuffamn>:<Themes>
+
+sky_xx.dict   This file is dictionary Huffman for decoding epg data sent to
+              Sky receivers.
+
+sky_xx.themes This file is table themes.
+
+In the above xx can be au, uk or it.
