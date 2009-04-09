@@ -5,3 +5,7 @@
 2009-04-08 Simon Kenyon <simon@teilifis.com>
 
 	* Convert to use autoconf and friends
+
+2009-04-09 Simon Kenyon <simon@teilifis.com>
+
+	* Added DVB and Freesat processing
