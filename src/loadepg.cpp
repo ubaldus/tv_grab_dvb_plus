@@ -6,6 +6,7 @@
 * $Id$
 */
 
+#include "constants.h"
 #include "loadepg.h"
 
 static const char *VERSION        = "0.2.1-20080915";
@@ -34,13 +35,12 @@ cControlLoadepg *Control;
 #endif
 cTaskLoadepg *Task;
 
-static char *ProgName;
-//static char demux[1000] = "/dev/dvb/adapter0/demux0";
-static int adapter = 2;
-static int demuxno = 0;
-static int vdrmode = 0;
-static bool useshortxmlids = false;
-static bool debug = false;
+extern char *ProgName;
+extern char conf[1024];
+
+extern int adapter;
+extern int vdrmode;
+extern bool useshortxmlids;
 
 int CurrentProvider;
 int nProviders;
@@ -147,6 +147,7 @@ static void ReadConfigLoadepg( void )
   nEquivChannels = 0;
   
   // Read loadepg.conf
+  Dprintf( "Config->Directory=\"%s\"\n", Config->Directory);
   asprintf( &FileName, "%s/%s", Config->Directory, LOADEPG_FILE_CONF );
   Dprintf( "Readconfig %s\n", FileName);
   File = fopen( FileName, "r" );
@@ -3784,7 +3785,7 @@ cPluginLoadepg::cPluginLoadepg(void)
   // DON'T DO ANYTHING ELSE THAT MAY HAVE SIDE EFFECTS, REQUIRE GLOBAL
   // VDR OBJECTS TO EXIST OR PRODUCE ANY OUTPUT!
   Config = new sConfig();
-  Config->Directory = NULL;
+  asprintf( &Config->Directory, "%s", conf );
   Config->DvbAdapterNumber = 0;
   Config->DvbAdapterHasRotor = 0;
   Config->UseFileEquivalents = true;
@@ -4270,20 +4271,10 @@ VDRPLUGINCREATOR(cPluginLoadepg); // Don't touch this!
 /// }}}
 #endif
 
-// EPGGrabber {{{
-class EPGGrabber
-{
-  public:
-    EPGGrabber();
-    ~EPGGrabber();
-    void Grab();
-};
-
 EPGGrabber::EPGGrabber()
 {
   Config = new sConfig();
-  Config->Directory = NULL;
-  asprintf(&Config->Directory, "conf");
+  asprintf( &Config->Directory, "%s", conf );
   Config->DvbAdapterNumber = 0;
   Config->DvbAdapterHasRotor = 0;
   Config->UseFileEquivalents = false;
@@ -4379,166 +4370,3 @@ void EPGGrabber::Grab()
     Task = NULL;
   }
 }
-// }}}
-
-/* Print usage information. {{{ */
-static void usage() {
-#if 0
-	fprintf(stderr, "Usage: %s [-d] [-u] [-c] [-n|m|p] [-s] [-t timeout]\n"
-		"\t[-e encoding] [-o offset] [-i file] [-f file]\n\n"
-		"\t-i file - Read from file/device instead of %s\n"
-		"\t-f file - Write output to file instead of stdout\n"
-		"\t-t timeout - Stop after timeout seconds of no new data\n"
-		"\t-o offset  - time offset in hours from -12 to 12\n"
-		"\t-c - Use Channel Identifiers from file 'chanidents'\n"
-		"\t     (rather than sidnumber.dvb.guide)\n"
-		"\t-d - output invalid dates\n"
-		"\t-n - now next info only\n"
-		"\t-m - current multiplex now_next only\n"
-		"\t-p - other multiplex now_next only\n"
-		"\t-s - silent - no status ouput\n"
-		"\t-u - output updated info - will result in repeated information\n"
-		"\t-e encoding - Use other than ISO-6937 default encoding\n"
-		"\n", ProgName, demux);
-#endif
-	fprintf(stderr, "Usage: %s [options]\n"
-		"\t-a adapter number %d\n"
-		//"\t-i file - Read from file/device instead of %s\n"
-		"\n", ProgName, adapter);
-	_exit(1);
-} /*}}}*/
-
-/* Parse command line arguments. {{{ */
-static int do_options(int arg_count, char **arg_strings) {
-	static const struct option Long_Options[] = {
-		{"help", 0, 0, 'h'},
-		{"timeout", 1, 0, 't'},
-		{"chanidents", 1, 0, 'c'},
-		{"foxtel", 0, 0, 'F'},
-		{0, 0, 0, 0}
-	};
-	int Option_Index = 0;
-
-	while (1) {
-		//int c = getopt_long(arg_count, arg_strings, "udscmpnht:o:f:Fi:e:", Long_Options, &Option_Index);
-		int c = getopt_long(arg_count, arg_strings, "a:dsv", Long_Options, &Option_Index);
-		if (c == EOF)
-			break;
-		switch (c) {
-		case 'a':
-			adapter = atoi(optarg);
-			//sprintf(demux, "/dev/dvb/adapter%d/demux%d",adapter,demuxno);
-			break;
-		case 'd':
-			debug = true;
-			break;
-		case 's':
-			useshortxmlids = true;
-			break;
-		case 'v':
-			vdrmode = 1;
-			break;
-#if 0
-		case 'i':
-			if (strcmp(optarg, "-")) 
-			  strcpy(demux,optarg);
-			else 
-			  strcpy(demux,"");
-			break;
-#endif
-#if 0
-		case 'f':
-			if ((fd = open(optarg, O_CREAT | O_TRUNC | O_WRONLY, 0666)) < 0) {
-				fprintf(stderr, "%s: Can't write file %s\n", ProgName, optarg);
-				usage();
-			}
-			dup2(fd, STDOUT_FILENO);
-			close(fd);
-			break;
-		case 't':
-			timeout = atoi(optarg);
-			if (0 == timeout) {
-				fprintf(stderr, "%s: Invalid timeout value\n", ProgName);
-				usage();
-			}
-			break;
-		case 'o':
-			time_offset = atoi(optarg);
-			if ((time_offset < -12) || (time_offset > 12)) {
-				fprintf(stderr, "%s: Invalid time offset\n", ProgName);
-				usage();
-			}
-			break;
-		case 'u':
-			ignore_updates = false;
-			break;
-		case 'd':
-			ignore_bad_dates = false;
-			break;
-		case 'c':
-			use_chanidents = true;
-			break;
-		case 'n':
-			chan_filter = 0x4e;
-			chan_filter_mask = 0xfe;
-			break;
-		case 'm':
-			chan_filter = 0x4e;
-			chan_filter_mask = 0xff;
-			break;
-		case 'p':
-			chan_filter = 0x4f;
-			chan_filter_mask = 0xff;
-			break;
-		case 's':
-			silent = true;
-			break;
-		case 'e':
-			iso6937_encoding = optarg;
-			break;
-		case 'F':
-			mode = SKYBOX;
-			break;
-#endif
-		case 'h':
-		case '?':
-			usage();
-			break;
-		case 0:
-		default:
-			fprintf(stderr, "%s: unknown getopt error - returned code %02x\n", ProgName, c);
-			_exit(1);
-		}
-	}
-	return 0;
-} /*}}}*/
-
-// main {{{
-int main(int argc, char * argv[])
-{
-  /* Remove path from command */
-  ProgName = strrchr(argv[0], '/');
-  if (ProgName == NULL)
-    ProgName = argv[0];
-  else
-    ProgName++;
-  do_options(argc, argv);
-
-  if (!vdrmode)
-  {
-    printf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-    printf("<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n");
-    printf("<tv generator-info-name=\"dvb-epg-gen\">\n");
-  }
-
-  EPGGrabber epgGrabber;
-  epgGrabber.Grab();
-
-  if (!vdrmode)
-    printf("</tv>\n");
-
-  return 0;
-}
-// }}}
-
-// vim: foldmethod=marker ts=8 sw=2

@@ -2,7 +2,6 @@
 #include <vdr/device.h>
 #include <vdr/remote.h>
 #include <vdr/thread.h>
-#include <getopt.h>
 #include <sys/ioctl.h>
 #include <linux/dvb/frontend.h>
 #include <linux/dvb/dmx.h>
@@ -28,7 +27,6 @@
 #define FILE_EPG_ERR "epg.err"
 #define FILE_EPG_CHANNELS "epg.channels"
 
-#define MAX_FILTERS 24
 #define MAX_ACTIVE_FILTERS 6
 #define MAX_PROVIDERS 64
 
@@ -41,12 +39,6 @@
 #define MAX_BUFFER_SIZE_CHANNELS 1048576
 #define MAX_BUFFER_SIZE_TITLES 4194304
 #define MAX_BUFFER_SIZE_SUMMARIES 33554432
-
-#define DATA_FORMAT_SKYBOX 1
-#define DATA_FORMAT_MHW_1 2 
-#define DATA_FORMAT_MHW_2 3
-#define DATA_FORMAT_FILE 4
-#define DATA_FORMAT_SCRIPT 5
 
 #define TIMEOUT_CONTROL 90 // seconds
 #define TIMEOUT_FILTER 5000 // ms
@@ -282,3 +274,11 @@ class cSetupMenuLoadepg : public cMenuSetupPage
     ~cSetupMenuLoadepg();
 };
 #endif
+
+class EPGGrabber
+{
+  public:
+    EPGGrabber();
+    ~EPGGrabber();
+    void Grab();
+};
