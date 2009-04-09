@@ -51,7 +51,7 @@ For loading epg data sent to Mediahighway (Ver.2) receivers:
 MHW2:<YourDescription>:<Frequency>:<Polarization>:<Source>:<SymbolRate>
 
 For loading epg data sent to Sky receivers:
-SKY:<YourDescription>:<Frequency>:<Polarization>:<Source>:<SymbolRate>:<DictionaryHuffamn>:<Themes>
+SKY:<YourDescription>:<Frequency>:<Polarization>:<Source>:<SymbolRate>:<DictionaryHuffman>:<Themes>
 
 sky_xx.dict   This file is dictionary Huffman for decoding epg data sent to
               Sky receivers.
