@@ -59,4 +59,4 @@ sky_xx.dict   This file is dictionary Huffman for decoding epg data sent to
 sky_xx.themes This file is table themes.
 
 In the above xx can be au, uk or it.
-Currently au is the same as uk.
+Currently au is the same as uk..
