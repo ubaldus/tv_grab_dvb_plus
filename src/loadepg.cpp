@@ -1578,10 +1578,12 @@ void cTaskLoadepg::LoadFromSatellite( void )
 char * get_channelident( sChannel *C)
 {
   char *s;
-  if (C->shortname != NULL && useshortxmlids)
-    asprintf( &s, "%s.%s", C->shortname, C->providername);
+  if (C == NULL)
+    asprintf( &s, "undefined");
+  else if (C->shortname != NULL && useshortxmlids)
+    asprintf( &s, "%d.%s.%s", C->Sid, C->shortname, C->providername);
   else
-    asprintf( &s, "%d.%s", C->SkyNumber, C->providername);
+    asprintf( &s, "%d.%d.%s", C->Sid, C->SkyNumber, C->providername);
   return s;
 }
 
@@ -3269,7 +3271,16 @@ void cTaskLoadepg::CreateEpgXml( void )
 
 	      sTitle *T = ( lTitles + i );
 
-	      printf("<programme channel=\"%d.dvb.guide\" ", T->ChannelId);
+	      KeyC.ChannelId = T->ChannelId;
+	      C = ( sChannel * ) bsearch( &KeyC, lChannels, nChannels, sizeof( sChannel ), &bsearchChannelByChannelId );
+	      if( C )
+	      {
+		C->IsEpg = true;
+		C->IsFound = true;
+	      }
+
+	      char * channelIdent = get_channelident(C);
+	      printf("<programme channel=\"%s.dvb.guide\" ", channelIdent);
 	      StartTime = ( T->StartTime + EpgTimeOffset );
 	      strftime(date_strbuf, sizeof(date_strbuf), "start=\"%Y%m%d%H%M%S %z\"", localtime(&StartTime) );
 	      printf("%s ", date_strbuf);
@@ -3457,6 +3468,7 @@ void cTaskLoadepg::CreateEpgXml( void )
 		//fprintf( File, "e\n" );
 	      }
 #endif
+	      delete channelIdent;
 	      printf("</programme>\n");
 	      i ++;
 	      EventId ++;
