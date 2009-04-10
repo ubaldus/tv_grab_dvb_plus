@@ -8,6 +8,7 @@
 
 #include "constants.h"
 #include "loadepg.h"
+#include "dvbtexticonv.h"
 
 static const char *VERSION        = "0.2.1-20080915";
 #if APIVERSNUM >= 10507
@@ -814,6 +815,7 @@ static int bsearchSummarie( const void *A, const void *B )
 // }}}
 
 // cTaskLoadepg {{{
+// cTaskLoadepg Construction {{{
 cTaskLoadepg::cTaskLoadepg( void )
 :cThread( "cTaskLoadepg" )
 {
@@ -878,7 +880,9 @@ cTaskLoadepg::~cTaskLoadepg()
   }
   Cancel( 2 );
 }
+// }}}
 
+// cTaskLoadepg Thread {{{
 void cTaskLoadepg::Action( void )
 {
   int Frequency;
@@ -1195,7 +1199,9 @@ void cTaskLoadepg::Action( void )
 #endif
   Setup.UpdateChannels = SetupUpdateChannels;
 }
+// }}}
 
+// cTaskLoadepg Huffman decode {{{
 int cTaskLoadepg::DecodeHuffmanCode( unsigned char *Data, int Length )
 {
   int i;
@@ -1304,7 +1310,9 @@ int cTaskLoadepg::DecodeHuffmanCode( unsigned char *Data, int Length )
   DecodeErrorText[q] = '\0';
   return p;
 }
+// }}}
 
+// cTaskLoadepg::ReadFileDictionary {{{
 bool cTaskLoadepg::ReadFileDictionary( void )
 {
   char *FileName;
@@ -1463,7 +1471,9 @@ bool cTaskLoadepg::ReadFileDictionary( void )
   free( FileName );
   return true;
 }
+// }}}
 
+// cTaskLoadepg::ReadFileThemes {{{
 bool cTaskLoadepg::ReadFileThemes( void )
 {
   char *FileName;
@@ -1506,7 +1516,9 @@ bool cTaskLoadepg::ReadFileThemes( void )
   free( FileName );
   return true;
 }
+// }}}
 
+// cTaskLoadepg::LoadFromSatellite {{{
 void cTaskLoadepg::LoadFromSatellite( void )
 {
   nFilters = 0;
@@ -1554,9 +1566,14 @@ void cTaskLoadepg::LoadFromSatellite( void )
   }
   if( ! IsError )
   {
-    CreateEpgDataFile();
+    if (vdrmode)
+      CreateEpgDataFile();
+    else
+      CreateEpgXml();
   }
 }
+// }}}
+
 
 char * get_channelident( sChannel *C)
 {
@@ -1568,6 +1585,7 @@ char * get_channelident( sChannel *C)
   return s;
 }
 
+// cTaskLoadepg::CreateXmlChannels {{{
 void cTaskLoadepg::CreateXmlChannels( )
 {
   char *ServiceName;
@@ -1612,7 +1630,9 @@ void cTaskLoadepg::CreateXmlChannels( )
     }
   }
 }
+// }}}
 
+// cTaskLoadepg::CreateFileChannels {{{
 void cTaskLoadepg::CreateFileChannels( const char *FileChannels )
 {
   FILE *File;
@@ -1680,8 +1700,10 @@ void cTaskLoadepg::CreateFileChannels( const char *FileChannels )
     fclose( File );
   }
 }
+// }}}
 
 #ifndef STANDALONE
+// cTaskLoadepg::LoadFromFile and cTaskLoadepg::LoadFromScript {{{
 void cTaskLoadepg::LoadFromFile( const char *FileEpg )
 {
   char *FileTmp;
@@ -1756,8 +1778,10 @@ void cTaskLoadepg::LoadFromScript( const char *FileScript, const char *FileEpg )
   }
   free( FileTmp );
 }
+// }}}
 #endif
 
+// cTaskLoadepg Filter Control {{{
 void cTaskLoadepg::AddFilter( unsigned short int Pid, unsigned char Tid, unsigned char Mask )
 {
   if( nFilters >= MAX_FILTERS )
@@ -1807,7 +1831,9 @@ void cTaskLoadepg::StopFilter( int ActiveFilterId )
     }
   }
 }
+// }}}
 
+// cTaskLoadepg::PollingFilters {{{
 void cTaskLoadepg::PollingFilters( int Timeout )
 {
   char *FileName;
@@ -1955,14 +1981,18 @@ void cTaskLoadepg::PollingFilters( int Timeout )
     StopFilter( i );
   }
 }
+// }}}
 
+// cTaskLoadepg::Stop {{{
 void cTaskLoadepg::Stop()
 {
   esyslog( "LoadEPG: Stop" );
   IsRunning = false;
   Cancel(2);
 }
+// }}}
 
+// cTaskLoadepg::ReadBuffer {{{
 void cTaskLoadepg::ReadBuffer( int FilterId, int Fd )
 {
   unsigned char Buffer[2*4096];
@@ -2085,7 +2115,9 @@ void cTaskLoadepg::ReadBuffer( int FilterId, int Fd )
     }
   }
 }
+// }}}
 
+// cTaskLoadepg Time Functions {{{
 void cTaskLoadepg::GetLocalTimeOffset( void )
 {
   time_t timeLocal;
@@ -2170,7 +2202,10 @@ void cTaskLoadepg::GetSatelliteTimeOffset( int FilterId, unsigned char *Data, in
   }
   Filters[FilterId].Step = 2;
 }
+// }}}
 
+// SKYBOX Stuff {{{
+// cTaskLoadepg::SupplementChannelsSKYBOX {{{
 void cTaskLoadepg::SupplementChannelsSKYBOX( int FilterId, unsigned char *Data, int Length )
 {
   if (!EndBAT)
@@ -2288,7 +2323,9 @@ void cTaskLoadepg::SupplementChannelsSKYBOX( int FilterId, unsigned char *Data, 
   }
 
 }
+// }}}
 
+// cTaskLoadepg::GetChannelsSKYBOX {{{
 void cTaskLoadepg::GetChannelsSKYBOX( int FilterId, unsigned char *Data, int Length )
 {
   unsigned char SectionNumber = Data[6];
@@ -2426,7 +2463,9 @@ void cTaskLoadepg::GetChannelsSKYBOX( int FilterId, unsigned char *Data, int Len
     }
   }
 }
+// }}}
 
+// cTaskLoadepg::GetTitlesSKYBOX {{{
 void cTaskLoadepg::GetTitlesSKYBOX( int FilterId, unsigned char *Data, int Length )
 {
   int p;
@@ -2511,7 +2550,9 @@ void cTaskLoadepg::GetTitlesSKYBOX( int FilterId, unsigned char *Data, int Lengt
     }
   }
 }
+// }}}
 
+// cTaskLoadepg::GetSummariesSKYBOX {{{
 void cTaskLoadepg::GetSummariesSKYBOX( int FilterId, unsigned char *Data, int Length )
 {
   int p;
@@ -2593,7 +2634,10 @@ void cTaskLoadepg::GetSummariesSKYBOX( int FilterId, unsigned char *Data, int Le
     }
   }
 }
+// }}}
+// }}}
 
+// cTaskLoadepg::CleanString {{{
 void cTaskLoadepg::CleanString( unsigned char *String )
 {
   unsigned char *Src;
@@ -2650,7 +2694,10 @@ void cTaskLoadepg::CleanString( unsigned char *String )
     *Dst = 0;
   }
 }
+// }}}
 
+// MHW1 Stuff {{{
+// cTaskLoadepg::GetThemesMHW1 {{{
 void cTaskLoadepg::GetThemesMHW1( int FilterId, unsigned char *Data, int Length )
 {
   if( Length > 19 )
@@ -2685,7 +2732,9 @@ void cTaskLoadepg::GetThemesMHW1( int FilterId, unsigned char *Data, int Length 
     }
   }
 }
+// }}}
 
+// cTaskLoadepg::GetChannelsMHW1 {{{
 void cTaskLoadepg::GetChannelsMHW1( int FilterId, unsigned char *Data, int Length )
 {
   sChannelMHW1 *Channel = ( sChannelMHW1 * ) ( Data + 4 );
@@ -2724,7 +2773,9 @@ void cTaskLoadepg::GetChannelsMHW1( int FilterId, unsigned char *Data, int Lengt
     Filters[FilterId].Step = 2;
   }
 }
+// }}}
 
+// cTaskLoadepg::GetTitlesMHW1 {{{
 void cTaskLoadepg::GetTitlesMHW1( int FilterId, unsigned char *Data, int Length )
 {
   sTitleMHW1 *Title = ( sTitleMHW1 * ) Data;
@@ -2805,7 +2856,9 @@ void cTaskLoadepg::GetTitlesMHW1( int FilterId, unsigned char *Data, int Length 
     }
   }
 }
+// }}}
 
+// cTaskLoadepg::GetSummariesMHW1 {{{
 void cTaskLoadepg::GetSummariesMHW1( int FilterId, unsigned char *Data, int Length )
 {
   sSummaryMHW1 *Summary = ( sSummaryMHW1 * ) Data;
@@ -2860,7 +2913,11 @@ void cTaskLoadepg::GetSummariesMHW1( int FilterId, unsigned char *Data, int Leng
     }
   }
 }
+// }}}
+// }}}
 
+// MHW2 Stuff {{{
+// cTaskLoadepg::GetThemesMHW2 {{{
 void cTaskLoadepg::GetThemesMHW2( int FilterId, unsigned char *Data, int Length )
 {
   int p1;
@@ -2944,7 +3001,9 @@ void cTaskLoadepg::GetThemesMHW2( int FilterId, unsigned char *Data, int Length 
     EndThemes = true;
   }
 }
+// }}}
 
+// cTaskLoadepg::GetChannelsMHW2 {{{
 void cTaskLoadepg::GetChannelsMHW2( int FilterId, unsigned char *Data, int Length )
 {
   if( EndThemes && EndChannels )
@@ -2996,7 +3055,9 @@ void cTaskLoadepg::GetChannelsMHW2( int FilterId, unsigned char *Data, int Lengt
     }
   }
 }
+// }}}
 
+// cTaskLoadepg::GetTitlesMHW2 {{{
 void cTaskLoadepg::GetTitlesMHW2( int FilterId, unsigned char *Data, int Length )
 {
   if( Length > 18 )
@@ -3081,7 +3142,9 @@ void cTaskLoadepg::GetTitlesMHW2( int FilterId, unsigned char *Data, int Length 
     }
   }
 }
+// }}}
 
+// cTaskLoadepg::GetSummariesMHW2 {{{
 void cTaskLoadepg::GetSummariesMHW2( int FilterId, unsigned char *Data, int Length )
 {
   if( Length > ( Data[14] + 17 ) )
@@ -3155,7 +3218,389 @@ void cTaskLoadepg::GetSummariesMHW2( int FilterId, unsigned char *Data, int Leng
     }
   }
 }
+// }}}
+// }}}
 
+// cTaskLoadepg::CreateEpgXml {{{
+void cTaskLoadepg::CreateEpgXml( void )
+{
+  char *ChannelName;
+  esyslog( "LoadEPG: found %i equivalents channels", nEquivChannels );
+  esyslog( "LoadEPG: found %i themes", nThemes );
+  esyslog( "LoadEPG: found %i channels", nChannels );
+  esyslog( "LoadEPG: found %i titles", nTitles );
+  esyslog( "LoadEPG: found %i summaries", nSummaries );
+  qsort( lEquivChannels, nEquivChannels, sizeof( sEquivChannel ), &qsortEquivChannels );
+  qsort( lChannels, nChannels, sizeof( sChannel ), &qsortChannels );
+  qsort( lTitles, nTitles, sizeof( sTitle ), &qsortTitles );
+  qsort( lSummaries, nSummaries, sizeof( sSummary ), &qsortSummaries );
+
+  if( ( lProviders + CurrentProvider )->DataFormat == DATA_FORMAT_SKYBOX )
+  {
+    // SKYBOX
+    if( ReadFileDictionary() )
+    {
+      ReadFileThemes();
+      if( nChannels > 0 )
+      {
+	if( nTitles > 0 )
+	{
+	  if( nSummaries > 0 )
+	  {
+	    int i;
+	    int prev_i;
+	    int EventId;
+	    unsigned short int ChannelId;
+	    bool IsChannel;
+	    bool IsEquivChannel;
+	    sChannel KeyC, *C;
+	    sEquivChannel KeyEC, *EC;
+	    i = 0;
+	    prev_i = 0;
+	    EventId = 1;
+	    ChannelId = 0;
+	    IsChannel = false;
+	    IsEquivChannel = false;
+
+	    while( i < nTitles )
+	    {
+	      char       date_strbuf[256];
+	      time_t StartTime;
+
+	      sTitle *T = ( lTitles + i );
+
+	      printf("<programme channel=\"%d.dvb.guide\" ", T->ChannelId);
+	      StartTime = ( T->StartTime + EpgTimeOffset );
+	      strftime(date_strbuf, sizeof(date_strbuf), "start=\"%Y%m%d%H%M%S %z\"", localtime(&StartTime) );
+	      printf("%s ", date_strbuf);
+	      StartTime = ( T->StartTime + T->Duration + EpgTimeOffset );
+	      strftime(date_strbuf, sizeof(date_strbuf), "stop=\"%Y%m%d%H%M%S %z\"", localtime(&StartTime));
+	      printf("%s>\n ", date_strbuf);
+
+	      //printf("\t<EventID>%i</EventID>\n", HILO(evt->event_id));
+	      //printf("\t<RunningStatus>%i</RunningStatus>\n", evt->running_status);
+	      //1 Airing, 2 Starts in a few seconds, 3 Pausing, 4 About to air
+
+	      if( DecodeHuffmanCode( &bTitles[T->pData], T->lenData ) )
+	      {
+		CleanString( DecodeText );
+	        //printf("\t<title lang=\"%s\">%s</title>\n", xmllang(&evtdesc->lang_code1), xmlify(evt));
+		printf("\t<title lang=\"%s\">%s</title>\n", 
+		    /* xmllang(&evtdesc->lang_code1) */ "en", xmlify((const char *)DecodeText));
+	      }
+	      sSummary KeyS, *S;
+	      KeyS.ChannelId = T->ChannelId;
+	      KeyS.MjdTime = T->MjdTime;
+	      KeyS.EventId = T->EventId;
+	      S = ( sSummary * ) bsearch( &KeyS, lSummaries, nSummaries, sizeof( sSummary ), &bsearchSummarie );
+	      if( S )
+	      {
+		if( DecodeHuffmanCode( &bSummaries[S->pData], S->lenData ) )
+		{
+		  CleanString( DecodeText );
+		  char *d = xmlify((const char *)DecodeText);
+		  if (d && *d)
+		  {
+		    //printf("\t<sub-title lang=\"%s\">%s</sub-title>\n", 
+		    //   /*xmllang(&evtdesc->lang_code1)*/ "en", d);
+		    printf("\t<desc lang=\"%s\">", /*xmllang(&levt->lang_code1)*/ "en");
+		    printf("%s", d);
+		    printf("</desc>\n");
+		  }
+		}
+	      }
+
+
+#if 0
+	      if( ChannelId != T->ChannelId )
+	      {
+		if( IsChannel )
+		{
+		  if( ChannelId > 0 )
+		  {
+		    //fprintf( File, "c\n" );
+		  }
+		}
+		if( IsEquivChannel )
+		{
+		  if( ChannelId > 0 )
+		  {
+		    //fprintf( File, "c\n" );
+		  }
+		  i = prev_i;
+		  T = ( lTitles + i );
+		}
+		IsChannel = false;
+		IsEquivChannel = false;
+		KeyC.ChannelId = T->ChannelId;
+		C = ( sChannel * ) bsearch( &KeyC, lChannels, nChannels, sizeof( sChannel ), &bsearchChannelByChannelId );
+		if( C )
+		{
+		  C->IsEpg = true;
+		  tChannelID ChVID = tChannelID( ( lProviders + CurrentProvider )->SourceId, C->Nid, C->Tid, C->Sid );
+#ifdef STANDALONE
+		  cChannel *VC = NULL;
+#else
+		  cChannel *VC = Channels.GetByChannelID( ChVID, true );
+		  if( VC )
+#endif
+		  {
+#ifdef STANDALONE
+		    KeyEC.OriginalSourceId = C->ChannelId;
+		    KeyEC.OriginalNid = C->Nid;
+		    KeyEC.OriginalTid = C->Tid;
+		    KeyEC.OriginalSid = C->Sid;
+#else
+		    KeyEC.OriginalSourceId = VC->Source();
+		    KeyEC.OriginalNid = VC->Nid();
+		    KeyEC.OriginalTid = VC->Tid();
+		    KeyEC.OriginalSid = VC->Sid();
+#endif
+		    EC = ( sEquivChannel * ) bsearch( &KeyEC, lEquivChannels, nEquivChannels, sizeof( sEquivChannel ), &bsearchEquivChannel );
+		    if( EC && Config->UseFileEquivalents )
+		    {
+		      tChannelID ChEID = tChannelID( EC->EquivSourceId, EC->EquivNid, EC->EquivTid, EC->EquivSid, EC->EquivRid );
+#ifdef STANDALONE
+		      cChannel *VEC = NULL;
+#else
+		      cChannel *VEC = Channels.GetByChannelID( ChEID, false );
+#endif
+		      if( VEC )
+		      {
+			//fprintf( File, "<se>C %s-%i-%i-%i-%i name=\"%s\"\n", *cSource::ToString( VEC->Source() ), VEC->Nid(), VEC->Tid(), VEC->Sid(), VEC->Rid(), VEC->Name() );
+			asprintf( &ChannelName, "%s", VEC->Name() );
+			IsEquivChannel = true;
+			prev_i = i;
+		      }
+		      EC->OriginalSourceId = 0;
+		      EC->OriginalNid = 0;
+		      EC->OriginalTid = 0;
+		      EC->OriginalSid = 0;
+		      qsort( lEquivChannels, nEquivChannels, sizeof( sEquivChannel ), &qsortEquivChannels );
+		    }
+		    else
+		    {
+		      //fprintf( File, "C %s-%i-%i-%i-%i %s\n", *cSource::ToString( VC->Source() ), VC->Nid(), VC->Tid(), VC->Sid(), VC->Rid(), VC->Name() );
+		      //fprintf( File, "<sky>C %i-%i-%i-%i sky=%i\n", C->ChannelId, C->Nid, C->Tid, C->Sid, C->SkyNumber );
+		      //asprintf( &ChannelName, "%s", VC->Name() );
+		      asprintf( &ChannelName, "%i", C->SkyNumber );
+		      IsChannel = true;
+		      C->IsFound = true;
+		    }
+		  }
+		}
+		ChannelId = T->ChannelId;
+	      }
+	      if( IsChannel || IsEquivChannel )
+	      {
+		//fprintf( File, "E %u %u %u\n", EventId, ( T->StartTime + EpgTimeOffset ), T->Duration );
+		if( DecodeHuffmanCode( &bTitles[T->pData], T->lenData ) )
+		{
+		  CleanString( DecodeText );
+		  //fprintf( File, "T %s\n", DecodeText );
+		  if( DecodeErrorText[0] != '\0' )
+		  {
+		    if( IsChannel )
+		    {
+		      time_t StartTime;
+		      StartTime = ( T->StartTime + EpgTimeOffset );
+		      //fprintf( Err, "Channel: %s - %s\n", ChannelName, ctime( &StartTime ) );
+		      //fprintf( Err, "T %s%s\n\n", DecodeText, DecodeErrorText );
+		    }
+		  }
+		  if( DEBUG && DEBUG_STARTTIME )
+		  {
+		    time_t StartTime;
+		    char *DateTime;
+		    StartTime = ( T->StartTime + EpgTimeOffset );
+		    asprintf( &DateTime, "%s", ctime( &StartTime ) );
+		    //fprintf( File, "S - %s", DateTime );
+		  }
+		  sTheme *ST = ( lThemes + T->ThemeId );
+		  if( ST->Name[0] != '\0' )
+		  {
+		    //fprintf( File, "S %s\n", ST->Name );
+		  }
+		  else
+		  {
+		    if( DEBUG )
+		    {
+		      time_t StartTime;
+		      StartTime = ( T->StartTime + EpgTimeOffset );
+		      //fprintf( Err, "Channel: %s - %s - ThemeId=0x%02x\n", ChannelName, ctime( &StartTime ), T->ThemeId );
+		    }
+		  }
+		  sSummary KeyS, *S;
+		  KeyS.ChannelId = T->ChannelId;
+		  KeyS.MjdTime = T->MjdTime;
+		  KeyS.EventId = T->EventId;
+		  S = ( sSummary * ) bsearch( &KeyS, lSummaries, nSummaries, sizeof( sSummary ), &bsearchSummarie );
+		  if( S )
+		  {
+		    if( DecodeHuffmanCode( &bSummaries[S->pData], S->lenData ) )
+		    {
+		      CleanString( DecodeText );
+		      //fprintf( File, "D %s\n", DecodeText );
+		    }
+		    if( DecodeErrorText[0] != '\0' )
+		    {
+		      if( IsChannel )
+		      {
+			time_t StartTime;
+			StartTime = ( T->StartTime + EpgTimeOffset );
+			//fprintf( Err, "Channel: %s - %s\n", ChannelName, ctime( &StartTime ) );
+			//fprintf( Err, "D %s%s\n\n", DecodeText, DecodeErrorText );
+		      }
+		    }
+		  }
+		}
+		//fprintf( File, "e\n" );
+	      }
+#endif
+	      printf("</programme>\n");
+	      i ++;
+	      EventId ++;
+	    }
+
+
+	    if( IsChannel || IsEquivChannel )
+	    {
+	      //fprintf( File, "c\n" );
+	    }
+	  }
+	}
+      }
+    }
+  }
+  else
+  {
+    // MHW_1 && MHW_2
+    int i;
+    int prev_i;
+    unsigned char ChannelId;
+    sChannel KeyC, *C;
+    sEquivChannel KeyEC, *EC;
+    bool IsChannel;
+    bool IsEquivChannel;
+    i = 0;
+    prev_i = 0;
+    ChannelId = 0xff;
+    IsChannel = false;
+    IsEquivChannel = false;
+    while( i < nTitles )
+    {
+      sTitle *T = ( lTitles + i );
+      if( ChannelId != T->ChannelId )
+      {
+	if( IsChannel )
+	{
+	  if( ChannelId < 0xff )
+	  {
+	    //fprintf( File, "c\n" );
+	  }
+	}
+	if( IsEquivChannel )
+	{
+	  if( ChannelId > 0 )
+	  {
+	    //fprintf( File, "c\n" );
+	  }
+	  i = prev_i;
+	  T = ( lTitles + i );
+	}
+	IsChannel = false;
+	IsEquivChannel = false;
+	KeyC.ChannelId = T->ChannelId;
+	C = ( sChannel * ) bsearch( &KeyC, lChannels, nChannels, sizeof( sChannel ), &bsearchChannelByChannelId );
+	if( C )
+	{
+	  tChannelID ChVID = tChannelID( ( lProviders + CurrentProvider )->SourceId, C->Nid, C->Tid, C->Sid );
+#ifdef STANDALONE
+	  cChannel *VC = NULL;
+#else
+	  cChannel *VC = Channels.GetByChannelID( ChVID, false );
+#endif
+	  if( VC )
+	  {
+	    KeyEC.OriginalSourceId = VC->Source();
+	    KeyEC.OriginalNid = VC->Nid();
+	    KeyEC.OriginalTid = VC->Tid();
+	    KeyEC.OriginalSid = VC->Sid();
+	    EC = ( sEquivChannel * ) bsearch( &KeyEC, lEquivChannels, nEquivChannels, sizeof( sEquivChannel ), &bsearchEquivChannel );
+	    if( EC && Config->UseFileEquivalents )
+	    {
+	      tChannelID ChEID = tChannelID( EC->EquivSourceId, EC->EquivNid, EC->EquivTid, EC->EquivSid, EC->EquivRid );
+#ifdef STANDALONE
+	      cChannel *VEC = NULL;
+#else
+	      cChannel *VEC = Channels.GetByChannelID( ChEID, false );
+#endif
+	      if( VEC )
+	      {
+		//fprintf( File, "<mhw>C %s-%i-%i-%i-%i %s\n", *cSource::ToString( VEC->Source() ), VEC->Nid(), VEC->Tid(), VEC->Sid(), VEC->Rid(), VEC->Name() );
+		asprintf( &ChannelName, "%s", VEC->Name() );
+		IsEquivChannel = true;
+		prev_i = i;
+	      }
+	      EC->OriginalSourceId = 0;
+	      EC->OriginalNid = 0;
+	      EC->OriginalTid = 0;
+	      EC->OriginalSid = 0;
+	      qsort( lEquivChannels, nEquivChannels, sizeof( sEquivChannel ), &qsortEquivChannels );
+	    }
+	    else
+	    {
+	      //fprintf( File, "<mhw>C %s-%i-%i-%i-%i %s\n", *cSource::ToString( VC->Source() ), VC->Nid(), VC->Tid(), VC->Sid(), VC->Rid(), VC->Name() );
+	      asprintf( &ChannelName, "%s", VC->Name() );
+	      IsChannel = true;
+	      C->IsFound = true;
+	    }
+	  }
+	}
+	ChannelId = T->ChannelId;
+      }
+      if( IsChannel || IsEquivChannel )
+      {
+	//fprintf( File, "E %u %u %u 01 FF\n", T->EventId, ( T->StartTime + EpgTimeOffset ), T->Duration );
+	//fprintf( File, "T %s\n", &bTitles[T->pData] );
+	if( ( lThemes + T->ThemeId )->Name[0] != '\0' )
+	{
+	  if( DEBUG && DEBUG_STARTTIME )
+	  {
+	    time_t StartTime;
+	    char *DateTime;
+	    StartTime = ( T->StartTime + EpgTimeOffset );
+	    asprintf( &DateTime, "%s", ctime( &StartTime ) );
+	    //fprintf( File, "S %s - %d\' - %s", ( lThemes + T->ThemeId )->Name, T->Duration / 60, DateTime );
+	  }
+	  else
+	  {
+	    //fprintf( File, "S %s - %d\'\n", ( lThemes + T->ThemeId )->Name, T->Duration / 60 );
+	  }
+	}
+	sSummary KeyS, *S;
+	KeyS.ChannelId = 0;
+	KeyS.MjdTime = 0;
+	KeyS.EventId = T->EventId;
+	S = ( sSummary * ) bsearch( &KeyS, lSummaries, nSummaries, sizeof( sSummary ), &bsearchSummarie );
+	if( S )
+	{
+	  //fprintf( File, "D %s\n", &bSummaries[S->pData] );
+	}
+	//fprintf( File, "e\n" );
+      }
+      i ++;
+    }
+    if(  IsChannel || IsEquivChannel )
+    {
+      //fprintf( File, "c\n" );
+    }
+  }
+  CreateXmlChannels( );
+}
+// }}}
+
+// cTaskLoadepg::CreateEpgDataFile {{{
 void cTaskLoadepg::CreateEpgDataFile( void )
 {
   FILE *File;
@@ -3490,10 +3935,7 @@ void cTaskLoadepg::CreateEpgDataFile( void )
 #ifndef STANDALONE
       LoadFromFile( FILE_EPG_TMP );
 #endif
-      if (vdrmode)
-	CreateFileChannels( FILE_EPG_CHANNELS );
-      else
-	CreateXmlChannels( );
+      CreateFileChannels( FILE_EPG_CHANNELS );
     }
     else
     {
@@ -3506,7 +3948,9 @@ void cTaskLoadepg::CreateEpgDataFile( void )
   }
 };
 /// }}}
+// }}}
 
+// EPGGrabber {{{
 EPGGrabber::EPGGrabber()
 {
   Config = new sConfig();

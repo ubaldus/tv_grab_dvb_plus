@@ -166,21 +166,6 @@ typedef struct
   bool IsBusy;
 } sActiveFilter;
 
-#ifndef STANDALONE
-class cControlLoadepg : public cThread
-{
-  private:
-  protected:
-    virtual void Action( void );
-  public:
-    cControlLoadepg( void );
-    ~cControlLoadepg();
-    bool Loading;
-    bool Stopping;
-    bool Error;
-};
-#endif
-
 class cTaskLoadepg : public cThread
 {
   private:
@@ -236,6 +221,7 @@ class cTaskLoadepg : public cThread
     int DecodeHuffmanCode( unsigned char *Data, int Length );
     void CreateFileChannels( const char *FileChannels );
     void CreateXmlChannels( );
+    void CreateEpgXml( void );
   protected:
     virtual void Action( void );
   public:
@@ -250,30 +236,6 @@ class cTaskLoadepg : public cThread
 #endif
     bool IsLoopRunning() const { return IsRunning; }
 };
-
-#ifndef STANDALONE
-class cMainMenuLoadepg : public cOsdMenu
-{
-  private:
-  protected:
-  public:
-    cMainMenuLoadepg( void );
-    ~cMainMenuLoadepg();
-    eOSState ProcessKey( eKeys Key );
-};
-
-class cSetupMenuLoadepg : public cMenuSetupPage
-{
-  private:
-    const char *dvbAdapterNumberFormatTexts[8];
-    const char *dvbAdapterHasRotorFormatTexts[8];
-  protected:
-    virtual void Store( void );
-  public:
-    cSetupMenuLoadepg( void );
-    ~cSetupMenuLoadepg();
-};
-#endif
 
 class EPGGrabber
 {
