@@ -3609,4 +3609,4 @@ void EPGGrabber::Grab()
 
 // }}}
 
-# vim: foldmethod=marker ts=8 sw=2
+// vim: foldmethod=marker ts=8 sw=2
