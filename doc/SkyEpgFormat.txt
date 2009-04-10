@@ -1,0 +1,62 @@
+Details of Sky Extended EPG format
+----------------------------------
+
+PIDS		Tags		Descr.
+--------------------------------------
+
+0x30-0x37	0xa0-0xa3	Titles
+0x40-0x47	0xa4-0xa7	Summaries
+
+
+Title Structure
+---------------
+
+typedef struct SkyTitleHeader {
+	u_char	unknown0:8;	// +0
+	u_char	unknown1:8;	// +1
+	u_char	unknown2:8;	// +2
+	u_char	channelIdHi:8;	// +3
+#if BYTE_ORDER == BIG_ENDIAN
+	u_char	channelIdLo:4;	// +4
+	u_char	xxxx:4;
+#else
+	u_char	xxxx:4;		// +4
+	u_char	channelIdLo:4;
+#endif
+	u_char	unknown5;	// +5
+	u_char	unknown6;	// +6
+	u_char	unknown7;	// +7
+	u_char	timeHi;		// +8
+	u_char	timeLo;		// +9
+} SkyTitleHeader;
+
+typedef struct SkyTitleData {
+	u_char	eventIdHi;	// +0
+	u_char	eventIdLo;	// +1
+#if BYTE_ORDER == BIG_ENDIAN
+	u_char	unknown3:4;	// +2
+	u_char	lenHi:4;
+#else
+	u_char	lenHi:4;	// +2
+	u_char	unknown3:4;
+#endif
+	u_char	lenLo;		// +3
+	u_char	type;		// +4 always 0xb5
+	u_char	len2;		// +5	datalen is len2-7
+	u_char	startTimeOffsetHi;	// +6 2 second res
+	u_char	startTimeOffsetLo;	// +7
+	u_char	durationHi;	// +8 2 second res
+	u_char	durationLo;	// +9
+	u_char	themeId;	// +10
+	u_char	res1;		// +11
+	u_char	res2;		// +12
+	u_char	data[1];	// +13	datalen bytes
+
+
+} SkyTitleData;
+
+typedef struct SkyTitle {
+	SkyTitleHeader header;
+	SkyTitleData[1];
+} SkyTitle;
+
