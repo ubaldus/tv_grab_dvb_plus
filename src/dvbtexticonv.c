@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -87,6 +88,7 @@ static iconv_t cd;
 char *xmlify(const char *s) {
 	char cs_new[16];
 	int l;
+	char c;
 
 	int i = (int)(unsigned char)s[0];
 	if (encoding[i].handler(cs_new, &s, encoding[i].data))
@@ -121,8 +123,7 @@ char *xmlify(const char *s) {
 
 	char *b = buf, *r = result;
 	for ( ; b < outbuf; b++)
-		switch (*b) {
-#if 0 // only needed for attributes
+		switch ((unsigned char)*b) {
 			case '"':
 				*r++ = '&';
 				*r++ = 'q';
@@ -131,7 +132,6 @@ char *xmlify(const char *s) {
 				*r++ = 't';
 				*r++ = ';';
 				break;
-#endif
 			case '&':
 				*r++ = '&';
 				*r++ = 'a';
@@ -154,7 +154,18 @@ char *xmlify(const char *s) {
 			case 0x0000 ... 0x0008:
 			case 0x000B ... 0x001F:
 			case 0x007F:
-				fprintf(stderr, "%s: Forbidden char %02x\n", ProgName, *b);
+				//fprintf(stderr, "%s: Forbidden char %02x\n", ProgName, *b);
+			case 0x0080 ... 0x009F:
+			case 0x00A0 ... 0x00FF:
+				*r++ = '&';
+				*r++ = '#';
+				*r++ = 'x';
+				c = (*b >> 4) & 0x0F;
+				*r++ = (char)(c > 9 ? c + 0x37 : c  + 0x30);
+				c = *b & 0x0F;
+				*r++ = (char)(c > 9 ? c + 0x37 : c  + 0x30);
+				*r++ = ';';
+				break;
 			default:
 				*r++ = *b;
 				break;
