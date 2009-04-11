@@ -83,9 +83,9 @@ static const struct encoding {
 static char cs_old[16];
 static iconv_t cd;
 
-/* Quote the xml entities in the string passed in.
+/* Convert the DVB text in the string passed in.
  */
-char *xmlify(const char *s) {
+char *convert_text(const char *s) {
 	char cs_new[16];
 	int l;
 	char c;
@@ -154,9 +154,63 @@ char *xmlify(const char *s) {
 			case 0x0000 ... 0x0008:
 			case 0x000B ... 0x001F:
 			case 0x007F:
+				fprintf(stderr, "%s: Forbidden char %02x\n", ProgName, *b);
+			default:
+				*r++ = *b;
+				break;
+		}
+
+	*r = '\0';
+	return result;
+}
+
+/* Quote the xml entities in the string passed in.
+ */
+char *xmlify(const char *s) {
+	char c;
+
+	char *outbuf = (char *)(s + strlen(s));
+	char *b = (char *)s, *r = result;
+	for ( ; b < outbuf; b++)
+		switch ((unsigned char)*b) {
+			case '"':
+				*r++ = '&';
+				*r++ = 'q';
+				*r++ = 'u';
+				*r++ = 'o';
+				*r++ = 't';
+				*r++ = ';';
+				break;
+			case '&':
+				*r++ = '&';
+				*r++ = 'a';
+				*r++ = 'm';
+				*r++ = 'p';
+				*r++ = ';';
+				break;
+			case '<':
+				*r++ = '&';
+				*r++ = 'l';
+				*r++ = 't';
+				*r++ = ';';
+				break;
+			case '>':
+				*r++ = '&';
+				*r++ = 'g';
+				*r++ = 't';
+				*r++ = ';';
+				break;
+			case 0x0000 ... 0x0008:
+			case 0x0009 ... 0x000A:	// added to aid debugging
+			case 0x000B ... 0x001F:
+			case 0x007F:
 				//fprintf(stderr, "%s: Forbidden char %02x\n", ProgName, *b);
 			case 0x0080 ... 0x009F:
 			case 0x00A0 ... 0x00FF:
+				/*
+				 * print these as XML escape sequences so we can see what is going on
+				 * and in particular, what encoding is being used
+				 */
 				*r++ = '&';
 				*r++ = '#';
 				*r++ = 'x';

@@ -71,7 +71,7 @@ static void parseEventDescription(void *data, enum ER round) {
 			return;
 		strncpy(evt, (char *)&evtdesc->data, evtlen);
 		evt[evtlen] = '\0';
-		printf("\t<title lang=\"%s\">%s</title>\n", xmllang(&evtdesc->lang_code1), xmlify(evt));
+		printf("\t<title lang=\"%s\">%s</title>\n", xmllang(&evtdesc->lang_code1), convert_text(evt));
 		return;
 	}
 
@@ -81,7 +81,7 @@ static void parseEventDescription(void *data, enum ER round) {
 		dsc[dsclen] = '\0';
 
 		if (*dsc) {
-			char *d = xmlify(dsc);
+			char *d = convert_text(dsc);
 			if (d && *d)
 				printf("\t<sub-title lang=\"%s\">%s</sub-title>\n", xmllang(&evtdesc->lang_code1), d);
 		}
@@ -106,7 +106,7 @@ static void parseLongEventDescription(void *data) {
 		assert(p + ITEM_EXTENDED_EVENT_LEN + name_len < data_end);
 		strncpy(dsc, (char *)&name->data, name_len);
 		dsc[name_len] = '\0';
-		printf("%s: ", xmlify(dsc));
+		printf("%s: ", convert_text(dsc));
 
 		p += ITEM_EXTENDED_EVENT_LEN + name_len;
 
@@ -115,7 +115,7 @@ static void parseLongEventDescription(void *data) {
 		assert(p + ITEM_EXTENDED_EVENT_LEN + value_len < data_end);
 		strncpy(dsc, (char *)&value->data, value_len);
 		dsc[value_len] = '\0';
-		printf("%s; ", xmlify(dsc));
+		printf("%s; ", convert_text(dsc));
 
 		p += ITEM_EXTENDED_EVENT_LEN + value_len;
 	}
@@ -124,10 +124,10 @@ static void parseLongEventDescription(void *data) {
 	if (non_empty && len) {
 		strncpy(dsc, (char *)&text->data, len);
 		dsc[len] = '\0';
-		printf("%s", xmlify(dsc));
+		printf("%s", convert_text(dsc));
 	}
 
-	//printf("/%d/%d/%s", levt->descriptor_number, levt->last_descriptor_number, xmlify(dsc));
+	//printf("/%d/%d/%s", levt->descriptor_number, levt->last_descriptor_number, convert_text(dsc));
 	if (non_empty && levt->descriptor_number == levt->last_descriptor_number)
 		printf("</desc>\n");
 }
