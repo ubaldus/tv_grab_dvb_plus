@@ -60,3 +60,17 @@ typedef struct SkyTitle {
 	SkyTitleData[1];
 } SkyTitle;
 
+
+table 0xB2
+----------
++0
++1	len (use len-3-llll for huffman data len)
++2	???
++3	???
++4	other len encoded as xxxyllll
+	xxx	???
+	y	???
+	llll	subdata len
++5	subdata llll bytes data as ????
++5+llll	huffman encoded data
+
