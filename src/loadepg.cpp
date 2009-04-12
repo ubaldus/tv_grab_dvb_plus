@@ -2384,9 +2384,19 @@ void cTaskLoadepg::GetChannelsSKYBOX( int FilterId, unsigned char *Data, int Len
 	      // 0x05 = Other Channel
 	      //if( Data[p3+2] == 0x01 || Data[p3+2] == 0x02 || Data[p3+2] == 0x05 )
 	      //{
-	        unsigned short int Sid = ( Data[p3] << 8 ) | Data[p3+1];
-	        unsigned short int ChannelId = ( Data[p3+3] << 8 ) | Data[p3+4];
-	        unsigned short int SkyNumber = ( Data[p3+5] << 8 ) | Data[p3+6];
+	        unsigned short Sid = ( Data[p3] << 8 ) | Data[p3+1];
+		unsigned char unk1 = Data[p3+2];
+	        unsigned short ChannelId = ( Data[p3+3] << 8 ) | Data[p3+4];
+	        unsigned short SkyNumber = ( Data[p3+5] << 8 ) | Data[p3+6];
+	        unsigned short Flags = ( Data[p3+7] << 8 ) | Data[p3+8];
+		unsigned short unkval = Flags >> 4;
+		int unkflag1 = (Flags & 8) >> 3;
+		int unkflag2 = (Flags & 4) >> 2;
+		int unkflag3 = (Flags & 2) >> 1;
+		int unkflag4 = (Flags & 1);
+		/*
+		 * 
+		 */
 		if( SkyNumber > 100 && SkyNumber < 1000 )
 		{
 		  if( ChannelId > 0 )
