@@ -9,6 +9,7 @@
 #include "constants.h"
 #include "loadepg.h"
 #include "dvbtexticonv.h"
+#include "chanid.h"
 
 static const char *VERSION        = "0.2.1-20080915";
 #if APIVERSNUM >= 10507
@@ -1578,12 +1579,16 @@ void cTaskLoadepg::LoadFromSatellite( void )
 char * get_channelident( sChannel *C)
 {
   char *s;
+  char *t;
+
   if (C == NULL)
     asprintf( &s, "undefined");
   else if (C->shortname != NULL && useshortxmlids)
-    asprintf( &s, "%d.%s.%s", C->Sid, C->shortname, C->providername);
-  else
-    asprintf( &s, "%d.%d.%s", C->Sid, C->SkyNumber, C->providername);
+    asprintf( &s, "%d.%s.%s.dvb.guide", C->Sid, C->shortname, C->providername);
+  else {
+    asprintf( &t, "%d.%d", C->Sid, C->SkyNumber);
+    asprintf( &s, "%s", schannelident(t, C->providername));
+  }
   return s;
 }
 
@@ -3290,7 +3295,7 @@ void cTaskLoadepg::CreateEpgXml( void )
 	      }
 
 	      char * channelIdent = get_channelident(C);
-	      printf("<programme channel=\"%s.dvb.guide\" ", channelIdent);
+	      printf("<programme channel=\"%s\" ", channelIdent);
 	      StartTime = ( T->StartTime + EpgTimeOffset );
 	      strftime(date_strbuf, sizeof(date_strbuf), "start=\"%Y%m%d%H%M%S %z\"", localtime(&StartTime) );
 	      printf("%s ", date_strbuf);

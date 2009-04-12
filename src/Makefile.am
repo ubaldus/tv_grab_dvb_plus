@@ -15,6 +15,7 @@ tv_grab_dvb_plus_SOURCES = \
 	tools.cpp \
 	vdrcompat.cpp \
 	\
+	chanid.c \
 	crc32.c \
 	dvbepg.c \
 	dvbinfotables.c \
@@ -24,6 +25,7 @@ tv_grab_dvb_plus_SOURCES = \
 	freesattables.c \
 	lookup.c \
 	\
+	chanid.h \
 	constants.h \
 	crc32.h \
 	dvb_epg.h \

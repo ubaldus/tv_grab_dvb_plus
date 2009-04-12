@@ -12,6 +12,7 @@
 #include "dvbtexticonv.h"
 #include "lookup.h"
 #include "crc32.h"
+#include "chanid.h"
 
 extern char *ProgName;
 extern int debug;
@@ -34,7 +35,6 @@ typedef struct chninfo {
 	int ver;
 } chninfo_t;
 
-static struct lookup_table *channelid_table;
 static struct chninfo *channels;
 
 /* Print progress indicator */
@@ -47,14 +47,14 @@ static void status() {
 
 /* Parse language-id translation file */
 static char *xmllang(u_char *l) {
-	static union lookup_key lang;
-	lang.c[0] = (char)l[0];
-	lang.c[1] = (char)l[1];
-	lang.c[2] = (char)l[2];
-	lang.c[3] = '\0';
+	char lang[4];
+	lang[0] = (char)l[0];
+	lang[1] = (char)l[1];
+	lang[2] = (char)l[2];
+	lang[3] = '\0';
 
-	char *c = lookup(languageid_table, lang.i);
-	return c ? c : lang.c;
+	char *c = slookup(languageid_table, lang);
+	return c ? c : lang;
 }
 
 /* Parse 0x4D Short Event Descriptor */
@@ -454,7 +454,7 @@ static void parseEIT(void *data, size_t len) {
 
 		programme_count++;
 
-		printf("<programme channel=\"%d.dvb.guide\" ", HILO(e->service_id));
+		printf("<programme channel=\"%s\" ", channelident(GetServiceId(e)));
 		strftime(date_strbuf, sizeof(date_strbuf), "start=\"%Y%m%d%H%M%S %z\"", localtime(&start_time) );
 		printf("%s ", date_strbuf);
 		strftime(date_strbuf, sizeof(date_strbuf), "stop=\"%Y%m%d%H%M%S %z\"", localtime(&stop_time));

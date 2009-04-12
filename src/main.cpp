@@ -35,6 +35,12 @@
 #include "dvbepg.h"
 #include "freesatepg.h"
 #include "loadepg.h"
+#include "lookup.h"
+
+#define CHANIDENTS    "chanidents"
+
+extern struct lookup_table *channelid_table;
+static char *chanidfile;
 
 char *ProgName;
 
@@ -50,6 +56,7 @@ int timeout = 10;
 int time_offset = 0;
 bool ignore_bad_dates = true;
 bool ignore_updates = true;
+bool use_chanidents = false;
 
 char demux[32] = "/dev/dvb/adapter0/demux0";
 char conf[1024] = "./conf";
@@ -61,8 +68,10 @@ char conf[1024] = "./conf";
 static void usage()
 {
     fprintf(stderr,
-	    "usage: %s [-h] [-d] [-I] [-s] [-u] [-v] [-a adapter] [-c dir] [-f format] [-i file] [-O offset] [-o file] [-t timeout]\n\n"
+	    "usage: %s [-h] [-C] [-d] [-I] [-s] [-u] [-v] [-a adapter] [-c dir] [-f format] [-i file] [-O offset] [-o file] [-t timeout]\n\n"
 	    "\t-h (--help)             output this help text\n"
+	    "\t-C (--chanids)          use channel identifiers from file 'chanidents'\n"
+	    "\t                        (default sidnumber.dvb.guide)\n"
 	    "\t-d (--debug)            output additional debugging information\n"
 	    "\t-I (--invalid-dates)    output invalid dates (default is to ignore them)\n"
 	    "\t-s (--short-xml)        output short xml ids (default false)\n"
@@ -86,45 +95,48 @@ static void usage()
 static int do_options(int arg_count, char **arg_strings)
 {
     static const struct option Long_Options[] = {
-	{"adapter",       1, 0, 'a'},
-	{"conf",          1, 0, 'c'},
-	{"debug",         0, 0, 'd'},
-	{"format",        1, 0, 'f'},
-	{"help",          0, 0, 'h'},
+	{"adapter", 1, 0, 'a'},
+	{"chanids", 0, 0, 'C'},
+	{"conf", 1, 0, 'c'},
+	{"debug", 0, 0, 'd'},
+	{"format", 1, 0, 'f'},
+	{"help", 0, 0, 'h'},
 	{"invalid-dates", 0, 0, 'I'},
-	{"input",         1, 0, 'i'},
-	{"offset",        1, 0, 'O'},
-	{"output",        1, 0, 'o'},
-	{"short-xml",     0, 0, 's'},
-	{"timeout",       1, 0, 't'},
-	{"updated-info",  0, 0, 'u'},
-	{"vdr",           0, 0, 'v'},
-	{0,               0, 0, 0}
+	{"input", 1, 0, 'i'},
+	{"offset", 1, 0, 'O'},
+	{"output", 1, 0, 'o'},
+	{"short-xml", 0, 0, 's'},
+	{"timeout", 1, 0, 't'},
+	{"updated-info", 0, 0, 'u'},
+	{"vdr", 0, 0, 'v'},
+	{0, 0, 0, 0}
     };
     int Option_Index = 0;
     int fd;
     char *f;
 
     while (1) {
-	int c =
-	    getopt_long(arg_count, arg_strings, "a:c:df:hIi:O:o:st:uv",
-			Long_Options, &Option_Index);
+	int c = getopt_long(arg_count, arg_strings, "a:Cc:df:hIi:O:o:st:uv",
+			    Long_Options, &Option_Index);
 	if (c == EOF)
 	    break;
 	switch (c) {
 	case 'a':
-		adapter = atoi(optarg);
-		sprintf(demux, "/dev/dvb/adapter%d/demux%d",adapter,demuxno);
-		break;
+	    adapter = atoi(optarg);
+	    sprintf(demux, "/dev/dvb/adapter%d/demux%d", adapter, demuxno);
+	    break;
+	case 'C':
+	    use_chanidents = true;
+	    break;
 	case 'c':
-		strcpy(conf, optarg);
-		break;
+	    strcpy(conf, optarg);
+	    break;
 	case 'D':
 	    ignore_bad_dates = false;
 	    break;
 	case 'd':
-		debug = true;
-		break;
+	    debug = true;
+	    break;
 	case 'f':
 	    f = optarg;
 	    if (strcasecmp(f, "dvb") == 0) {
@@ -168,8 +180,8 @@ static int do_options(int arg_count, char **arg_strings)
 	    close(fd);
 	    break;
 	case 's':
-		useshortxmlids = true;
-		break;
+	    useshortxmlids = true;
+	    break;
 	case 't':
 	    timeout = atoi(optarg);
 	    if (0 == timeout) {
@@ -181,8 +193,8 @@ static int do_options(int arg_count, char **arg_strings)
 	    ignore_updates = false;
 	    break;
 	case 'v':
-		vdrmode = 1;
-		break;
+	    vdrmode = 1;
+	    break;
 	case 0:
 	default:
 	    fprintf(stderr,
@@ -199,12 +211,11 @@ static int do_options(int arg_count, char **arg_strings)
  */
 static void header()
 {
-  if (!vdrmode)
-  {
-    printf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-    printf("<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n");
-    printf("<tv generator-info-name=\"tv_grab_dvb_plus\">\n");
-  }
+    if (!vdrmode) {
+	printf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+	printf("<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n");
+	printf("<tv generator-info-name=\"tv_grab_dvb_plus\">\n");
+    }
 }
 
 /* 
@@ -212,10 +223,9 @@ static void header()
  */
 static void footer()
 {
-  if (!vdrmode)
-  {
-    printf("</tv>\n");
-  }
+    if (!vdrmode) {
+	printf("</tv>\n");
+    }
 }
 
 /* 
@@ -256,7 +266,7 @@ static int openInput(int format)
 	switch (format) {
 	case DATA_FORMAT_DVB:
 	    fprintf(stderr, "%s: set up DVB filter\n", ProgName);
-            add_filter(0x14, 0x70, 0xfc);	// TOT && TDT
+	    add_filter(0x14, 0x70, 0xfc);	// TOT && TDT
 	    add_filter(DVB_EIT_PID, 0x00, 0x00);
 	    break;
 	case DATA_FORMAT_FREESAT:
@@ -286,7 +296,8 @@ static int openInput(int format)
 	    add_filter(0x47, 0xa8, 0xfc);
 	    break;
 	case DATA_FORMAT_MHW_1:
-	    fprintf(stderr, "%s: set up MediaHighway 1 filter\n", ProgName);
+	    fprintf(stderr, "%s: set up MediaHighway 1 filter\n",
+		    ProgName);
 	    add_filter(0x14, 0x70, 0xfc);	// TOT && TDT
 	    add_filter(0xd2, 0x90, 0xff);
 	    add_filter(0xd3, 0x90, 0xff);
@@ -294,7 +305,8 @@ static int openInput(int format)
 	    add_filter(0xd3, 0x92, 0xff);
 	    break;
 	case DATA_FORMAT_MHW_2:
-	    fprintf(stderr, "%s: set up MediaHighway 2 filter\n", ProgName);
+	    fprintf(stderr, "%s: set up MediaHighway 2 filter\n",
+		    ProgName);
 	    add_filter(0x14, 0x70, 0xfc);	// TOT && TDT
 	    add_filter(0x231, 0xc8, 0xff);
 	    add_filter(0x234, 0xe6, 0xff);
@@ -305,8 +317,8 @@ static int openInput(int format)
 	    break;
 	}
 	if (!start_filters(fd_epg)) {
-		close(fd_epg);
-		return -1;
+	    close(fd_epg);
+	    return -1;
 	}
 
 	for (to = timeout; to > 0; to--) {
@@ -362,24 +374,33 @@ int main(int argc, char **argv)
 	ProgName++;
     /* Process command line arguments */
     do_options(argc, argv);
+    /* Load lookup tables. */
+    if (use_chanidents) {
+	asprintf(&chanidfile, "%s/%s", conf, CHANIDENTS);
+        if (use_chanidents && load_lookup(&channelid_table, chanidfile)) {
+	    fprintf(stderr, "error loading %s, continuing.\n", chanidfile);
+	}
+    }
 
 
     header();
     switch (format) {
     case DATA_FORMAT_DVB:
-    if (openInput(format) != 0) {
-	fprintf(stderr, "%s: unable to get event data from multiplex.\n",
-		ProgName);
-	exit(1);
-    }
+	if (openInput(format) != 0) {
+	    fprintf(stderr,
+		    "%s: unable to get event data from multiplex.\n",
+		    ProgName);
+	    exit(1);
+	}
 	readEventTables(format);
 	break;
     case DATA_FORMAT_FREESAT:
-    if (openInput(format) != 0) {
-	fprintf(stderr, "%s: unable to get event data from multiplex.\n",
-		ProgName);
-	exit(1);
-    }
+	if (openInput(format) != 0) {
+	    fprintf(stderr,
+		    "%s: unable to get event data from multiplex.\n",
+		    ProgName);
+	    exit(1);
+	}
 	readEventTables(format);
 	break;
     case DATA_FORMAT_SKYBOX:
