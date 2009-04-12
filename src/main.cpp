@@ -374,14 +374,34 @@ int main(int argc, char **argv)
 	ProgName++;
     /* Process command line arguments */
     do_options(argc, argv);
+
     /* Load lookup tables. */
     if (use_chanidents) {
-	asprintf(&chanidfile, "%s/%s", conf, CHANIDENTS);
+	switch (format) {
+	case DATA_FORMAT_DVB:
+	    asprintf(&chanidfile, "%s/%s.dvb", conf, CHANIDENTS);
+	    break;
+	case DATA_FORMAT_FREESAT:
+	    asprintf(&chanidfile, "%s/%s.freesat", conf, CHANIDENTS);
+	    break;
+	case DATA_FORMAT_SKYBOX:
+	    asprintf(&chanidfile, "%s/%s.sky", conf, CHANIDENTS);
+	    break;
+	case DATA_FORMAT_MHW_1:
+	    asprintf(&chanidfile, "%s/%s.mhw1", conf, CHANIDENTS);
+	    break;
+	case DATA_FORMAT_MHW_2:
+	    asprintf(&chanidfile, "%s/%s.mhw2", conf, CHANIDENTS);
+	    break;
+	default:
+	    fprintf(stderr, "%s: no format specified!\n", ProgName);
+	    asprintf(&chanidfile, "%s/%s", conf, CHANIDENTS);
+	    break;
+	}
         if (use_chanidents && load_lookup(&channelid_table, chanidfile)) {
 	    fprintf(stderr, "error loading %s, continuing.\n", chanidfile);
 	}
     }
-
 
     header();
     switch (format) {
