@@ -60,9 +60,11 @@ typedef struct SkyTitle {
 	SkyTitleData[1];
 } SkyTitle;
 
+table 0xB1	=> basic channel information
+--------------------------------------------
 
-table 0xB2
-----------
+table 0xB2	=> channel description
+--------------------------------------
 +0
 +1	len (use len-3-llll for huffman data len)
 +2	???
