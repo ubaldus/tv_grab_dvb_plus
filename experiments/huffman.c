@@ -1533,7 +1533,10 @@ void gen_test_result(short code, u_int bits, int bitcount)
 	bitstring[i] = 0;
 	if (code < 256)
 	{
-	    sprintf(dictionary_result[code],"%c=%s",code,bitstring);
+	    short index = code;
+	    if (code == 0xa)
+		code = 0x0d;
+	    sprintf(dictionary_result[index],"%c=%s",code,bitstring);
 	}
 	else
 	{
