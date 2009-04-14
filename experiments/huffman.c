@@ -1,6 +1,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <getopt.h>
 
 u_char **huffman_word_lookup_lo[4];
 u_char **huffman_word_lookup_hi[4];
@@ -1444,7 +1446,7 @@ int huffman_decode(u_char* src_ptr, int src_len, u_char * dest_ptr, int dest_len
                 huffman_hi_bit_branch_ptr = huffman_hi_bit_branch [ dict_index];
                 huffman_lo_bit_branch_ptr = huffman_lo_bit_branch [ dict_index];
                 current_byte_to_decode = *src_ptr;
-                bit_mask = 32;
+                bit_mask = 1<<5;
                 src_index = 0;
                 dest_count = 0;
                 dest_len1 = dest_len + -1;
@@ -1509,6 +1511,77 @@ loc_40130C11:
     return 0;
 }
 
+/////////////////////////////////////////////
+// generate dict table from branch table
+/////////////////////////////////////////////
+
+char dictionary_result[1024][200];
+
+void gen_low_branch(short result_code, u_int bits, int bitcount);
+void gen_high_branch(short result_code, u_int bits, int bitcount);
+void gen_test_result(short code, u_int bits, int bitcount)
+{
+    if (code < 0)
+    {
+	code = -1 - code;
+	char bitstring[200];
+	int i;
+	for(i=0;i<bitcount;i++)
+	{
+	    bitstring[i] = (bits & (1<<i))?'1':'0';
+	}
+	bitstring[i] = 0;
+	if (code < 256)
+	{
+	    sprintf(dictionary_result[code],"%c=%s",code,bitstring);
+	}
+	else
+	{
+	    u_char * char_ptr = huffman_word_lookup_hi[ 0 ][code - 0x100 ];
+	    sprintf(dictionary_result[code],"%s=%s", char_ptr, bitstring);
+	}
+    }
+    else
+    {
+	bitcount++;
+	gen_low_branch( code, bits, bitcount );
+	gen_high_branch( code, bits | (1<<bitcount), bitcount );
+    }
+}
+
+void gen_low_branch(short result_code, u_int bits, int bitcount)
+{
+    short new_code = huffman_lo_bit_branch [ 0 ] [ result_code ];
+    gen_test_result( new_code, bits, bitcount );
+}
+
+void gen_high_branch(short result_code, u_int bits, int bitcount)
+{
+    short new_code = huffman_hi_bit_branch [ 0 ] [ result_code ];
+    gen_test_result( new_code, bits, bitcount );
+}
+
+void generate_huffman_table()
+{
+    int i;
+    short result_code = 0;
+    memset(&dictionary_result,0,sizeof(dictionary_result));
+
+    gen_low_branch( result_code, 0, 1 );
+    gen_high_branch( result_code, 1, 1 );
+
+    for(i=0;i<1024;i++)
+    {
+	if (dictionary_result[i][0] != 0)
+	{
+	    printf("%s\n",dictionary_result[i]);
+	}
+    }
+}
+
+/////////////////////////////////////////////
+// Test Data
+/////////////////////////////////////////////
 u_char test1[] = {
 //  0x1d, 0x01, 0x11, 0xcf, 
   0x2a, 0xe3, 0x01, 0xcc
@@ -1533,39 +1606,91 @@ u_char test1[] = {
 , 0xb8, 0xc1, 0x8b, 0xb5
 };
 
+static const struct option Long_Options[] = {
+    {"itest",       1, 0, 't'},
+    {"gentable",    1, 0, 'g'},
+    {"help",        1, 0, 'h'},
+    {0,             0, 0, 0}
+};
+
+void usage()
+{
+    exit(1);
+}
+
 int main(int argc, char * argv[])
 {
+    int Option_Index = 0;
+    int gentable = 0;
+    int testmode = 0;
+
+    while (1) {
+	int c =
+	    getopt_long(argc, argv, "ght",
+			Long_Options, &Option_Index);
+	if (c == EOF)
+	    break;
+	switch (c) {
+	case 'g':
+	    gentable = 1;
+	    break;
+	case 't':
+	    testmode = 1;
+	    break;
+	case 'h':
+	case '?':
+	    usage();
+	    break;
+	case 0:
+	default:
+	    fprintf(stderr,
+		    "%s: unknown getopt error - returned code %02x\n",
+		    argv[0], c);
+	    exit(1);
+	}
+    }
+
     init_huffman();
 
     u_char realbuf[2048];
     u_char *buf = test1;
     int buflen = sizeof(test1);
     int isStdin = 0;
-    FILE* file = NULL;
-    if (argc == 2)
+    if (!testmode && !gentable)
     {
-	if ((argv[1],"-")==0)
+	FILE* file = NULL;
+	if (argc == 2)
 	{
-	    isStdin = 1;
-	    file = stdin;
+	    if ((argv[1],"-")==0)
+	    {
+		isStdin = 1;
+		file = stdin;
+	    }
+	    else
+	    {
+		file = fopen(argv[1],"rb");
+	    }
 	}
-	else
+	if (file)
 	{
-	    file = fopen(argv[1],"rb");
+	    buf = realbuf;
+	    buflen = fread(realbuf,1,sizeof(realbuf),file);
+	    if (!isStdin)
+		fclose(file);
 	}
     }
-    if (file)
+
+    if (gentable)
     {
-	buf = realbuf;
-	buflen = fread(realbuf,1,sizeof(realbuf),file);
-	if (!isStdin)
-	    fclose(file);
+	generate_huffman_table();
+    }
+    else
+    {
+	u_char output[2048];
+	huffman_decode( buf, buflen, output, sizeof(output));
+	printf("%s\n", output);
     }
 
-    u_char output[2048];
-    huffman_decode( buf, buflen, output, sizeof(output));
-
-    printf("%s\n", output);
     return 0;
 }
 
