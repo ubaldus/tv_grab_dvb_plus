@@ -567,7 +567,7 @@ char *lookup_aspect(int id) {
 }
 
 /*
- * Lookup ausio
+ * Lookup audio
  */
 char *lookup_audio(int id) {
 	return lookup(audio_table, id);
