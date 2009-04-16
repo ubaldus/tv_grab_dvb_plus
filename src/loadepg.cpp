@@ -3361,6 +3361,13 @@ void cTaskLoadepg::CreateEpgXml( void )
 		  {
 		    //printf("\t<sub-title lang=\"%s\">%s</sub-title>\n", 
 		    //   /*xmllang(&evtdesc->lang_code1)*/ "en", d);
+		    char* colon = strrchr(d, ':');
+		    if (colon != NULL)
+		    {
+		      *colon = 0;
+		      printf("\t<subtitle lang=\"%s\">%s</subtitle>\n", /*xmllang(&levt->lang_code1)*/ "en", d);
+		      d = colon + 2;
+		    }
 		    printf("\t<desc lang=\"%s\">", /*xmllang(&levt->lang_code1)*/ "en");
 		    printf("%s", d);
 		    printf("</desc>\n");
