@@ -1523,7 +1523,8 @@ void gen_test_result(short code, u_int bits, int bitcount)
 {
     if (code < 0)
     {
-	code = -1 - code;
+	//code = -1 - code;
+	code = ~code;
 	char bitstring[200];
 	int i;
 	for(i=0;i<bitcount;i++)
@@ -1534,44 +1535,70 @@ void gen_test_result(short code, u_int bits, int bitcount)
 	if (code < 256)
 	{
 	    short index = code;
-	    if (code == 0xa)
-		code = 0x0d;
-	    sprintf(dictionary_result[index],"%c=%s",code,bitstring);
+#if 1
+	    switch (code)
+	    {
+		//case 0:
+		//    sprintf(dictionary_result[index],"^@=%s",bitstring);
+		//    break;
+		//case '\n':
+		//    sprintf(dictionary_result[index],"^J=%s",bitstring);
+		//    break;
+		default:
+#if 1
+		    if ((code < ' ') || (code >= 0x7f && code < 0xa0))
+		    {
+			sprintf(dictionary_result[index],"%c=%s",' ',bitstring);
+			break;
+		    }
+#endif
+		    sprintf(dictionary_result[index],"%c=%s",code,bitstring);
+		    //sprintf(dictionary_result[index],"%c=%s\t%d,%08x",code,bitstring,bitcount,bits);
+		    //printf("result code %04x %c=%s\t%d,%08x\n",code & 0xffff,code,bitstring,bitcount,bits);
+		    break;
+	    }
+#else
+	    if ((code >= ' ' && code <= '~') || (code >= 0x7f && code <= 0xa0))
+		sprintf(dictionary_result[index],"%c=%s",code,bitstring);
+	    else
+		sprintf(dictionary_result[index],"\\x%02x=%s",code,bitstring);
+#endif
 	}
 	else
 	{
 	    u_char * char_ptr = huffman_word_lookup_hi[ 0 ][code - 0x100 ];
+	    //printf("word result code %04x %s=%s", code & 0xffff, char_ptr, bitstring);
 	    sprintf(dictionary_result[code],"%s=%s", char_ptr, bitstring);
 	}
     }
     else
     {
-	bitcount++;
-	gen_low_branch( code, bits, bitcount );
-	gen_high_branch( code, bits | (1<<bitcount), bitcount );
+	gen_low_branch( code, bits, bitcount + 1 );
+	gen_high_branch( code, bits | (1<<bitcount), bitcount + 1 );
     }
 }
 
 void gen_low_branch(short result_code, u_int bits, int bitcount)
 {
     short new_code = huffman_lo_bit_branch [ 0 ] [ result_code ];
+    //printf("lo code %04x bc %d bits %08x\n",new_code & 0xffff,bitcount,bits);
     gen_test_result( new_code, bits, bitcount );
 }
 
 void gen_high_branch(short result_code, u_int bits, int bitcount)
 {
     short new_code = huffman_hi_bit_branch [ 0 ] [ result_code ];
+    //printf("hi code %04x bc %d bits %08x\n",new_code & 0xffff,bitcount,bits);
     gen_test_result( new_code, bits, bitcount );
 }
 
 void generate_huffman_table()
 {
     int i;
-    short result_code = 0;
     memset(&dictionary_result,0,sizeof(dictionary_result));
 
-    gen_low_branch( result_code, 0, 1 );
-    gen_high_branch( result_code, 1, 1 );
+    gen_low_branch( 0, 0, 1 );
+    gen_high_branch( 0, 1, 1 );
 
     for(i=0;i<1024;i++)
     {
