@@ -2,11 +2,10 @@
 #define __SI_TABLES_H__
 
 /*
- * si_tables.h: definitions for data structures of the
- *              incoming SI data stream
- */
-
-/*
+ * si_tables.h
+ *
+ * Definitions for data structures of the incoming SI data stream.
+ *
  * $Revision: 69 $
  * $Date: 2008-01-09 08:10:21 +0000 (Wed, 09 Jan 2008) $
  * $Author: pmhahn $

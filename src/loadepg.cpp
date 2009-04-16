@@ -1,14 +1,25 @@
 /*
-* loadepg.c: A plugin for the Video Disk Recorder
-*
-* See the README file for copyright information and how to reach the author.
-*
-* $Id$
-*/
+ * loadepg.cpp
+ *
+ * Parse Sky AU/IT/UK and MediaHighway EPG data and generate an xmltv file.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "constants.h"
 #include "loadepg.h"
-#include "dvbtexticonv.h"
+#include "dvbtext.h"
 #include "chanid.h"
 
 static const char *VERSION        = "0.2.1-20080915";
@@ -1587,7 +1598,7 @@ char * get_channelident( sChannel *C)
     asprintf( &s, "%d.%s.%s.dvb.guide", C->Sid, C->shortname, C->providername);
   else {
     asprintf( &t, "%d.%d", C->Sid, C->SkyNumber);
-    asprintf( &s, "%s", schannelident(t, C->providername));
+    asprintf( &s, "%s", skyxmltvid(t, C->providername));
   }
   return s;
 }

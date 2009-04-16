@@ -1,11 +1,12 @@
+AM_CPPFLAGS = -DSTANDALONE -I@top_srcdir@/include
+
 bin_PROGRAMS = tv_grab_dvb_plus
+
+tv_grab_dvb_plus_LDADD = ../libsi/libsi.a
 tv_grab_dvb_plus_SOURCES = \
 	device.cpp \
 	dvbdevice.cpp \
 	filter.cpp \
-	freesatepg.h \
-	freesathuffman.h \
-	freesattables.h \
 	loadepg.cpp \
 	main.cpp \
 	menuitems.cpp \
@@ -18,22 +19,23 @@ tv_grab_dvb_plus_SOURCES = \
 	chanid.c \
 	crc32.c \
 	dvbepg.c \
-	dvbinfotables.c \
-	dvblangidents.c \
-	dvbtexticonv.c \
+	dvbinfo.c \
+	dvbtext.c \
 	freesathuffman.c \
 	freesattables.c \
-	lookup.c \
+	lookup.c
 	\
 	chanid.h \
 	constants.h \
 	crc32.h \
-	dvb_epg.h \
+	dvbepg.h \
+	dvbinfo.h \
+	dvbtext.h \
+	filter.h \
 	formats.h \
-	i18n.h \
+	freesatepg.h \
+	freesathuffman.h \
+	freesattables.h \
 	loadepg.h \
 	lookup.h \
 	sitables.h
-tv_grab_dvb_plus_LDADD = ../libsi/libsi.a
-
-AM_CPPFLAGS = -DSTANDALONE -I@top_srcdir@/include

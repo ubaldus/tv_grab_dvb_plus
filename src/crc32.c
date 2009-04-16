@@ -1,5 +1,20 @@
 /*
- * CRC32 routine
+ * crc32.c
+ *
+ * CRC routine to check packets for errors.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdint.h>
@@ -51,7 +66,11 @@ static const uint32_t crc_table[256] = {
 	0xbcb4666d, 0xb8757bda, 0xb5365d03, 0xb1f740b4
 };
 
-uint32_t _dvb_crc32(const uint8_t *data, size_t len) {
+/*
+ * Calculate the CRC for a packet.
+ * If there are no errors then the return value should be zero.
+ */
+uint32_t dvb_crc32(const uint8_t *data, size_t len) {
 	int i;
         uint32_t crc = 0xffffffff;
 

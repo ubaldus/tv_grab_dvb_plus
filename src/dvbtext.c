@@ -1,3 +1,22 @@
+/*
+ * dvbtext.c
+ *
+ * Routines to handle encoding, be it character encoding or xml.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
@@ -7,7 +26,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#include "dvbtexticonv.h"
+#include "dvbtext.h"
 #include "freesathuffman.h"
 
 extern char *ProgName;
@@ -83,7 +102,10 @@ static const struct encoding {
 static char cs_old[16];
 static iconv_t cd;
 
-/* Convert the DVB text in the string passed in.
+/*
+ * Convert the DVB text in the string passed in.
+ * If the buffer is Freesat huffman encoded, then decode that.
+ * Text is converted to UTF-8 and XML entities are encoded.
  */
 char *convert_text(const char *s) {
 	char cs_new[16];
@@ -164,7 +186,12 @@ char *convert_text(const char *s) {
 	return result;
 }
 
-/* Quote the xml entities in the string passed in.
+/*
+ * Quote the xml entities in the string passed in.
+ * Return a string with XML entities encoded.
+ *
+ * To aid in debugging, this currently includes and non-ascii
+ * characters as well.
  */
 char *xmlify(const char *s) {
 	char c;

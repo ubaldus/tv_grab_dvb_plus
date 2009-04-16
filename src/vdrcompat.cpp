@@ -1,9 +1,27 @@
+/*
+ * vdrcompat.cpp
+ *
+ * Framework for embedding a vdr plugin in a separate program.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "include/vdr/plugin.h"
 #include "include/vdr/interface.h"
 #include "include/vdr/status.h"
 #include "include/vdr/skins.h"
 #include "include/vdr/channels.h"
-//#include "include/vdr/dvbci.h"
 #include "include/vdr/menu.h"
 #include "include/vdr/config.h"
 #include <ctype.h>

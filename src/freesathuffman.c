@@ -1,3 +1,24 @@
+/*
+ * freesathuffman.c
+ *
+ * Decode a Freesat huffman encoded buffer.
+ * Once decoded the buffer can be used like a "standard" DVB buffer.
+ *
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <malloc.h>
@@ -36,6 +57,17 @@ unsigned char *freesat_huffman_to_string(unsigned char *src, uint size)
     //}
     count = 0;
     p = 0;
+    /*
+     * FIXME!
+     *
+     * The routine allocates a buffer that is 3 times the size of
+     * the input buffer and * if we run out of space added another 10 bytes.
+     *
+     * We should really see what the expansion ratio is for a sample stream
+     * and adjust the multiplier accordingly. Maybe the thing to do is to
+     * create a stats object and output it (on stderr or in xml file) at
+     * the end of a run.
+     */
     alloc_size = (size * 3) + 1;
     uncompressed = (unsigned char *) malloc(alloc_size);
     if (src[1] == 1 || src[1] == 2) {
@@ -87,6 +119,11 @@ unsigned char *freesat_huffman_to_string(unsigned char *src, uint size)
 		if (nextCh != STOP && nextCh != ESCAPE) {
 		    if (p >= count) {
 			//fprintf(stderr, "%s: had to realloc string in freesat huffman decoding\n", ProgName);
+			/*
+			 * FIXME!
+			 *
+			 * See above comment about buffer sizes
+			 */
 			alloc_size += 10;
 			uncompressed = (unsigned char *) realloc(uncompressed, alloc_size);
 		    }

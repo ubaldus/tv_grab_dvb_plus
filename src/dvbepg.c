@@ -1,3 +1,22 @@
+/*
+ * dvbepg.c
+ *
+ * Parse DVB or Freesat EPG data and generate an xmltv file.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
@@ -9,7 +28,8 @@
 
 #include "sitables.h"
 #include "dvbepg.h"
-#include "dvbtexticonv.h"
+#include "dvbinfo.h"
+#include "dvbtext.h"
 #include "lookup.h"
 #include "crc32.h"
 #include "chanid.h"
@@ -37,24 +57,14 @@ typedef struct chninfo {
 
 static struct chninfo *channels;
 
-/* Print progress indicator */
+/*
+ * Print progress indicator
+ */
 static void status() {
 	if (debug) {
 		fprintf(stderr, "\r%s: Status: %d pkts, %d prgms, %d updates, %d invalid, %d CRC err",
 				ProgName, packet_count, programme_count, update_count, invalid_date_count, crcerr_count);
 	}
-}
-
-/* Parse language-id translation file */
-static char *xmllang(u_char *l) {
-	char lang[4];
-	lang[0] = (char)l[0];
-	lang[1] = (char)l[1];
-	lang[2] = (char)l[2];
-	lang[3] = '\0';
-
-	char *c = slookup(languageid_table, lang);
-	return c ? c : lang;
 }
 
 /* Parse 0x4D Short Event Descriptor */
@@ -71,7 +81,7 @@ static void parseEventDescription(void *data, enum ER round) {
 			return;
 		strncpy(evt, (char *)&evtdesc->data, evtlen);
 		evt[evtlen] = '\0';
-		printf("\t<title lang=\"%s\">%s</title>\n", xmllang(&evtdesc->lang_code1), convert_text(evt));
+		printf("\t<title lang=\"%s\">%s</title>\n", lookup_language(&evtdesc->lang_code1), convert_text(evt));
 		return;
 	}
 
@@ -83,7 +93,7 @@ static void parseEventDescription(void *data, enum ER round) {
 		if (*dsc) {
 			char *d = convert_text(dsc);
 			if (d && *d)
-				printf("\t<sub-title lang=\"%s\">%s</sub-title>\n", xmllang(&evtdesc->lang_code1), d);
+				printf("\t<sub-title lang=\"%s\">%s</sub-title>\n", lookup_language(&evtdesc->lang_code1), d);
 		}
 	}
 }
@@ -96,7 +106,7 @@ static void parseLongEventDescription(void *data) {
 	bool non_empty = (levt->descriptor_number || levt->last_descriptor_number || levt->length_of_items || levt->data[0]);
 
 	if (non_empty && levt->descriptor_number == 0)
-		printf("\t<desc lang=\"%s\">", xmllang(&levt->lang_code1));
+		printf("\t<desc lang=\"%s\">", lookup_language(&levt->lang_code1));
 
 	void *p = &levt->data;
 	void *data_end = CastExtendedEventDescriptor(data) + DESCR_GEN_LEN + GetDescriptorLength(data);
@@ -153,7 +163,7 @@ static void parseComponentDescription(void *data, enum CR round, int *seen) {
 				//if ((dc->component_type-1)&0x08) //HD TV
 				//if ((dc->component_type-1)&0x04) //30Hz else 25
 				printf("\t<video>\n");
-				printf("\t\t<aspect>%s</aspect>\n", lookup(aspect_table, (dc->component_type-1) & 0x03));
+				printf("\t\t<aspect>%s</aspect>\n", lookup_aspect((dc->component_type - 1) & 0x03));
 				printf("\t</video>\n");
 				(*seen)++;
 			}
@@ -161,15 +171,15 @@ static void parseComponentDescription(void *data, enum CR round, int *seen) {
 		case 0x02: // Audio Info
 			if (round == AUDIO && !*seen) {
 				printf("\t<audio>\n");
-				printf("\t\t<stereo>%s</stereo>\n", lookup(audio_table, (dc->component_type)));
+				printf("\t\t<stereo>%s</stereo>\n", lookup_audio(dc->component_type));
 				printf("\t</audio>\n");
 				(*seen)++;
 			}
 			if (round == LANGUAGE) {
 				if (!*seen) {
-					printf("\t<language>%s</language>\n", xmllang(&dc->lang_code1));
+					printf("\t<language>%s</language>\n", lookup_language(&dc->lang_code1));
 				} else {
-					//printf("\t<!--language>%s</language-->\n", xmllang(&dc->lang_code1));
+					//printf("\t<!--language>%s</language-->\n", lookup_language(&dc->lang_code1));
 				}
 				(*seen)++;
 			}
@@ -180,7 +190,7 @@ static void parseComponentDescription(void *data, enum CR round, int *seen) {
 			// if ((dc->component_type)&0x10) //subtitles
 			// if ((dc->component_type)&0x20) //subtitles for hard of hearing
 				//printf("\t<subtitles type=\"teletext\">\n");
-				//printf("\t\t<language>%s</language>\n", xmllang(&dc->lang_code1));
+				//printf("\t\t<language>%s</language>\n", lookup_language(&dc->lang_code1));
 				//printf("\t</subtitles>\n");
 			//}
 			//break;
@@ -214,7 +224,7 @@ static void parseContentDescription(void *data) {
 #endif
 		if (c1 > 0 && !get_bit(once, c1)) {
 			set_bit(once, c1);
-			char *c = lookup(description_table, c1);
+			char *c = lookup_description(c1);
 			if (c)
 				if (c[0])
 					printf("\t<category>%s</category>\n", c);
@@ -454,7 +464,7 @@ static void parseEIT(void *data, size_t len) {
 
 		programme_count++;
 
-		printf("<programme channel=\"%s\" ", channelident(GetServiceId(e)));
+		printf("<programme channel=\"%s\" ", dvbxmltvid(GetServiceId(e)));
 		strftime(date_strbuf, sizeof(date_strbuf), "start=\"%Y%m%d%H%M%S %z\"", localtime(&start_time) );
 		printf("%s ", date_strbuf);
 		strftime(date_strbuf, sizeof(date_strbuf), "stop=\"%Y%m%d%H%M%S %z\"", localtime(&stop_time));
@@ -488,7 +498,7 @@ void readEventTables(int format) {
 		if (n < l)
 			goto read_more;
 		packet_count++;
-		if (_dvb_crc32((uint8_t *)bhead, l) != 0) {
+		if (dvb_crc32((uint8_t *)bhead, l) != 0) {
 			/* data or length is wrong. skip bytewise. */
 			//l = 1; // FIXME
 			crcerr_count++;

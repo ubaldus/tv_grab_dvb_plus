@@ -1,5 +1,9 @@
 /*
- * tv_grab_dvb_plus Parse DVB, Freesat, Sky UK, Sky Italia and MediaHighway EPG data
+ * main.c
+ *
+ * tv_grab_dvb_plus main routine
+ *
+ * Parse DVB, Freesat, Sky AU/IT/UK and MediaHighway EPG data
  * and generate an xmltv file
  *
  * This program is free software: you can redistribute it and/or modify
@@ -36,11 +40,7 @@
 #include "freesatepg.h"
 #include "loadepg.h"
 #include "lookup.h"
-
-#define CHANIDENTS    "chanidents"
-
-extern struct lookup_table *channelid_table;
-static char *chanidfile;
+#include "chanid.h"
 
 char *ProgName;
 
@@ -364,8 +364,9 @@ static int openInput(int format)
 /* 
  * Main function
  */
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
+    char *chanidfile;
+
     /* Remove path from command */
     ProgName = strrchr(argv[0], '/');
     if (ProgName == NULL)
@@ -398,7 +399,7 @@ int main(int argc, char **argv)
 	    asprintf(&chanidfile, "%s/%s", conf, CHANIDENTS);
 	    break;
 	}
-        if (use_chanidents && load_lookup(&channelid_table, chanidfile)) {
+        if (use_chanidents && !load_channel_table(chanidfile)) {
 	    fprintf(stderr, "error loading %s, continuing.\n", chanidfile);
 	}
     }
