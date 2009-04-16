@@ -1264,8 +1264,17 @@ int cTaskLoadepg::DecodeHuffmanCode( unsigned char *Data, int Length )
         nH = nH->P0;
 	if( nH->Value != NULL )
 	{
-	  memcpy( &DecodeText[p], nH->Value, strlen( nH->Value ) );
-	  p += strlen( nH->Value );
+	  // handle 0 code
+	  if (nH->Value[0] == 0)
+	  {
+	    memcpy( &DecodeText[p], nH->Value, 1 );
+	    p += 1;
+	  }
+	  else
+	  {
+	    memcpy( &DecodeText[p], nH->Value, strlen( nH->Value ) );
+	    p += strlen( nH->Value );
+	  }
 	  nH = &H;
 	  IsFound = true;
 	}
@@ -1343,6 +1352,7 @@ bool cTaskLoadepg::ReadFileDictionary( void )
   {
     int i;
     int LenPrefix;
+    int charcode;
     char string1[256];
     char string2[256];
     H.Value = NULL;
@@ -1356,6 +1366,11 @@ bool cTaskLoadepg::ReadFileDictionary( void )
 	memset( string2, 0, sizeof( string2 ) );
 	if( sscanf( Line, "%c=%[^\n]\n", string1, string2 ) == 2 )
 	{
+	  goto codingstart;
+	}
+        else if( sscanf( Line, "\\x%2x=%[^\n]\n", &charcode, string2 ) == 2 )
+	{
+	  string1[0] = charcode;
 	  goto codingstart;
 	}
         else if( sscanf( Line, "%[^=]=%[^\n]\n", string1, string2 ) == 2 )
@@ -1429,6 +1444,7 @@ bool cTaskLoadepg::ReadFileDictionary( void )
     int LenPrefix;
     char string1[256];
     char string2[256];
+    int charcode;
     while( ( Line = fgets( Buffer, sizeof( Buffer ), FileDict ) ) != NULL )
     {
       if( ! isempty( Line ) )
@@ -1437,6 +1453,11 @@ bool cTaskLoadepg::ReadFileDictionary( void )
 	memset( string2, 0, sizeof( string2 ) );
 	if( sscanf( Line, "%c=%[^\n]\n", string1, string2 ) == 2 )
 	{
+	  goto verifystart;
+	}
+        else if( sscanf( Line, "\\x%2x=%[^\n]\n", &charcode, string2 ) == 2 )
+	{
+	  string1[0] = charcode;
 	  goto verifystart;
 	}
         else if( sscanf( Line, "%[^=]=%[^\n]\n", string1, string2 ) == 2 )
