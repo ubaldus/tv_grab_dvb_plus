@@ -1535,7 +1535,7 @@ void gen_test_result(short code, u_int bits, int bitcount)
 	if (code < 256)
 	{
 	    short index = code;
-#if 1
+#if 0
 	    switch (code)
 	    {
 		//case 0:
@@ -1545,7 +1545,7 @@ void gen_test_result(short code, u_int bits, int bitcount)
 		//    sprintf(dictionary_result[index],"^J=%s",bitstring);
 		//    break;
 		default:
-#if 1
+#if 0
 		    if ((code < ' ') || (code >= 0x7f && code < 0xa0))
 		    {
 			sprintf(dictionary_result[index],"%c=%s",' ',bitstring);
@@ -1558,7 +1558,8 @@ void gen_test_result(short code, u_int bits, int bitcount)
 		    break;
 	    }
 #else
-	    if ((code >= ' ' && code <= '~') || (code >= 0x7f && code <= 0xa0))
+	    //if ((code >= ' ' && code <= '~') || (code >= 0x7f && code <= 0xa0))
+	    if (code >= ' ' && code <= '~')
 		sprintf(dictionary_result[index],"%c=%s",code,bitstring);
 	    else
 		sprintf(dictionary_result[index],"\\x%02x=%s",code,bitstring);
