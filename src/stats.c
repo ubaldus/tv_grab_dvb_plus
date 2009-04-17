@@ -70,6 +70,13 @@ void decr_stat(char *n) {
 	s->value -= 1;
 }
 
+void add_to_stat(char *n, int i) {
+	struct stats_table *s;
+
+	s = stats_entry(n);
+	s->value += i;
+}
+
 void set_stat(char *n, int v) {
 	struct stats_table *s;
 

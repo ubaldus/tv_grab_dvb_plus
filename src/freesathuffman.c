@@ -19,6 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <malloc.h>
@@ -26,15 +27,13 @@
 
 #include "freesathuffman.h"
 #include "freesattables.h"
-
-extern char *ProgName;
+#include "stats.h"
+#include "log.h"
 
 unsigned char *freesat_huffman_to_string(unsigned char *src, uint size)
 {
     int i;
-    unsigned char *result;
     unsigned char *uncompressed;
-    int count;
     int p;
     unsigned int value;
     unsigned int byte;
@@ -51,24 +50,47 @@ unsigned char *freesat_huffman_to_string(unsigned char *src, uint size)
     unsigned int b;
     unsigned int alloc_size;
 
-    //fprintf(stderr, "%s: freesat text length=%d\n", ProgName, size);
-    //for (i = 0; i < size; i++) {
-	    //fprintf(stderr, "%s: freesat text string=\"%2.2X\"\n", ProgName, src[i]);
-    //}
-    count = 0;
+    /*
+     * variable for debugging
+     */
+    int alloc;
+    int incr;
+    float percentage_incrementing;
+    int uc;
+    int co;
+    float ratio;
+    float average_length;
+    float length_ratio;
+    int length;
+    int allocated = 0;
+    int num_incr;
+
+    if (is_logging(TRACE)) {
+	log_message(TRACE, "freesat text length=%d", size);
+	for (i = 0; i < size; i++) {
+	    log_message(TRACE, "freesat text string=\"%2.2X\"", src[i]);
+	}
+    }
     p = 0;
     /*
-     * FIXME!
+     * The routine allocates a buffer that is ALLOC_MULT times the size of
+     * the input buffer and * if we run out of space added another ALLOC_INCR bytes.
      *
-     * The routine allocates a buffer that is 3 times the size of
-     * the input buffer and * if we run out of space added another 10 bytes.
+     * Use the output of the stats to see what the expansion ratio is for a sample stream
+     * and adjust the multiplier accordingly. 
+     * Create a stats object and output it in the xml file at the end of a run.
      *
-     * We should really see what the expansion ratio is for a sample stream
-     * and adjust the multiplier accordingly. Maybe the thing to do is to
-     * create a stats object and output it (on stderr or in xml file) at
-     * the end of a run.
+     * The values if freesathuffman.h reflect doing this.
      */
-    alloc_size = (size * 3) + 1;
+    alloc_size = (size * ALLOC_MULT) + 1;
+    if (is_logging(DEBUG)) {
+	allocated = alloc_size;
+	num_incr = 0;
+    }
+    incr_stat("freesathuffman.alloc");
+    add_to_stat("freesathuffman.compressed", size);
+    add_to_stat("freesathuffman.uncompressed", alloc_size);
+
     uncompressed = (unsigned char *) malloc(alloc_size);
     if (src[1] == 1 || src[1] == 2) {
 	value = 0;
@@ -117,18 +139,22 @@ unsigned char *freesat_huffman_to_string(unsigned char *src, uint size)
 	    }
 	    if (found) {
 		if (nextCh != STOP && nextCh != ESCAPE) {
-		    if (p >= count) {
-			//fprintf(stderr, "%s: had to realloc string in freesat huffman decoding\n", ProgName);
-			/*
-			 * FIXME!
-			 *
-			 * See above comment about buffer sizes
-			 */
-			alloc_size += 10;
-			uncompressed = (unsigned char *) realloc(uncompressed, alloc_size);
+		    if (p >= alloc_size) {
+			log_message(TRACE,
+				    "had to realloc string in freesat huffman decoding");
+			alloc_size += ALLOC_INCR;
+			if (is_logging(DEBUG)) {
+			    allocated += ALLOC_INCR;
+			    num_incr++;
+			}
+			incr_stat("freesathuffman.increment");
+			add_to_stat("freesathuffman.uncompressed",
+				    ALLOC_INCR);
+			uncompressed =
+			    (unsigned char *) realloc(uncompressed,
+						      alloc_size);
 		    }
 		    uncompressed[p++] = nextCh;
-		    count++;
 		}
 		// Shift up by the number of bits.
 		for (b = 0; b < bitShift; b++) {
@@ -143,26 +169,47 @@ unsigned char *freesat_huffman_to_string(unsigned char *src, uint size)
 		}
 	    } else {
 		// Entry missing in table.
-		    if (p >= count) {
-			//fprintf(stderr, "%s: had to realloc string in freesat huffman decoding (missing entry)\n", ProgName);
-			alloc_size += 4;
-			uncompressed = (unsigned char *) realloc(uncompressed, alloc_size);
-		    }
+		if (p >= alloc_size) {
+		    log_message(TRACE,
+				"had to realloc string in freesat huffman decoding (missing entry)");
+		    alloc_size += 4;
+		    uncompressed =
+			(unsigned char *) realloc(uncompressed,
+						  alloc_size);
+		}
 		uncompressed[p++] = '.';
 		uncompressed[p++] = '.';
 		uncompressed[p++] = '.';
 		uncompressed[p++] = '\0';
-		//fprintf(stderr, "%s: entry missing in huffman table for Freesat\n", ProgName);
+		log_message(ERROR,
+			    "entry missing in huffman table for Freesat");
 		return uncompressed;
 	    }
 	} while (lastch != STOP && byte < size + 4);
 
 	uncompressed[p++] = '\0';
-	//fprintf(stderr, "%s: freesat text=\"%s\"\n", ProgName, uncompressed);
+	log_message(TRACE, "freesat text=\"%s\"", uncompressed);
+	if (is_logging(DEBUG)) {
+	    length = strlen((char *) uncompressed);
+	    length_ratio = (float) length / (float) size;
+	    uc = get_stat("freesathuffman.uncompressed");
+	    co = get_stat("freesathuffman.compressed");
+	    ratio = (float) uc / (float) co;
+	    alloc = get_stat("freesathuffman.alloc");
+	    incr = get_stat("freesathuffman.increment");
+	    percentage_incrementing =
+		((float) incr / (float) alloc) * 100.0;
+	    average_length = (float) uc / (float) alloc;
+	    log_message(DEBUG,
+			"freesat huffman size=%d len=%d allocated=%d lr=%f num_incr=%d co=%d uc=%d ratio=%f avglen=%f alloc=%d incr=%d percincr=%f",
+			size, length, allocated, length_ratio, num_incr,
+			co, uc, ratio, average_length, alloc, incr,
+			percentage_incrementing);
+	}
 	return uncompressed;
     } else {
 	uncompressed[0] = '\0';
-	//fprintf(stderr, "%s: empty freesat text=\n", ProgName);
+	log_message(WARNING, "empty freesat text");
 	return uncompressed;
     }
 }

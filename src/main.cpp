@@ -41,6 +41,7 @@
 #include "loadepg.h"
 #include "lookup.h"
 #include "chanid.h"
+#include "stats.h"
 #include "log.h"
 
 char *ProgName;
@@ -251,7 +252,6 @@ static int openInput(int format)
 {
     int fd_epg, to;
     struct stat stat_buf;
-    struct dmx_sct_filter_params sctFilterParams;
     struct pollfd ufd;
 
     if (!strcmp(demux, "-"))
@@ -435,6 +435,5 @@ int main(int argc, char **argv) {
 	break;
     }
     footer();
-
     return 0;
 }

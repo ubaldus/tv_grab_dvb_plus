@@ -34,6 +34,7 @@ struct stats_table {
 
 extern void incr_stat(char *n);
 extern void decr_stat(char *n);
+extern void add_to_stat(char *n, int i);
 extern void set_stat(char *n, int v);
 extern int get_stat(char *n);
 

@@ -24,15 +24,6 @@
 #include "stats.h"
 #include "log.h"
 
-static const char *VERSION        = "0.2.1-20080915";
-#if APIVERSNUM >= 10507
-static const char *DESCRIPTION    = trNOOP( "Load EPG type MediaHighWay, SkyBox, from script or file" );
-static const char *MAINMENUENTRY  = trNOOP( "LoadEPG" );
-#else
-static const char *DESCRIPTION    = "Load EPG type MediaHighWay, SkyBox, from script or file";
-static const char *MAINMENUENTRY  = "LoadEPG";
-#endif
-
 sConfig *Config;
 cTaskLoadepg *Task;
 

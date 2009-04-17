@@ -28,6 +28,7 @@
 
 #include "dvbtext.h"
 #include "freesathuffman.h"
+#include "log.h"
 
 extern char *ProgName;
 
@@ -58,7 +59,7 @@ static int encoding_variable(char *t, const char **s, const char *d) {
 	return 0;
 }
 static int encoding_reserved(char *t, const char **s, const char *d) {
-	fprintf(stderr, "%s: reserved encoding: %02x\n", ProgName, *s[0]);
+	log_message(WARNING, "reserved encoding: %02x", *s[0]);
 	return 1;
 }
 static const struct encoding {
@@ -109,14 +110,13 @@ static iconv_t cd;
  */
 char *convert_text(const char *s) {
 	char cs_new[16];
-	int l;
-	char c;
+	size_t ret;
 
 	int i = (int)(unsigned char)s[0];
 	if (encoding[i].handler(cs_new, &s, encoding[i].data))
 		return "";
 	if (i == 0x1F) {
-		s = freesat_huffman_to_string((unsigned char *)s, strlen(s));
+		s = (char *)freesat_huffman_to_string((unsigned char *)s, strlen(s));
 	}
 	if (strncmp(cs_old, cs_new, 16)) {
 		if (cd) {
@@ -125,7 +125,7 @@ char *convert_text(const char *s) {
 		} // if
 		cd = iconv_open("UTF-8", cs_new);
 		if (cd == (iconv_t)-1) {
-			fprintf(stderr, "%s: iconv_open() failed: %s\n", ProgName, strerror(errno));
+			log_message(ERROR, "iconv_open() failed: %s", strerror(errno));
 			exit(1);
 		} // if
 		strncpy(cs_old, cs_new, 16);
@@ -135,7 +135,7 @@ char *convert_text(const char *s) {
 	size_t inbytesleft = strlen(s);
 	char *outbuf = (char *)buf;
 	size_t outbytesleft = sizeof(buf);
-	size_t ret = iconv(cd, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
+	ret = iconv(cd, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
 	// FIXME: handle errors
 
 	// Luckiely '&<> are single byte character sequences in UTF-8 and no
@@ -176,7 +176,7 @@ char *convert_text(const char *s) {
 			case 0x0000 ... 0x0008:
 			case 0x000B ... 0x001F:
 			case 0x007F:
-				fprintf(stderr, "%s: Forbidden char %02x\n", ProgName, *b);
+				log_message(ERROR, "forbidden char: %02x", *b);
 			default:
 				*r++ = *b;
 				break;
@@ -231,7 +231,7 @@ char *xmlify(const char *s) {
 			case 0x0009 ... 0x000A:	// added to aid debugging
 			case 0x000B ... 0x001F:
 			case 0x007F:
-				//fprintf(stderr, "%s: Forbidden char %02x\n", ProgName, *b);
+				//log_message(ERROR, "forbidden char: %02x", *b);
 			case 0x0080 ... 0x009F:
 			case 0x00A0 ... 0x00FF:
 				/*

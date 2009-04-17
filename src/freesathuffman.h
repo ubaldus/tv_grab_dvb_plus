@@ -20,6 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * if the multiplier is set to 2, then we get about 40% reallocations.
+ * if the multiplier is set to 3, then we get about 0.3% reallocations.
+ */
+#define ALLOC_MULT 3
+#define ALLOC_INCR 10
+
 extern unsigned char *freesat_huffman_to_string(unsigned char *compressed, uint size);
 
 #endif
