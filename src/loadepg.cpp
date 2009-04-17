@@ -975,73 +975,14 @@ void cTaskLoadepg::Action( void )
 	    //EpgDevice = cDevice::GetDevice( DeviceID );
 	    //if( EpgDevice )
 	    {
-#if 0
-	      if( ! EpgDevice->ProvidesSource( cSource::FromString( SourceName ) ) )
-	      {
-	        // virtual device (xine,drx3,...)
-	        if( EpgDevice->IsPrimaryDevice() )
-	        {
-	          HasSwitched = true;
-		  for( int i = 0; i < DeviceID; i ++ )
-		  {
-		    if( cDevice::GetDevice( i )->ProvidesSource( cSource::FromString( SourceName ) ) )
-		    {
-		      if( ! cDevice::GetDevice( i )->Receiving( true ) )
-		      {
-		        DvbAdapterNumber = cDevice::GetDevice( i )->CardIndex();
-		      }
-		    }
-		  }
-		  if( DvbAdapterNumber == -1 )
-		  {
-	            for( int i = 0; i < DeviceID; i ++ )
-		    {
-		      if( cDevice::GetDevice( i )->ProvidesSource( cSource::FromString( SourceName ) ) )
-		      {
-		        if( ! cDevice::GetDevice( i )->Receiving() )
-		        {
-		          DvbAdapterNumber = cDevice::GetDevice( i )->CardIndex();
-		        }
-		      }
-		    }
-		  }
-	        }
-	      }
-	      else
-	      {
-	        // card ss1 or ss2
-		if( EpgDevice->IsPrimaryDevice() || EpgDevice->ActualDevice() )
-		{
-		  HasSwitched = true;
-		}
-		if( ! cDevice::GetDevice( DeviceID )->Receiving( true ) )
-		{
-		  DvbAdapterNumber = cDevice::GetDevice( DeviceID )->CardIndex();
-		}
-		if( DvbAdapterNumber == -1 )
-		{
-		  if( ! cDevice::GetDevice( DeviceID )->Receiving() )
-		  {
-		    DvbAdapterNumber = cDevice::GetDevice( DeviceID )->CardIndex();
-		  }
-		}
-	      }
-#endif
 	      DvbAdapterNumber = adapter;
 	      if( DvbAdapterNumber != -1 )
 	      {
-#if 1
 	        if( Config->DvbAdapterNumber == 0 || ( Config->DvbAdapterNumber - 1 ) == DvbAdapterNumber )
 		{
 	          VdrChannel = Channels.GetByNumber( EpgDevice->CurrentChannel() );
 	          EpgChannel = new cChannel();
-#if APIVERSNUM >= 10700
-                  EpgChannel->cChannel::SetSatTransponderData( cSource::FromString( SourceName ), Frequency, Polarization, SymbolRate, DVBFE_FEC_AUTO, DVBFE_MOD_AUTO, DVBFE_DELSYS_DVBS, DVBFE_ROLLOFF_UNKNOWN );
-#elif APIVERSNUM == 10514	      
-                  EpgChannel->cChannel::SetSatTransponderData( cSource::FromString( SourceName ), Frequency, Polarization, SymbolRate, DVBFE_FEC_AUTO, DVBFE_MOD_AUTO, DVBFE_DELSYS_DVBS, DVBFE_ROLLOFF_UNKNOWN );
-#else
                   EpgChannel->cChannel::SetSatTransponderData( cSource::FromString( SourceName ), Frequency, Polarization, SymbolRate, FEC_AUTO );
-#endif
                   EpgChannel->SetId( 4096, 4095, 4094, 0 );
 		  int CaIds[MAXCAIDS + 1] = { 0 };
 		  EpgChannel->SetCaIds( CaIds );
@@ -1055,13 +996,6 @@ void cTaskLoadepg::Action( void )
 	          {
 		    log_message(TRACE, "tuned transponder with adapter number=%i", DvbAdapterNumber );
 		    LoadFromSatellite();
-#if 0
-		    if( HasSwitched )
-		    {
-		      EpgDevice->SwitchChannel( VdrChannel, true );
-		      HasSwitched = false;
-		    }
-#endif
 		    if( IsError )
 		    {
 		      if( ( Config->DvbAdapterNumber - 1 ) == DvbAdapterNumber )
@@ -1096,7 +1030,6 @@ void cTaskLoadepg::Action( void )
 		  }
 		  EpgChannel = NULL;
 		}
-#endif
 	      }
 	    }
 	    DeviceID --;
@@ -3244,138 +3177,6 @@ void cTaskLoadepg::CreateEpgXml( void )
 		  }
 		}
 	      }
-
-
-#if 0
-	      if( ChannelId != T->ChannelId )
-	      {
-		if( IsChannel )
-		{
-		  if( ChannelId > 0 )
-		  {
-		    //fprintf( File, "c\n" );
-		  }
-		}
-		if( IsEquivChannel )
-		{
-		  if( ChannelId > 0 )
-		  {
-		    //fprintf( File, "c\n" );
-		  }
-		  i = prev_i;
-		  T = ( lTitles + i );
-		}
-		IsChannel = false;
-		IsEquivChannel = false;
-		KeyC.ChannelId = T->ChannelId;
-		C = ( sChannel * ) bsearch( &KeyC, lChannels, nChannels, sizeof( sChannel ), &bsearchChannelByChannelId );
-		if( C )
-		{
-		  C->IsEpg = true;
-		  tChannelID ChVID = tChannelID( ( lProviders + CurrentProvider )->SourceId, C->Nid, C->Tid, C->Sid );
-		  cChannel *VC = NULL;
-		  {
-		    KeyEC.OriginalSourceId = C->ChannelId;
-		    KeyEC.OriginalNid = C->Nid;
-		    KeyEC.OriginalTid = C->Tid;
-		    KeyEC.OriginalSid = C->Sid;
-		    EC = ( sEquivChannel * ) bsearch( &KeyEC, lEquivChannels, nEquivChannels, sizeof( sEquivChannel ), &bsearchEquivChannel );
-		    if( EC && Config->UseFileEquivalents )
-		    {
-		      tChannelID ChEID = tChannelID( EC->EquivSourceId, EC->EquivNid, EC->EquivTid, EC->EquivSid, EC->EquivRid );
-		      cChannel *VEC = NULL;
-		      if( VEC )
-		      {
-			//fprintf( File, "<se>C %s-%i-%i-%i-%i name=\"%s\"\n", *cSource::ToString( VEC->Source() ), VEC->Nid(), VEC->Tid(), VEC->Sid(), VEC->Rid(), VEC->Name() );
-			asprintf( &ChannelName, "%s", VEC->Name() );
-			IsEquivChannel = true;
-			prev_i = i;
-		      }
-		      EC->OriginalSourceId = 0;
-		      EC->OriginalNid = 0;
-		      EC->OriginalTid = 0;
-		      EC->OriginalSid = 0;
-		      qsort( lEquivChannels, nEquivChannels, sizeof( sEquivChannel ), &qsortEquivChannels );
-		    }
-		    else
-		    {
-		      //fprintf( File, "C %s-%i-%i-%i-%i %s\n", *cSource::ToString( VC->Source() ), VC->Nid(), VC->Tid(), VC->Sid(), VC->Rid(), VC->Name() );
-		      //fprintf( File, "<sky>C %i-%i-%i-%i sky=%i\n", C->ChannelId, C->Nid, C->Tid, C->Sid, C->SkyNumber );
-		      //asprintf( &ChannelName, "%s", VC->Name() );
-		      asprintf( &ChannelName, "%i", C->SkyNumber );
-		      IsChannel = true;
-		      C->IsFound = true;
-		    }
-		  }
-		}
-		ChannelId = T->ChannelId;
-	      }
-	      if( IsChannel || IsEquivChannel )
-	      {
-		//fprintf( File, "E %u %u %u\n", EventId, ( T->StartTime + EpgTimeOffset ), T->Duration );
-		if( DecodeHuffmanCode( &bTitles[T->pData], T->lenData ) )
-		{
-		  CleanString( DecodeText );
-		  //fprintf( File, "T %s\n", DecodeText );
-		  if( DecodeErrorText[0] != '\0' )
-		  {
-		    if( IsChannel )
-		    {
-		      time_t StartTime;
-		      StartTime = ( T->StartTime + EpgTimeOffset );
-		      //fprintf( Err, "Channel: %s - %s\n", ChannelName, ctime( &StartTime ) );
-		      //fprintf( Err, "T %s%s\n\n", DecodeText, DecodeErrorText );
-		    }
-		  }
-		  if( debug && DEBUG_STARTTIME )
-		  {
-		    time_t StartTime;
-		    char *DateTime;
-		    StartTime = ( T->StartTime + EpgTimeOffset );
-		    asprintf( &DateTime, "%s", ctime( &StartTime ) );
-		    //fprintf( File, "S - %s", DateTime );
-		  }
-		  sTheme *ST = ( lThemes + T->ThemeId );
-		  if( ST->Name[0] != '\0' )
-		  {
-		    //fprintf( File, "S %s\n", ST->Name );
-		  }
-		  else
-		  {
-		    if( debug )
-		    {
-		      time_t StartTime;
-		      StartTime = ( T->StartTime + EpgTimeOffset );
-		      //fprintf( Err, "Channel: %s - %s - ThemeId=0x%02x\n", ChannelName, ctime( &StartTime ), T->ThemeId );
-		    }
-		  }
-		  sSummary KeyS, *S;
-		  KeyS.ChannelId = T->ChannelId;
-		  KeyS.MjdTime = T->MjdTime;
-		  KeyS.EventId = T->EventId;
-		  S = ( sSummary * ) bsearch( &KeyS, lSummaries, nSummaries, sizeof( sSummary ), &bsearchSummarie );
-		  if( S )
-		  {
-		    if( DecodeHuffmanCode( &bSummaries[S->pData], S->lenData ) )
-		    {
-		      CleanString( DecodeText );
-		      //fprintf( File, "D %s\n", DecodeText );
-		    }
-		    if( DecodeErrorText[0] != '\0' )
-		    {
-		      if( IsChannel )
-		      {
-			time_t StartTime;
-			StartTime = ( T->StartTime + EpgTimeOffset );
-			//fprintf( Err, "Channel: %s - %s\n", ChannelName, ctime( &StartTime ) );
-			//fprintf( Err, "D %s%s\n\n", DecodeText, DecodeErrorText );
-		      }
-		    }
-		  }
-		}
-		//fprintf( File, "e\n" );
-	      }
-#endif
 	      delete channelIdent;
 	      printf("</programme>\n");
 	      i ++;
@@ -3881,12 +3682,6 @@ EPGGrabber::~EPGGrabber()
   {
     free( lEquivChannels );
   }
-#if 0
-  if( Control )
-  {
-    delete( Control );
-  }
-#endif
   if( Task )
   {
     delete( Task );
