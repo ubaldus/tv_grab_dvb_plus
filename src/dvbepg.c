@@ -33,9 +33,9 @@
 #include "lookup.h"
 #include "crc32.h"
 #include "chanid.h"
+#include "log.h"
 
 extern char *ProgName;
-extern int debug;
 
 extern int timeout;
 extern int time_offset;
@@ -61,10 +61,8 @@ static struct chninfo *channels;
  * Print progress indicator
  */
 static void status() {
-	if (debug) {
-		fprintf(stderr, "\r%s: Status: %d pkts, %d prgms, %d updates, %d invalid, %d CRC err",
+	log_raw_message(DEBUG, "\r%s: Status: %d pkts, %d prgms, %d updates, %d invalid, %d CRC err",
 				ProgName, packet_count, programme_count, update_count, invalid_date_count, crcerr_count);
-	}
 }
 
 /* Parse 0x4D Short Event Descriptor */

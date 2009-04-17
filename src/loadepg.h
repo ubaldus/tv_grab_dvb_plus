@@ -37,9 +37,6 @@
 #include <vdr/config.h>
 #endif
 
-#define DEBUG false
-#define DEBUG_STARTTIME false
-
 #define DVB_DEVICE_DEMUX "/dev/dvb/adapter%i/demux0"
 
 #define LOADEPG_FILE_CONF "epg.conf"

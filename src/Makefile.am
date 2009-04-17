@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -DSTANDALONE -I@top_srcdir@/include
+AM_CPPFLAGS = -Wall -DSTANDALONE -I@top_srcdir@/include
 
 bin_PROGRAMS = tv_grab_dvb_plus
 
@@ -22,7 +22,8 @@ tv_grab_dvb_plus_SOURCES = \
 	dvbtext.c \
 	freesathuffman.c \
 	freesattables.c \
-	lookup.c
+	log.c \
+	lookup.c \
 	stats.c \
 	\
 	chanid.h \
@@ -37,6 +38,7 @@ tv_grab_dvb_plus_SOURCES = \
 	freesathuffman.h \
 	freesattables.h \
 	loadepg.h \
+	log.h \
 	lookup.h \
 	sitables.h \
 	stats.h

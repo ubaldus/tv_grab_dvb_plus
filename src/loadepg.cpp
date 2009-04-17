@@ -22,6 +22,7 @@
 #include "dvbtext.h"
 #include "chanid.h"
 #include "stats.h"
+#include "log.h"
 
 static const char *VERSION        = "0.2.1-20080915";
 #if APIVERSNUM >= 10507
@@ -32,14 +33,8 @@ static const char *DESCRIPTION    = "Load EPG type MediaHighWay, SkyBox, from sc
 static const char *MAINMENUENTRY  = "LoadEPG";
 #endif
 
-#undef esyslog
-#define esyslog(x, args...) fprintf(stderr, x "\n", ##args)
-#define Dprintf(x, args...) fprintf(stderr, x, ##args)
-
 sConfig *Config;
 cTaskLoadepg *Task;
-
-extern bool debug;
 
 extern char *ProgName;
 extern char conf[1024];
@@ -153,9 +148,8 @@ static void ReadConfigLoadepg( void )
   nEquivChannels = 0;
   
   // Read loadepg.conf
-  Dprintf( "Config->Directory=\"%s\"\n", Config->Directory);
   asprintf( &FileName, "%s/%s", Config->Directory, LOADEPG_FILE_CONF );
-  Dprintf( "Readconfig %s\n", FileName);
+  log_message(TRACE, "read config file \"%s\"", FileName);
   File = fopen( FileName, "r" );
   if( File )
   {
@@ -170,7 +164,7 @@ static void ReadConfigLoadepg( void )
     while( ( Line = fgets( Buffer, sizeof( Buffer ), File ) ) != NULL )
     {
       Line = compactspace( skipspace( stripspace( Line ) ) );
-      //Dprintf( "line is '%s'\n", Line);
+      log_message(TRACE, "line is '%s'", Line);
       if( ! isempty( Line ) )
       {
 	if ( Line[0] == '#' )
@@ -179,7 +173,7 @@ static void ReadConfigLoadepg( void )
 	{
           if( sscanf( Line, "SKYBOX=%[^:] :%i :%c :%[^:] :%i :%[^:] :%s ", string1, &int1, &char1, string2, &int2, string3, string4 ) == 7 )
 	  {
-	    Dprintf( "is SKYBOX\n");
+	    log_message(TRACE, "is SKYBOX");
 	    asprintf( &( lProviders + nProviders )->Title, "%s", string1 );
 	    ( lProviders + nProviders )->DataFormat = DATA_FORMAT_SKYBOX;
 	    ( lProviders + nProviders )->SourceId = cSource::FromString( string2 );
@@ -244,10 +238,10 @@ static void ReadConfigLoadepg( void )
       memset( Buffer, 0, sizeof( Buffer ) );
     }
     fclose( File );
-    if (debug) {
+    if (is_logging(DEBUG)) {
       for( int i = 0; i < nProviders; i ++ )
       {
-        fprintf( stderr, "%s|%i|%s|%s|%s\n", ( lProviders + i )->Title, ( lProviders + i )->SourceId, ( lProviders + i )->Parm1, ( lProviders + i )->Parm2, ( lProviders + i )->Parm3 );
+        log_message( DEBUG, "%s|%i|%s|%s|%s", ( lProviders + i )->Title, ( lProviders + i )->SourceId, ( lProviders + i )->Parm1, ( lProviders + i )->Parm2, ( lProviders + i )->Parm3 );
       }
     }
   }
@@ -358,13 +352,13 @@ static void ReadConfigLoadepg( void )
 		  }
 		  else
 		  {
-		    esyslog( "LoadEPG: warning, not found equivalent channel \'%s\' in channels.conf", string2 );
+		    log_message(WARNING, "not found equivalent channel \'%s\' in channels.conf", string2 );
 		  }
 		}
 	      }
 	      else
 	      {
-	        esyslog( "LoadEPG: warning, not found epg channel \'%s\' in channels.conf", string1 );
+	        log_message(WARNING, "not found epg channel \'%s\' in channels.conf", string1 );
 	      }
 	    }
 	  }
@@ -923,11 +917,7 @@ void cTaskLoadepg::Action( void )
   EpgTimeOffset = 0;
   if( Running() )
   {
-    if( debug )
-    {
-      fprintf( stderr, "LoadEPG: Start task\n" );
-    }
-    esyslog( "LoadEPG: Start task" );
+    log_message(TRACE, "start task" );
     switch( ( lProviders + CurrentProvider )->DataFormat )
     {
       case DATA_FORMAT_SKYBOX:
@@ -938,49 +928,49 @@ void cTaskLoadepg::Action( void )
         lThemes = ( sTheme * ) calloc( MAX_THEMES, sizeof( sTheme ) );
 	if( ! lThemes )
 	{
-	  esyslog( "LoadEPG: Error, failed to allocate memory for lThemes" );
+	  log_message(ERROR, "failed to allocate memory for lThemes" );
 	  goto endrunning;
 	}
 	lChannels = ( sChannel * ) calloc( MAX_CHANNELS, sizeof( sChannel ) );
         if( ! lChannels )
         {
-          esyslog( "LoadEPG: Error, failed to allocate memory for lChannels" );
+          log_message(ERROR, "failed to allocate memory for lChannels" );
           goto endrunning;
         }
 	lBouquets = ( sBouquet * ) calloc( MAX_BOUQUETS, sizeof( sBouquet ) );
         if( ! lBouquets )
         {
-          esyslog( "LoadEPG: Error, failed to allocate memory for lBouquets" );
+          log_message(ERROR, "failed to allocate memory for lBouquets" );
           goto endrunning;
         }
         lTitles = ( sTitle * ) calloc( MAX_TITLES, sizeof( sTitle ) );
         if( ! lTitles )
         {
-          esyslog( "LoadEPG: Error, failed to allocate memory for lTitles" );
+          log_message(ERROR, "failed to allocate memory for lTitles" );
           goto endrunning;
         }
         lSummaries = ( sSummary * ) calloc( MAX_SUMMARIES, sizeof( sSummary ) );
         if( ! lSummaries )
         {
-          esyslog( "LoadEPG: Error, failed to allocate memory for lSummaries" );
+          log_message(ERROR, "failed to allocate memory for lSummaries" );
           goto endrunning;
         }
 	bChannels = ( unsigned char * ) calloc( MAX_BUFFER_SIZE_CHANNELS, sizeof( unsigned char ) );
 	if( ! bChannels )
 	{
-	  esyslog( "LoadEPG: Error, failed to allocate memory for bChannels" );
+	  log_message(ERROR, "failed to allocate memory for bChannels" );
 	  goto endrunning;
 	}
         bTitles = ( unsigned char * ) calloc( MAX_BUFFER_SIZE_TITLES, sizeof( unsigned char ) );
         if( ! bTitles )
         {
-          esyslog( "LoadEPG: Error, failed to allocate memory for bTitles" );
+          log_message(ERROR, "failed to allocate memory for bTitles" );
           goto endrunning;
         }
         bSummaries = ( unsigned char * ) calloc( MAX_BUFFER_SIZE_SUMMARIES, sizeof( unsigned char ) );
         if( ! bSummaries )
         {
-          esyslog( "LoadEPG: Error, failed to allocate memory for bSummaries" );
+          log_message(ERROR, "failed to allocate memory for bSummaries" );
           goto endrunning;
         }
 	if( sscanf( ( lProviders + CurrentProvider )->Parm1, "%i :%c :%[^:]:%i", &Frequency, &Polarization, SourceName, &SymbolRate ) == 4 )
@@ -1075,7 +1065,7 @@ void cTaskLoadepg::Action( void )
 	          //if( EpgDevice->HasLock() )
 	          if( 1 )
 	          {
-		    esyslog( "LoadEPG: tuned transponder with adapter number=%i\n", DvbAdapterNumber );
+		    log_message(TRACE, "tuned transponder with adapter number=%i", DvbAdapterNumber );
 		    LoadFromSatellite();
 #if 0
 		    if( HasSwitched )
@@ -1125,7 +1115,7 @@ void cTaskLoadepg::Action( void )
 	  }
 	  if( DvbAdapterNumber == -1 )
 	  {
-	    esyslog( "LoadEPG: Error, none of the devices provides this source %s", SourceName );
+	    log_message(ERROR, "none of the devices provides this source %s", SourceName );
 	    IsError = true;
 	    break;
 	  }
@@ -1190,11 +1180,7 @@ void cTaskLoadepg::Action( void )
       free( bSummaries );
       bSummaries = NULL;
     }
-    esyslog( "LoadEPG: End task" );
-    if( debug )
-    {
-      fprintf( stderr, "LoadEPG: End task\n" );
-    }
+    log_message( DEBUG, "end task" );
     if( EpgDevice )
     {
       if( HasSwitched )
@@ -1342,7 +1328,7 @@ bool cTaskLoadepg::ReadFileDictionary( void )
   FileDict = fopen( FileName, "r" );
   if( FileDict == NULL )
   {
-    esyslog( "LoadEPG: Error opening file '%s'. %s", FileName, strerror( errno ) );
+    log_message(ERROR, "opening file '%s'. %s", FileName, strerror( errno ) );
     free( FileName );
     return false;
   }
@@ -1398,7 +1384,7 @@ bool cTaskLoadepg::ReadFileDictionary( void )
 		  nH = nH->P0;
 		  if( nH->Value != NULL || ( LenPrefix - 1 ) == i )
 		  {
-		    esyslog( "LoadEPG: Error, huffman prefix code already exists for \"%s\"=%s with '%s'", string1, string2, nH->Value );
+		    log_message(ERROR, "huffman prefix code already exists for \"%s\"=%s with '%s'", string1, string2, nH->Value );
 		  }
 		}
 	        break;
@@ -1420,7 +1406,7 @@ bool cTaskLoadepg::ReadFileDictionary( void )
 		  nH = nH->P1;
 		  if( nH->Value != NULL || ( LenPrefix - 1 ) == i )
 		  {
-		    esyslog( "LoadEPG: Error, huffman prefix code already exists for \"%s\"=%s with '%s'", string1, string2, nH->Value );
+		    log_message(ERROR, "huffman prefix code already exists for \"%s\"=%s with '%s'", string1, string2, nH->Value );
 		  }
 		}
 	        break;
@@ -1487,12 +1473,12 @@ bool cTaskLoadepg::ReadFileDictionary( void )
 	  {
 	    if( memcmp( nH->Value, string1, strlen( nH->Value ) ) != 0 )
 	    {
-	      esyslog( "LoadEPG: Error, huffman prefix value '%s' not equal to '%s'", nH->Value, string1 );
+	      log_message(ERROR, "huffman prefix value '%s' not equal to '%s'", nH->Value, string1 );
 	    }
 	  }
 	  else
 	  {
-	    esyslog( "LoadEPG: Error, huffman prefix value is not exists for \"%s\"=%s", string1, string2 );
+	    log_message(ERROR, "huffman prefix value is not exists for \"%s\"=%s", string1, string2 );
 	  }
         }
       }
@@ -1515,7 +1501,7 @@ bool cTaskLoadepg::ReadFileThemes( void )
   FileThemes = fopen( FileName, "r" );
   if( FileThemes == NULL )
   {
-    esyslog( "LoadEPG: Error opening file '%s'. %s", FileName, strerror( errno ) );
+    log_message(ERROR, "opening file '%s'. %s", FileName, strerror( errno ) );
     free( FileName );
     return false;
   }
@@ -1754,7 +1740,7 @@ void cTaskLoadepg::LoadFromFile( const char *FileEpg )
     File = fopen( FileTmp, "r" );
     if( File == NULL )
     {
-      esyslog( "LoadEPG: Error opening epg data file '%s' from function LoadFromFile(), %s", FileTmp, strerror( errno ) );
+      log_message(ERROR, "opening epg data file '%s' from function LoadFromFile(), %s", FileTmp, strerror( errno ) );
       free( FileTmp );
       IsError = true;
       return;
@@ -1795,7 +1781,7 @@ void cTaskLoadepg::LoadFromScript( const char *FileScript, const char *FileEpg )
     File = fopen( FileTmp, "r" );
     if( File == NULL )
     {
-      esyslog( "LoadEPG: Error opening script file '%s' from function LoadFromScript(), %s", FileTmp, strerror( errno ) );
+      log_message(ERROR, "opening script file '%s' from function LoadFromScript(), %s", FileTmp, strerror( errno ) );
       free( FileTmp );
       IsError = true;
       return;
@@ -1804,7 +1790,7 @@ void cTaskLoadepg::LoadFromScript( const char *FileScript, const char *FileEpg )
   fclose( File );
   if( system( FileTmp ) == -1 )
   {
-    esyslog( "LoadEPG: Error execute script file '%s' from function LoadFromScript()", FileTmp );
+    log_message(ERROR, "execute script file '%s' from function LoadFromScript()", FileTmp );
     free( FileTmp );
     IsError = true;
     return;
@@ -1823,7 +1809,7 @@ void cTaskLoadepg::AddFilter( unsigned short int Pid, unsigned char Tid, unsigne
 {
   if( nFilters >= MAX_FILTERS )
   {
-    esyslog( "LoadEPG: Error, numbers of filters is greater than %i, can't add filter pid=0x%04x tid=0x%02x", MAX_FILTERS, Pid, Tid );
+    log_message(ERROR, "numbers of filters is greater than %i, can't add filter pid=0x%04x tid=0x%02x", MAX_FILTERS, Pid, Tid );
     return;
   }
   Filters[nFilters].Step = 0;
@@ -1848,7 +1834,7 @@ void cTaskLoadepg::StartFilter( int FilterId )
   }
   else
   {
-    esyslog( "LoadEPG: Error, can't starting filter pid=0x%04x tid=0x%02x", Filters[FilterId].Pid, Filters[FilterId].Tid );
+    log_message(ERROR, "can't starting filter pid=0x%04x tid=0x%02x", Filters[FilterId].Pid, Filters[FilterId].Tid );
     Filters[FilterId].Step = 3;
   }
 }
@@ -1859,7 +1845,7 @@ void cTaskLoadepg::StopFilter( int ActiveFilterId )
   {
     if( ioctl( ActiveFilters[ActiveFilterId].Fd, DMX_STOP ) < 0 )
     {
-      esyslog( "LoadEPG: Error, ioctl DMX_STOP failed" );
+      log_message(ERROR, "ioctl DMX_STOP failed" );
       perror( strerror( errno ) );
     }
     if( close( ActiveFilters[ActiveFilterId].Fd ) == 0 )
@@ -1895,7 +1881,7 @@ void cTaskLoadepg::PollingFilters( int Timeout )
       }
       else
       {
-        esyslog( "LoadEPG: Error, can't open filter handle on '%s'", FileName );
+        log_message(ERROR, "can't open filter handle on '%s'", FileName );
 	IsError = true;
       }
     }
@@ -1991,20 +1977,20 @@ void cTaskLoadepg::PollingFilters( int Timeout )
 	    }
 	    if( IsError )
 	    {
-	      esyslog( "LoadEPG: Error, unknown" );
+	      log_message(ERROR, "unknown" );
 	      IsRunning = false;
 	    }
 	  }
         }
         else if( Status == 0 )
         {
-          esyslog( "LoadEPG: Error, timeout polling filter" );
+          log_message(ERROR, "timeout polling filter" );
 	  IsError = true;
 	  IsRunning = false;
         }
         else
         {
-	  esyslog( "LoadEPG: Error polling filter" );
+	  log_message(ERROR, "polling filter" );
 	  IsError = true;
 	  IsRunning = false;
         }
@@ -2023,7 +2009,7 @@ void cTaskLoadepg::PollingFilters( int Timeout )
 // cTaskLoadepg::Stop {{{
 void cTaskLoadepg::Stop()
 {
-  esyslog( "LoadEPG: Stop" );
+  log_message(TRACE, "stop" );
   IsRunning = false;
   Cancel(2);
 }
@@ -2039,12 +2025,12 @@ void cTaskLoadepg::ReadBuffer( int FilterId, int Fd )
   {
     if( errno != EOVERFLOW )
     {
-      esyslog( "LoadEPG: Error, failed to read filter for pid=0x%04x tid=0x%02x", Filters[FilterId].Pid, Filters[FilterId].Tid );
+      log_message(ERROR, "failed to read filter for pid=0x%04x tid=0x%02x", Filters[FilterId].Pid, Filters[FilterId].Tid );
       Filters[FilterId].Step = 2;
     }
     else
     {
-      esyslog( "LoadEPG: Error, buffer overflow to read filter for pid=0x%04x tid=0x%02x", Filters[FilterId].Pid, Filters[FilterId].Tid );
+      log_message(ERROR, "buffer overflow to read filter for pid=0x%04x tid=0x%02x", Filters[FilterId].Pid, Filters[FilterId].Tid );
     }
   }
   else
@@ -2174,7 +2160,7 @@ void cTaskLoadepg::GetLocalTimeOffset( void )
   tmCurrent->tm_sec = 0;
   tmCurrent->tm_isdst = -1;
   YesterdayEpoch = mktime( tmCurrent );
-  esyslog( "LoadEPG: Local Time Offset=[UTC]%+i", LocalTimeOffset / 3600 );
+  log_message(INFO, "local time offset=[UTC]%+i", LocalTimeOffset / 3600 );
 }
 
 void cTaskLoadepg::GetSatelliteTimeOffset( int FilterId, unsigned char *Data, int Length )
@@ -2218,15 +2204,14 @@ void cTaskLoadepg::GetSatelliteTimeOffset( int FilterId, unsigned char *Data, in
 	    SatelliteTimeOffset = SatelliteTimeOffsetH * 3600;
 	  }
 	  EpgTimeOffset = ( LocalTimeOffset - SatelliteTimeOffset );
-	  esyslog( "LoadEPG: Satellite Time Offset=[UTC]%+i", SatelliteTimeOffset / 3600 );
-	  esyslog( "LoadEPG: Epg Time Offset=%+i seconds", EpgTimeOffset );
-	  if( debug )
-	  {
-	    esyslog( "LoadEPG: Satellite Time UTC: %s %02i:%02i:%02i", GetStringMJD( satMJD ), satH, satM, satS );
-	    esyslog( "LoadEPG: Satellite CountryCode=%s", SatelliteCountryCode );
-	    esyslog( "LoadEPG: Satellite CountryRegionId=%i", SatelliteCountryRegionId );
-	    esyslog( "LoadEPG: Satellite LocalTimeOffsetPolarity=%i", SatelliteTimeOffsetPolarity );
-	    esyslog( "LoadEPG: Satellite LocalTimeOffset=%02i:%02i", SatelliteTimeOffsetH, SatelliteTimeOffsetM );
+	  log_message(INFO, "satellite time offset=[UTC]%+i", SatelliteTimeOffset / 3600 );
+	  log_message(INFO, "EPG time offset=%+i seconds", EpgTimeOffset );
+	  if( is_logging(DEBUG) ) {
+	    log_message(DEBUG, "satellite time UTC: %s %02i:%02i:%02i", GetStringMJD( satMJD ), satH, satM, satS );
+	    log_message(DEBUG, "satellite country code=%s", SatelliteCountryCode );
+	    log_message(DEBUG, "satellite country region ID=%i", SatelliteCountryRegionId );
+	    log_message(DEBUG, "satellite local time offset polarity=%i", SatelliteTimeOffsetPolarity );
+	    log_message(DEBUG, "satellite local time offset=%02i:%02i", SatelliteTimeOffsetH, SatelliteTimeOffsetM );
 	  }
 	  break;
 	default:
@@ -2253,7 +2238,7 @@ void cTaskLoadepg::SupplementChannelsSKYBOX( int FilterId, unsigned char *Data, 
   if ( EndSDT )
   {
     Filters[FilterId].Step = 2;
-    //Dprintf("endsdt\n");
+    log_message(TRACE, "endsdt");
     return;
   }
 
@@ -2298,7 +2283,7 @@ void cTaskLoadepg::SupplementChannelsSKYBOX( int FilterId, unsigned char *Data, 
 		  char NameBuf[1024];
 		  char ShortNameBuf[1024];
 		  char ProviderNameBuf[1024];
-		  //Dprintf("B %02x %x-%x %x-%x %x-%x\n", sd->getServiceType(), Key.Nid, lChannels[10].Nid, Key.Tid, lChannels[10].Tid, Key.Sid, lChannels[10].Sid );
+		  log_message(TRACE, "B %02x %x-%x %x-%x %x-%x", sd->getServiceType(), Key.Nid, lChannels[10].Nid, Key.Tid, lChannels[10].Tid, Key.Sid, lChannels[10].Sid );
 		  sd->serviceName.getText(NameBuf, ShortNameBuf, sizeof(NameBuf), sizeof(ShortNameBuf));
 		  char *pn = compactspace(NameBuf);
 		  char *ps = compactspace(ShortNameBuf);
@@ -2379,7 +2364,7 @@ void cTaskLoadepg::GetChannelsSKYBOX( int FilterId, unsigned char *Data, int Len
     if( EndBAT )
     {
       Filters[FilterId].Step = 2;
-      //Dprintf("endbat\n");
+      log_message(TRACE, "endbat");
       return;
     }
     unsigned short int BouquetId = ( Data[3] << 8 ) | Data[4];
@@ -2458,7 +2443,7 @@ void cTaskLoadepg::GetChannelsSKYBOX( int FilterId, unsigned char *Data, int Len
 		      incr_stat("channels.count");
 		      if( nChannels >= MAX_CHANNELS )
 		      {
-                        esyslog( "LoadEPG: Error, channels found more than %i", MAX_CHANNELS );
+                        log_message(ERROR, "channels found more than %i", MAX_CHANNELS );
 			IsError = true;
 			return;
 		      }
@@ -2472,7 +2457,7 @@ void cTaskLoadepg::GetChannelsSKYBOX( int FilterId, unsigned char *Data, int Len
 	    }
 	    break;
 	  default:
-	    Dprintf( "unprocessed descriptor 0x%02x\n", DescriptorTag );
+	    log_message(ERROR, "unprocessed descriptor 0x%02x\n", DescriptorTag );
 	    break;
 	}
       }
@@ -2552,18 +2537,12 @@ void cTaskLoadepg::GetTitlesSKYBOX( int FilterId, unsigned char *Data, int Lengt
 	Len1 = ( ( Data[p+2] & 0x0f ) << 8 ) | Data[p+3];
 	if( Data[p+4] != 0xb5 )
 	{
-	  if( debug )
-	  {
-	    esyslog( "LoadEPG: Data error signature for title" );
-	  }
+	  log_message(WARNING, "data error signature for title" );
 	  goto endloop1;
 	}
         if( Len1 > Length )
 	{
-	  if( debug )
-	  {
-	    esyslog( "LoadEPG: Data error length for title" );
-	  }
+	  log_message(WARNING, "data error length for title" );
 	  goto endloop1;
 	}
 	p += 4;
@@ -2575,7 +2554,7 @@ void cTaskLoadepg::GetTitlesSKYBOX( int FilterId, unsigned char *Data, int Lengt
 	T->lenData = Len2;
 	if( ( pT + Len2 + 2 ) > MAX_BUFFER_SIZE_TITLES )
 	{
-	  esyslog( "LoadEPG: Error, buffer overflow, titles size more than %i bytes", MAX_BUFFER_SIZE_TITLES );
+	  log_message(ERROR, "buffer overflow, titles size more than %i bytes", MAX_BUFFER_SIZE_TITLES );
 	  IsError = true;
 	  return;
 	}
@@ -2585,7 +2564,7 @@ void cTaskLoadepg::GetTitlesSKYBOX( int FilterId, unsigned char *Data, int Lengt
 	nTitles ++;
 	if( nTitles >= MAX_TITLES )
 	{
-	  esyslog( "LoadEPG: Error, titles found more than %i", MAX_TITLES );
+	  log_message(ERROR, "titles found more than %i", MAX_TITLES );
 	  IsError = true;
 	  return;
 	}
@@ -2639,18 +2618,12 @@ void cTaskLoadepg::GetSummariesSKYBOX( int FilterId, unsigned char *Data, int Le
 	Len1 = ( ( Data[p+2] & 0x0f ) << 8 ) | Data[p+3];
 	if( Data[p+4] != 0xb9 )
 	{
-	  if( debug )
-	  {
-	    esyslog( "LoadEPG: Data error signature for summary" );
-	  }
+	  log_message(WARNING, "data error signature for summary" );
 	  goto endloop1;
         }
         if( Len1 > Length )
         {
-          if( debug )
-	  {
-	    esyslog( "LoadEPG: Data error length for summary" );
-	  }
+	  log_message(WARNING, "data error length for summary" );
           goto endloop1;
         }
         p += 4;
@@ -2659,7 +2632,7 @@ void cTaskLoadepg::GetSummariesSKYBOX( int FilterId, unsigned char *Data, int Le
         S->lenData = Len2;
         if( ( pS + Len2 + 2 ) > MAX_BUFFER_SIZE_SUMMARIES )
         {
-          esyslog( "LoadEPG: Error, buffer overflow, summaries size more than %i bytes", MAX_BUFFER_SIZE_SUMMARIES );
+          log_message(ERROR, "buffer overflow, summaries size more than %i bytes", MAX_BUFFER_SIZE_SUMMARIES );
           IsError = true;
           return;
         }
@@ -2669,7 +2642,7 @@ void cTaskLoadepg::GetSummariesSKYBOX( int FilterId, unsigned char *Data, int Le
         nSummaries ++;
         if( nSummaries >= MAX_SUMMARIES )
         {
-          esyslog( "LoadEPG: Error, summaries found more than %i", MAX_SUMMARIES );
+          log_message(ERROR, "summaries found more than %i", MAX_SUMMARIES );
           IsError = true;
 	  return;
         }
@@ -2754,7 +2727,7 @@ void cTaskLoadepg::GetThemesMHW1( int FilterId, unsigned char *Data, int Length 
     nThemes = ( Length - 19 ) / 15;
     if( nThemes > MAX_THEMES )
     {
-      esyslog( "LoadEPG: Error, themes found more than %i", MAX_THEMES );
+      log_message(ERROR, "themes found more than %i", MAX_THEMES );
       IsError = true;
       return;
     }
@@ -2790,7 +2763,7 @@ void cTaskLoadepg::GetChannelsMHW1( int FilterId, unsigned char *Data, int Lengt
   set_stat("channels.count", nChannels);
   if( nChannels > MAX_CHANNELS )
   {
-    esyslog( "LoadEPG: Error, channels found more than %i", MAX_CHANNELS );
+    log_message(ERROR, "channels found more than %i", MAX_CHANNELS );
     IsError = true;
     return;
   }
@@ -2810,7 +2783,7 @@ void cTaskLoadepg::GetChannelsMHW1( int FilterId, unsigned char *Data, int Lengt
       C->IsEpg = true;
       if( ( pC + 18 ) > MAX_BUFFER_SIZE_CHANNELS )
       {
-        esyslog( "LoadEPG: Error, buffer overflow, channels size more than %i bytes", MAX_BUFFER_SIZE_CHANNELS );
+        log_message(ERROR, "buffer overflow, channels size more than %i bytes", MAX_BUFFER_SIZE_CHANNELS );
 	IsError = true;
 	return;
       }
@@ -2886,7 +2859,7 @@ void cTaskLoadepg::GetTitlesMHW1( int FilterId, unsigned char *Data, int Length 
 	  T->lenData = 23;
 	  if( ( pT + 25 ) > MAX_BUFFER_SIZE_TITLES )
 	  {
-	    esyslog( "LoadEPG: Error, buffer overflow, titles size more than %i bytes", MAX_BUFFER_SIZE_TITLES );
+	    log_message(ERROR, "buffer overflow, titles size more than %i bytes", MAX_BUFFER_SIZE_TITLES );
 	    IsError = true;
 	    return;
 	  }
@@ -2898,7 +2871,7 @@ void cTaskLoadepg::GetTitlesMHW1( int FilterId, unsigned char *Data, int Length 
       }
       else
       {
-        esyslog( "LoadEPG: Error, titles found more than %i", MAX_TITLES );
+        log_message(ERROR, "titles found more than %i", MAX_TITLES );
         IsError = true;
 	return;
       }
@@ -2941,7 +2914,7 @@ void cTaskLoadepg::GetSummariesMHW1( int FilterId, unsigned char *Data, int Leng
 	      S->lenData = SummaryLength;
 	      if( ( pS + SummaryLength + 2 ) > MAX_BUFFER_SIZE_SUMMARIES )
 	      {
-	        esyslog( "LoadEPG: Error, buffer overflow, summaries size more than %i bytes", MAX_BUFFER_SIZE_SUMMARIES );
+	        log_message(ERROR, "buffer overflow, summaries size more than %i bytes", MAX_BUFFER_SIZE_SUMMARIES );
 		IsError = true;
 		return;
 	      }
@@ -2953,7 +2926,7 @@ void cTaskLoadepg::GetSummariesMHW1( int FilterId, unsigned char *Data, int Leng
           }
           else
           {
-            esyslog( "LoadEPG: Error, summaries found more than %i", MAX_SUMMARIES );
+            log_message(ERROR, "summaries found more than %i", MAX_SUMMARIES );
             IsError = true;
 	    return;
           }
@@ -3025,7 +2998,7 @@ void cTaskLoadepg::GetThemesMHW2( int FilterId, unsigned char *Data, int Length 
 	        nThemes ++;
                 if( nThemes > MAX_THEMES )
                 {
-                  esyslog( "LoadEPG: Error, themes found more than %i", MAX_THEMES );
+                  log_message(ERROR, "themes found more than %i", MAX_THEMES );
                   IsError = true;
 		  return;
                 }
@@ -3066,7 +3039,7 @@ void cTaskLoadepg::GetChannelsMHW2( int FilterId, unsigned char *Data, int Lengt
     set_stat("channels.count", nChannels);
     if( nChannels > MAX_CHANNELS )
     {
-      esyslog( "LoadEPG: Error, channels found more than %i", MAX_CHANNELS );
+      log_message(ERROR, "channels found more than %i", MAX_CHANNELS );
       IsError = true;
       return;
     }
@@ -3087,7 +3060,7 @@ void cTaskLoadepg::GetChannelsMHW2( int FilterId, unsigned char *Data, int Lengt
 	  int lenName = Data[pName] & 0x0f;
 	  if( ( pC + lenName + 2 ) > MAX_BUFFER_SIZE_CHANNELS )
 	  {
-	    esyslog( "LoadEPG: Error, buffer overflow, channels size more than %i bytes", MAX_BUFFER_SIZE_CHANNELS );
+	    log_message(ERROR, "buffer overflow, channels size more than %i bytes", MAX_BUFFER_SIZE_CHANNELS );
 	    IsError = true;
 	    return;
 	  }
@@ -3169,7 +3142,7 @@ void cTaskLoadepg::GetTitlesMHW2( int FilterId, unsigned char *Data, int Length 
 	T->lenData = Len;
 	if( ( pT + Len + 2 ) > MAX_BUFFER_SIZE_TITLES )
 	{
-	  esyslog( "LoadEPG: Error, buffer overflow, titles size more than %i bytes", MAX_BUFFER_SIZE_TITLES );
+	  log_message(ERROR, "buffer overflow, titles size more than %i bytes", MAX_BUFFER_SIZE_TITLES );
 	  IsError = true;
 	  return;
 	}
@@ -3184,7 +3157,7 @@ void cTaskLoadepg::GetTitlesMHW2( int FilterId, unsigned char *Data, int Length 
 	nTitles ++;
 	if( nTitles > MAX_TITLES )
 	{
-	  esyslog( "LoadEPG: Error, titles found more than %i", MAX_TITLES );
+	  log_message(ERROR, "titles found more than %i", MAX_TITLES );
 	  IsError = true;
 	  return;
 	}
@@ -3234,7 +3207,7 @@ void cTaskLoadepg::GetSummariesMHW2( int FilterId, unsigned char *Data, int Leng
 	    {
 	      if( ( pS + lenSummary + lenText + 2 ) > MAX_BUFFER_SIZE_SUMMARIES )
 	      {
-	        esyslog( "LoadEPG: Error, buffer overflow, summaries size more than %i bytes", MAX_BUFFER_SIZE_SUMMARIES );
+	        log_message(ERROR, "buffer overflow, summaries size more than %i bytes", MAX_BUFFER_SIZE_SUMMARIES );
 		IsError = true;
 		return;
 	      }
@@ -3261,7 +3234,7 @@ void cTaskLoadepg::GetSummariesMHW2( int FilterId, unsigned char *Data, int Leng
       }
       else
       {
-        esyslog( "LoadEPG: Error, buffer overflow, summaries size more than %i", MAX_BUFFER_SIZE_SUMMARIES );
+        log_message(ERROR, "buffer overflow, summaries size more than %i", MAX_BUFFER_SIZE_SUMMARIES );
 	IsError = true;
         return;
       }
@@ -3275,11 +3248,11 @@ void cTaskLoadepg::GetSummariesMHW2( int FilterId, unsigned char *Data, int Leng
 void cTaskLoadepg::CreateEpgXml( void )
 {
   char *ChannelName;
-  esyslog( "LoadEPG: found %i equivalents channels", nEquivChannels );
-  esyslog( "LoadEPG: found %i themes", nThemes );
-  esyslog( "LoadEPG: found %i channels", nChannels );
-  esyslog( "LoadEPG: found %i titles", nTitles );
-  esyslog( "LoadEPG: found %i summaries", nSummaries );
+  log_message(INFO, "found %i equivalents channels", nEquivChannels );
+  log_message(INFO, "found %i themes", nThemes );
+  log_message(INFO, "found %i channels", nChannels );
+  log_message(INFO, "found %i titles", nTitles );
+  log_message(INFO, "found %i summaries", nSummaries );
   qsort( lEquivChannels, nEquivChannels, sizeof( sEquivChannel ), &qsortEquivChannels );
   qsort( lChannels, nChannels, sizeof( sChannel ), &qsortChannels );
   qsort( lTitles, nTitles, sizeof( sTitle ), &qsortTitles );
@@ -3632,21 +3605,15 @@ void cTaskLoadepg::CreateEpgXml( void )
       }
       if( IsChannel || IsEquivChannel )
       {
-	//fprintf( File, "E %u %u %u 01 FF\n", T->EventId, ( T->StartTime + EpgTimeOffset ), T->Duration );
-	//fprintf( File, "T %s\n", &bTitles[T->pData] );
-	if( ( lThemes + T->ThemeId )->Name[0] != '\0' )
-	{
-	  if( debug && DEBUG_STARTTIME )
-	  {
+	log_message(TRACE, "E %u %u %u 01 FF", T->EventId, ( T->StartTime + EpgTimeOffset ), T->Duration );
+	log_message(TRACE, "T %s", &bTitles[T->pData] );
+	if ((lThemes + T->ThemeId)->Name[0] != '\0') {
+	  if (is_logging(TRACE)) {
 	    time_t StartTime;
 	    char *DateTime;
 	    StartTime = ( T->StartTime + EpgTimeOffset );
 	    asprintf( &DateTime, "%s", ctime( &StartTime ) );
-	    //fprintf( File, "S %s - %d\' - %s", ( lThemes + T->ThemeId )->Name, T->Duration / 60, DateTime );
-	  }
-	  else
-	  {
-	    //fprintf( File, "S %s - %d\'\n", ( lThemes + T->ThemeId )->Name, T->Duration / 60 );
+	    log_message(TRACE, "S %s - %d\' - %s", ( lThemes + T->ThemeId )->Name, T->Duration / 60, DateTime );
 	  }
 	}
 	sSummary KeyS, *S;
@@ -3656,15 +3623,15 @@ void cTaskLoadepg::CreateEpgXml( void )
 	S = ( sSummary * ) bsearch( &KeyS, lSummaries, nSummaries, sizeof( sSummary ), &bsearchSummarie );
 	if( S )
 	{
-	  //fprintf( File, "D %s\n", &bSummaries[S->pData] );
+	  log_message(TRACE, "D %s", &bSummaries[S->pData] );
 	}
-	//fprintf( File, "e\n" );
+	log_message(TRACE, "e" );
       }
       i ++;
     }
     if(  IsChannel || IsEquivChannel )
     {
-      //fprintf( File, "c\n" );
+      log_message(TRACE, "c" );
     }
   }
   CreateXmlChannels( );
@@ -3677,11 +3644,11 @@ void cTaskLoadepg::CreateEpgDataFile( void )
   FILE *File;
   FILE *Err;
   char *ChannelName;
-  esyslog( "LoadEPG: found %i equivalents channels", nEquivChannels );
-  esyslog( "LoadEPG: found %i themes", nThemes );
-  esyslog( "LoadEPG: found %i channels", nChannels );
-  esyslog( "LoadEPG: found %i titles", nTitles );
-  esyslog( "LoadEPG: found %i summaries", nSummaries );
+  log_message(INFO, "found %i equivalents channels", nEquivChannels );
+  log_message(INFO, "found %i themes", nThemes );
+  log_message(INFO, "found %i channels", nChannels );
+  log_message(INFO, "found %i titles", nTitles );
+  log_message(INFO, "found %i summaries", nSummaries );
   qsort( lEquivChannels, nEquivChannels, sizeof( sEquivChannel ), &qsortEquivChannels );
   qsort( lChannels, nChannels, sizeof( sChannel ), &qsortChannels );
   qsort( lTitles, nTitles, sizeof( sTitle ), &qsortTitles );
@@ -3817,22 +3784,22 @@ void cTaskLoadepg::CreateEpgDataFile( void )
 		          fprintf( Err, "T %s%s\n\n", DecodeText, DecodeErrorText );
 			}
 		      }
-		      if( debug && DEBUG_STARTTIME )
+		      if(is_logging(TRACE))
 		      {
 	                time_t StartTime;
 	                char *DateTime;
 	                StartTime = ( T->StartTime + EpgTimeOffset );
 	                asprintf( &DateTime, "%s", ctime( &StartTime ) );
-			fprintf( File, "S - %s", DateTime );
+			log_message(TRACE, "S - %s", DateTime );
 		      }
 		      sTheme *ST = ( lThemes + T->ThemeId );
 		      if( ST->Name[0] != '\0' )
 		      {
-		        fprintf( File, "S %s\n", ST->Name );
+		        log_message(TRACE, "S %s", ST->Name );
 		      }
 		      else
 		      {
-		        if( debug )
+		        if( is_logging(DEBUG) )
 			{
 			  time_t StartTime;
 			  StartTime = ( T->StartTime + EpgTimeOffset );
@@ -3970,7 +3937,7 @@ void cTaskLoadepg::CreateEpgDataFile( void )
 	    fprintf( File, "T %s\n", &bTitles[T->pData] );
 	    if( ( lThemes + T->ThemeId )->Name[0] != '\0' )
 	    {
-	      if( debug && DEBUG_STARTTIME )
+	      if( is_logging(TRACE) )
 	      {
 	        time_t StartTime;
 	        char *DateTime;
@@ -4010,12 +3977,12 @@ void cTaskLoadepg::CreateEpgDataFile( void )
     }
     else
     {
-      esyslog( "LoadEPG: Error, can't open file '%s', %s", FILE_EPG_ERR, strerror( errno ) );
+      log_message(ERROR, "can't open file '%s', %s", FILE_EPG_ERR, strerror( errno ) );
     }
   }
   else
   {
-    esyslog( "LoadEPG: Error, can't open file '%s', %s", FILE_EPG_TMP, strerror( errno ) );
+    log_message(ERROR, "can't open file '%s', %s", FILE_EPG_TMP, strerror( errno ) );
   }
 };
 /// }}}
@@ -4102,19 +4069,18 @@ void EPGGrabber::Grab()
       time_t diff = now - starttime;
       if (Task->IsLoopRunning())
       {
-        if ( debug ) {
-	  Dprintf("%d found %d channels %d titles %d summaries\n", diff, nChannels, nTitles, nSummaries);
+        if ( is_logging(DEBUG) ) {
+	  log_message(DEBUG, "%d found %d channels %d titles %d summaries", diff, nChannels, nTitles, nSummaries);
         } else {
-	  Dprintf("\r%d found %d channels %d titles %d summaries\r", diff, nChannels, nTitles, nSummaries);
+	  log_raw_message(INFO, "\r%d found %d channels %d titles %d summaries\r", diff, nChannels, nTitles, nSummaries);
         }
       }
       if (diff >= 60)
       {
-	Dprintf("timed out\n");
+	log_message(ERROR, "timed out");
 	break;
       }
     }
-
     Task->Stop();
     // stop load epg
     delete( Task );

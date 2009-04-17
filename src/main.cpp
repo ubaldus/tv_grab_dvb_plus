@@ -41,6 +41,7 @@
 #include "loadepg.h"
 #include "lookup.h"
 #include "chanid.h"
+#include "log.h"
 
 char *ProgName;
 
@@ -48,7 +49,6 @@ int adapter = 0;
 int demuxno = 0;
 int vdrmode = 0;
 bool useshortxmlids = false;
-bool debug = false;
 
 int format = DATA_FORMAT_DVB;
 
@@ -73,7 +73,6 @@ static void usage()
 	    "\t-h (--help)             output this help text\n"
 	    "\t-C (--chanids)          use channel identifiers from file 'chanidents'\n"
 	    "\t                        (default sidnumber.dvb.guide)\n"
-	    "\t-d (--debug)            output additional debugging information\n"
 	    "\t-I (--invalid-dates)    output invalid dates (default is to ignore them)\n"
 	    "\t-S (--stats)            output runtime statistics (default false)\n"
 	    "\t-s (--short-xml)        output short xml ids (default false)\n"
@@ -81,6 +80,7 @@ static void usage()
 	    "\t-v (--vdr)              vdr output mode (default false)\n"
 	    "\t-a (--adapter) adapter# change the adapter number (default 0)\n"
 	    "\t-c (--conf)    dir      change the config directory (default ./conf)\n"
+	    "\t-d (--debug)   level    output debug infoi (none|trace|debug|warning|error) (default error)\n"
 	    "\t-d (--demux)   demux#   change the demux number (default 0)\n"
 	    "\t-f (--format)  format   format of incoming data (dvb|freesat|sky|mhw1|mhw2) (default dvb)\n"
 	    "\t-i (--input)   file     read from file/device instead of %s\n"
@@ -100,7 +100,7 @@ static int do_options(int arg_count, char **arg_strings)
 	{"adapter", 1, 0, 'a'},
 	{"chanids", 0, 0, 'C'},
 	{"conf", 1, 0, 'c'},
-	{"debug", 0, 0, 'd'},
+	{"debug", 1, 0, 'd'},
 	{"format", 1, 0, 'f'},
 	{"help", 0, 0, 'h'},
 	{"invalid-dates", 0, 0, 'I'},
@@ -119,7 +119,7 @@ static int do_options(int arg_count, char **arg_strings)
     char *f;
 
     while (1) {
-	int c = getopt_long(arg_count, arg_strings, "a:Cc:df:hIi:O:o:Sst:uv",
+	int c = getopt_long(arg_count, arg_strings, "a:Cc:d:f:hIi:O:o:Sst:uv",
 			    Long_Options, &Option_Index);
 	if (c == EOF)
 	    break;
@@ -138,7 +138,7 @@ static int do_options(int arg_count, char **arg_strings)
 	    ignore_bad_dates = false;
 	    break;
 	case 'd':
-	    debug = true;
+	    log_level(optarg);
 	    break;
 	case 'f':
 	    f = optarg;
@@ -239,8 +239,7 @@ static void footer()
  */
 static void finish_up(int)
 {
-    if (debug)
-	fprintf(stderr, "\n");
+    log_message(DEBUG, "\n");
     footer();
     exit(0);
 }
