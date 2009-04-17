@@ -26,6 +26,8 @@
 #include "include/vdr/channels.h"
 #include "include/vdr/i18n.h"
 
+#include "log.h"
+
 // --- cDevice ---------------------------------------------------------------
 
 // The default priority for non-primary devices:
@@ -60,7 +62,7 @@ cDevice::cDevice(void)
   if (numDevices < MAXDEVICES)
      device[numDevices++] = this;
   else
-     esyslog("ERROR: too many devices!");
+     log_message(ERROR, "too many devices!");
 }
 
 cDevice::~cDevice()
@@ -78,10 +80,10 @@ int cDevice::NextCardIndex(int n)
   if (n > 0) {
      nextCardIndex += n;
      if (nextCardIndex >= MAXDEVICES)
-        esyslog("ERROR: nextCardIndex too big (%d)", nextCardIndex);
+        log_message(ERROR, "nextCardIndex too big (%d)", nextCardIndex);
      }
   else if (n < 0)
-     esyslog("ERROR: illegal value in IncCardIndex(%d)", n);
+     log_message(ERROR, "illegal value in IncCardIndex(%d)", n);
   return nextCardIndex;
 }
 
@@ -102,14 +104,14 @@ bool cDevice::SetPrimaryDevice(int n)
 {
   n--;
   if (0 <= n && n < numDevices && device[n]) {
-     isyslog("setting primary device to %d", n + 1);
+     log_message(DEBUG, "setting primary device to %d", n + 1);
      if (primaryDevice)
         primaryDevice->MakePrimaryDevice(false);
      primaryDevice = device[n];
      primaryDevice->MakePrimaryDevice(true);
      return true;
      }
-  esyslog("ERROR: invalid primary device number: %d", n + 1);
+  log_message(ERROR, "invalid primary device number: %d", n + 1);
   return false;
 }
 
@@ -218,7 +220,7 @@ bool cDevice::AddPid(int Pid, ePidType PidType)
         n = a;
         }
      else
-        esyslog("ERROR: no free slot for PID %d", Pid);
+        log_message(ERROR, "no free slot for PID %d", Pid);
      if (n >= 0) {
         pidHandles[n].pid = Pid;
         pidHandles[n].used = 1;

@@ -28,6 +28,7 @@
 
 #include "constants.h"
 #include "filter.h"
+#include "log.h"
 
 struct filter_t filters[MAX_FILTERS];
 
@@ -38,9 +39,9 @@ extern char *ProgName;
 void add_filter(unsigned short int pid, unsigned char tid, unsigned char mask)
 {
     if (no_filters >= MAX_FILTERS) {
-	fprintf(stderr,
-		"%s: error, numbers of filters is greater than %i, can't add filter pid=0x%04x tid=0x%02x mask=0x%02x",
-		ProgName, MAX_FILTERS, pid, tid, mask);
+	log_message(ERROR,
+		"numbers of filters is greater than %i, can't add filter pid=0x%04x tid=0x%02x mask=0x%02x",
+		MAX_FILTERS, pid, tid, mask);
 	return;
     }
     filters[no_filters].pid = pid;
@@ -54,7 +55,7 @@ int start_filters(int fd)
     struct dmx_sct_filter_params sctFilterParams;
     int id;
 
-    fprintf(stderr, "%s: starting %d filter(s)\n", ProgName, no_filters);
+    log_message(DEBUG, "starting %d filter(s)\n", no_filters);
     memset(&sctFilterParams, 0, sizeof(sctFilterParams));
     sctFilterParams.timeout = 0;
     sctFilterParams.flags = DMX_IMMEDIATE_START;
@@ -63,9 +64,9 @@ int start_filters(int fd)
 	sctFilterParams.filter.filter[0] = filters[id].tid;
 	sctFilterParams.filter.mask[0] = filters[id].mask;
 	if (ioctl(fd, DMX_SET_FILTER, &sctFilterParams) < 0) {
-	    fprintf(stderr,
-		    "%s: error, can't start filter pid=0x%04x tid=0x%02x mask=0x%02x\n",
-		    ProgName, filters[id].pid, filters[id].tid, filters[id].mask);
+	    log_message(ERROR,
+		    "can't start filter pid=0x%04x tid=0x%02x mask=0x%02x\n",
+		    filters[id].pid, filters[id].tid, filters[id].mask);
             return FAILURE;
 	}
     }

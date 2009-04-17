@@ -154,8 +154,7 @@ static int do_options(int arg_count, char **arg_strings)
 	    } else if (strcasecmp(f, "mhw2") == 0) {
 		format = DATA_FORMAT_MHW_2;
 	    } else {
-		fprintf(stderr, "%s: invalid format \"%s\"\n", ProgName,
-			f);
+		log_message(ERROR, "invalid format \"%s\"", f);
 		usage();
 	    }
 	    break;
@@ -169,15 +168,13 @@ static int do_options(int arg_count, char **arg_strings)
 	case 'O':
 	    time_offset = atoi(optarg);
 	    if ((time_offset < -12) || (time_offset > 12)) {
-		fprintf(stderr, "%s: invalid time offset\n", ProgName);
+		log_message(ERROR, "invalid time offset");
 		usage();
 	    }
 	    break;
 	case 'o':
-	    if ((fd =
-		 open(optarg, O_CREAT | O_TRUNC | O_WRONLY, 0666)) < 0) {
-		fprintf(stderr, "%s: can't write file %s\n", ProgName,
-			optarg);
+	    if ((fd = open(optarg, O_CREAT | O_TRUNC | O_WRONLY, 0666)) < 0) {
+		log_message(ERROR, "can't write to file %s", optarg);
 		usage();
 	    }
 	    dup2(fd, STDOUT_FILENO);
@@ -192,7 +189,7 @@ static int do_options(int arg_count, char **arg_strings)
 	case 't':
 	    timeout = atoi(optarg);
 	    if (0 == timeout) {
-		fprintf(stderr, "%s: invalid timeout value\n", ProgName);
+		log_message(ERROR, "invalid timeout value");
 		usage();
 	    }
 	    break;
@@ -204,9 +201,7 @@ static int do_options(int arg_count, char **arg_strings)
 	    break;
 	case 0:
 	default:
-	    fprintf(stderr,
-		    "%s: unknown getopt error - returned code %02x\n",
-		    ProgName, c);
+	    log_message(ERROR, "unknown getopt error - returned code %02x", c);
 	    _exit(1);
 	}
     }
@@ -240,7 +235,7 @@ static void footer()
  */
 static void finish_up(int)
 {
-    log_message(DEBUG, "\n");
+    log_message(DEBUG, "");
     footer();
     exit(0);
 }
@@ -270,17 +265,17 @@ static int openInput(int format)
 	bool found = false;
 	switch (format) {
 	case DATA_FORMAT_DVB:
-	    fprintf(stderr, "%s: set up DVB filter\n", ProgName);
+	    log_message(TRACE, "set up DVB filter");
 	    add_filter(0x14, 0x70, 0xfc);	// TOT && TDT
 	    add_filter(DVB_EIT_PID, 0x00, 0x00);
 	    break;
 	case DATA_FORMAT_FREESAT:
-	    fprintf(stderr, "%s: set up Freesat filter\n", ProgName);
+	    log_message(TRACE, "set up Freesat filter");
 	    add_filter(0x14, 0x70, 0xfc);	// TOT && TDT
 	    add_filter(FREESAT_EIT_PID, 0x00, 0x00);
 	    break;
 	case DATA_FORMAT_SKYBOX:
-	    fprintf(stderr, "%s: set up Sky UK filter\n", ProgName);
+	    log_message(TRACE, "set up Sky filter");
 	    add_filter(0x14, 0x70, 0xfc);	// TOT && TDT
 	    add_filter(0x11, 0x4a, 0xff);
 	    add_filter(0x30, 0xa0, 0xfc);
@@ -301,8 +296,7 @@ static int openInput(int format)
 	    add_filter(0x47, 0xa8, 0xfc);
 	    break;
 	case DATA_FORMAT_MHW_1:
-	    fprintf(stderr, "%s: set up MediaHighway 1 filter\n",
-		    ProgName);
+	    log_message(TRACE, "set up MediaHighway 1 filter");
 	    add_filter(0x14, 0x70, 0xfc);	// TOT && TDT
 	    add_filter(0xd2, 0x90, 0xff);
 	    add_filter(0xd3, 0x90, 0xff);
@@ -310,15 +304,14 @@ static int openInput(int format)
 	    add_filter(0xd3, 0x92, 0xff);
 	    break;
 	case DATA_FORMAT_MHW_2:
-	    fprintf(stderr, "%s: set up MediaHighway 2 filter\n",
-		    ProgName);
+	    log_message(TRACE, "set up MediaHighway 2 filter");
 	    add_filter(0x14, 0x70, 0xfc);	// TOT && TDT
 	    add_filter(0x231, 0xc8, 0xff);
 	    add_filter(0x234, 0xe6, 0xff);
 	    add_filter(0x236, 0x96, 0xff);
 	    break;
 	default:
-	    fprintf(stderr, "%s: set up no filter!\n", ProgName);
+	    log_message(ERROR, "did not set up any filter!");
 	    break;
 	}
 	if (!start_filters(fd_epg)) {
@@ -333,22 +326,20 @@ static int openInput(int format)
 	    ufd.events = POLLIN;
 	    res = poll(&ufd, 1, 1000);
 	    if (0 == res) {
-		fprintf(stderr, ".");
-		fflush(stderr);
+		log_raw_message(TRACE, ".");
 		continue;
 	    }
 	    if (1 == res) {
 		found = true;
 		break;
 	    }
-	    fprintf(stderr, "%s: error polling for data\n", ProgName);
+	    log_message(ERROR, "error polling for data");
 	    close(fd_epg);
 	    return -1;
 	}
 	fprintf(stdout, "\n");
 	if (!found) {
-	    fprintf(stderr, "%s: timeout - try tuning to a multiplex?\n",
-		    ProgName);
+	    log_message(ERROR, "timeout - try tuning to a multiplex");
 	    close(fd_epg);
 	    return -1;
 	}
@@ -400,12 +391,12 @@ int main(int argc, char **argv) {
 	    asprintf(&chanidfile, "%s/%s.mhw2", conf, CHANIDENTS);
 	    break;
 	default:
-	    fprintf(stderr, "%s: no format specified!\n", ProgName);
+	    log_message(ERROR, "no format specified");
 	    asprintf(&chanidfile, "%s/%s", conf, CHANIDENTS);
 	    break;
 	}
         if (use_chanidents && !load_channel_table(chanidfile)) {
-	    fprintf(stderr, "error loading %s, continuing.\n", chanidfile);
+	    log_message(WARNING, "error loading %s, continuing", chanidfile);
 	}
     }
 
@@ -413,18 +404,14 @@ int main(int argc, char **argv) {
     switch (format) {
     case DATA_FORMAT_DVB:
 	if (openInput(format) != 0) {
-	    fprintf(stderr,
-		    "%s: unable to get event data from multiplex.\n",
-		    ProgName);
+	    log_message(ERROR, "unable to get event data from multiplex");
 	    exit(1);
 	}
 	readEventTables(format);
 	break;
     case DATA_FORMAT_FREESAT:
 	if (openInput(format) != 0) {
-	    fprintf(stderr,
-		    "%s: unable to get event data from multiplex.\n",
-		    ProgName);
+	    log_message(ERROR, "unable to get event data from multiplex");
 	    exit(1);
 	}
 	readEventTables(format);
