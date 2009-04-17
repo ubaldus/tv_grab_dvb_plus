@@ -21,6 +21,7 @@
 #include "loadepg.h"
 #include "dvbtext.h"
 #include "chanid.h"
+#include "stats.h"
 
 static const char *VERSION        = "0.2.1-20080915";
 #if APIVERSNUM >= 10507
@@ -35,13 +36,10 @@ static const char *MAINMENUENTRY  = "LoadEPG";
 #define esyslog(x, args...) fprintf(stderr, x "\n", ##args)
 #define Dprintf(x, args...) fprintf(stderr, x, ##args)
 
-#if 1
-#undef DEBUG
-#define DEBUG 1
-#endif
-
 sConfig *Config;
 cTaskLoadepg *Task;
+
+extern bool debug;
 
 extern char *ProgName;
 extern char conf[1024];
@@ -246,12 +244,12 @@ static void ReadConfigLoadepg( void )
       memset( Buffer, 0, sizeof( Buffer ) );
     }
     fclose( File );
-#if DEBUG
-    for( int i = 0; i < nProviders; i ++ )
-    {
-      fprintf( stderr, "%s|%i|%s|%s|%s\n", ( lProviders + i )->Title, ( lProviders + i )->SourceId, ( lProviders + i )->Parm1, ( lProviders + i )->Parm2, ( lProviders + i )->Parm3 );
+    if (debug) {
+      for( int i = 0; i < nProviders; i ++ )
+      {
+        fprintf( stderr, "%s|%i|%s|%s|%s\n", ( lProviders + i )->Title, ( lProviders + i )->SourceId, ( lProviders + i )->Parm1, ( lProviders + i )->Parm2, ( lProviders + i )->Parm3 );
+      }
     }
-#endif
   }
   
   // IsSkyThemes (IT)
@@ -925,7 +923,7 @@ void cTaskLoadepg::Action( void )
   EpgTimeOffset = 0;
   if( Running() )
   {
-    if( DEBUG )
+    if( debug )
     {
       fprintf( stderr, "LoadEPG: Start task\n" );
     }
@@ -1193,7 +1191,7 @@ void cTaskLoadepg::Action( void )
       bSummaries = NULL;
     }
     esyslog( "LoadEPG: End task" );
-    if( DEBUG )
+    if( debug )
     {
       fprintf( stderr, "LoadEPG: End task\n" );
     }
@@ -2222,7 +2220,7 @@ void cTaskLoadepg::GetSatelliteTimeOffset( int FilterId, unsigned char *Data, in
 	  EpgTimeOffset = ( LocalTimeOffset - SatelliteTimeOffset );
 	  esyslog( "LoadEPG: Satellite Time Offset=[UTC]%+i", SatelliteTimeOffset / 3600 );
 	  esyslog( "LoadEPG: Epg Time Offset=%+i seconds", EpgTimeOffset );
-	  if( DEBUG )
+	  if( debug )
 	  {
 	    esyslog( "LoadEPG: Satellite Time UTC: %s %02i:%02i:%02i", GetStringMJD( satMJD ), satH, satM, satS );
 	    esyslog( "LoadEPG: Satellite CountryCode=%s", SatelliteCountryCode );
@@ -2457,6 +2455,7 @@ void cTaskLoadepg::GetChannelsSKYBOX( int FilterId, unsigned char *Data, int Len
 		      C->IsFound = false;
 		      C->IsEpg = false;
 		      nChannels ++;
+		      incr_stat("channels.count");
 		      if( nChannels >= MAX_CHANNELS )
 		      {
                         esyslog( "LoadEPG: Error, channels found more than %i", MAX_CHANNELS );
@@ -2553,7 +2552,7 @@ void cTaskLoadepg::GetTitlesSKYBOX( int FilterId, unsigned char *Data, int Lengt
 	Len1 = ( ( Data[p+2] & 0x0f ) << 8 ) | Data[p+3];
 	if( Data[p+4] != 0xb5 )
 	{
-	  if( DEBUG )
+	  if( debug )
 	  {
 	    esyslog( "LoadEPG: Data error signature for title" );
 	  }
@@ -2561,7 +2560,7 @@ void cTaskLoadepg::GetTitlesSKYBOX( int FilterId, unsigned char *Data, int Lengt
 	}
         if( Len1 > Length )
 	{
-	  if( DEBUG )
+	  if( debug )
 	  {
 	    esyslog( "LoadEPG: Data error length for title" );
 	  }
@@ -2640,7 +2639,7 @@ void cTaskLoadepg::GetSummariesSKYBOX( int FilterId, unsigned char *Data, int Le
 	Len1 = ( ( Data[p+2] & 0x0f ) << 8 ) | Data[p+3];
 	if( Data[p+4] != 0xb9 )
 	{
-	  if( DEBUG )
+	  if( debug )
 	  {
 	    esyslog( "LoadEPG: Data error signature for summary" );
 	  }
@@ -2648,7 +2647,7 @@ void cTaskLoadepg::GetSummariesSKYBOX( int FilterId, unsigned char *Data, int Le
         }
         if( Len1 > Length )
         {
-          if( DEBUG )
+          if( debug )
 	  {
 	    esyslog( "LoadEPG: Data error length for summary" );
 	  }
@@ -2788,6 +2787,7 @@ void cTaskLoadepg::GetChannelsMHW1( int FilterId, unsigned char *Data, int Lengt
 {
   sChannelMHW1 *Channel = ( sChannelMHW1 * ) ( Data + 4 );
   nChannels = ( Length - 4 ) / sizeof( sChannelMHW1 );
+  set_stat("channels.count", nChannels);
   if( nChannels > MAX_CHANNELS )
   {
     esyslog( "LoadEPG: Error, channels found more than %i", MAX_CHANNELS );
@@ -3063,6 +3063,7 @@ void cTaskLoadepg::GetChannelsMHW2( int FilterId, unsigned char *Data, int Lengt
   if( Length > 119 )
   {
     nChannels = Data[119];
+    set_stat("channels.count", nChannels);
     if( nChannels > MAX_CHANNELS )
     {
       esyslog( "LoadEPG: Error, channels found more than %i", MAX_CHANNELS );
@@ -3284,6 +3285,10 @@ void cTaskLoadepg::CreateEpgXml( void )
   qsort( lTitles, nTitles, sizeof( sTitle ), &qsortTitles );
   qsort( lSummaries, nSummaries, sizeof( sSummary ), &qsortSummaries );
 
+  if (print_stats) {
+    printf("<!-- channels.count=\"%d\" -->\n", get_stat("channels.count"));
+  }
+
   if( ( lProviders + CurrentProvider )->DataFormat == DATA_FORMAT_SKYBOX )
   {
     // SKYBOX
@@ -3473,7 +3478,7 @@ void cTaskLoadepg::CreateEpgXml( void )
 		      //fprintf( Err, "T %s%s\n\n", DecodeText, DecodeErrorText );
 		    }
 		  }
-		  if( DEBUG && DEBUG_STARTTIME )
+		  if( debug && DEBUG_STARTTIME )
 		  {
 		    time_t StartTime;
 		    char *DateTime;
@@ -3488,7 +3493,7 @@ void cTaskLoadepg::CreateEpgXml( void )
 		  }
 		  else
 		  {
-		    if( DEBUG )
+		    if( debug )
 		    {
 		      time_t StartTime;
 		      StartTime = ( T->StartTime + EpgTimeOffset );
@@ -3631,7 +3636,7 @@ void cTaskLoadepg::CreateEpgXml( void )
 	//fprintf( File, "T %s\n", &bTitles[T->pData] );
 	if( ( lThemes + T->ThemeId )->Name[0] != '\0' )
 	{
-	  if( DEBUG && DEBUG_STARTTIME )
+	  if( debug && DEBUG_STARTTIME )
 	  {
 	    time_t StartTime;
 	    char *DateTime;
@@ -3812,7 +3817,7 @@ void cTaskLoadepg::CreateEpgDataFile( void )
 		          fprintf( Err, "T %s%s\n\n", DecodeText, DecodeErrorText );
 			}
 		      }
-		      if( DEBUG && DEBUG_STARTTIME )
+		      if( debug && DEBUG_STARTTIME )
 		      {
 	                time_t StartTime;
 	                char *DateTime;
@@ -3827,7 +3832,7 @@ void cTaskLoadepg::CreateEpgDataFile( void )
 		      }
 		      else
 		      {
-		        if( DEBUG )
+		        if( debug )
 			{
 			  time_t StartTime;
 			  StartTime = ( T->StartTime + EpgTimeOffset );
@@ -3965,7 +3970,7 @@ void cTaskLoadepg::CreateEpgDataFile( void )
 	    fprintf( File, "T %s\n", &bTitles[T->pData] );
 	    if( ( lThemes + T->ThemeId )->Name[0] != '\0' )
 	    {
-	      if( DEBUG && DEBUG_STARTTIME )
+	      if( debug && DEBUG_STARTTIME )
 	      {
 	        time_t StartTime;
 	        char *DateTime;
@@ -4097,11 +4102,11 @@ void EPGGrabber::Grab()
       time_t diff = now - starttime;
       if (Task->IsLoopRunning())
       {
-#ifdef DEBUG
-	Dprintf("%d found %d channels %d titles %d summaries\n", diff, nChannels, nTitles, nSummaries);
-#else
-	Dprintf("\r%d found %d channels %d titles %d summaries\r", diff, nChannels, nTitles, nSummaries);
-#endif
+        if ( debug ) {
+	  Dprintf("%d found %d channels %d titles %d summaries\n", diff, nChannels, nTitles, nSummaries);
+        } else {
+	  Dprintf("\r%d found %d channels %d titles %d summaries\r", diff, nChannels, nTitles, nSummaries);
+        }
       }
       if (diff >= 60)
       {

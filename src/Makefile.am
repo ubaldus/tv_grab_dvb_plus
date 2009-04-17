@@ -23,6 +23,7 @@ tv_grab_dvb_plus_SOURCES = \
 	freesathuffman.c \
 	freesattables.c \
 	lookup.c
+	stats.c \
 	\
 	chanid.h \
 	constants.h \
@@ -37,4 +38,5 @@ tv_grab_dvb_plus_SOURCES = \
 	freesattables.h \
 	loadepg.h \
 	lookup.h \
-	sitables.h
+	sitables.h \
+	stats.h

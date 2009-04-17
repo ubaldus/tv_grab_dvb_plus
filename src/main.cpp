@@ -57,6 +57,7 @@ int time_offset = 0;
 bool ignore_bad_dates = true;
 bool ignore_updates = true;
 bool use_chanidents = false;
+bool print_stats = false;
 
 char demux[32] = "/dev/dvb/adapter0/demux0";
 char conf[1024] = "./conf";
@@ -68,12 +69,13 @@ char conf[1024] = "./conf";
 static void usage()
 {
     fprintf(stderr,
-	    "usage: %s [-h] [-C] [-d] [-I] [-s] [-u] [-v] [-a adapter] [-c dir] [-f format] [-i file] [-O offset] [-o file] [-t timeout]\n\n"
+	    "usage: %s [-h] [-C] [-d] [-I] [-S] [-s] [-u] [-v] [-a adapter] [-c dir] [-f format] [-i file] [-O offset] [-o file] [-t timeout]\n\n"
 	    "\t-h (--help)             output this help text\n"
 	    "\t-C (--chanids)          use channel identifiers from file 'chanidents'\n"
 	    "\t                        (default sidnumber.dvb.guide)\n"
 	    "\t-d (--debug)            output additional debugging information\n"
 	    "\t-I (--invalid-dates)    output invalid dates (default is to ignore them)\n"
+	    "\t-S (--stats)            output runtime statistics (default false)\n"
 	    "\t-s (--short-xml)        output short xml ids (default false)\n"
 	    "\t-u (--updated-info)     output updated info (will result in repeated information) (default false)\n"
 	    "\t-v (--vdr)              vdr output mode (default false)\n"
@@ -106,6 +108,7 @@ static int do_options(int arg_count, char **arg_strings)
 	{"offset", 1, 0, 'O'},
 	{"output", 1, 0, 'o'},
 	{"short-xml", 0, 0, 's'},
+	{"stats", 0, 0, 'S'},
 	{"timeout", 1, 0, 't'},
 	{"updated-info", 0, 0, 'u'},
 	{"vdr", 0, 0, 'v'},
@@ -116,7 +119,7 @@ static int do_options(int arg_count, char **arg_strings)
     char *f;
 
     while (1) {
-	int c = getopt_long(arg_count, arg_strings, "a:Cc:df:hIi:O:o:st:uv",
+	int c = getopt_long(arg_count, arg_strings, "a:Cc:df:hIi:O:o:Sst:uv",
 			    Long_Options, &Option_Index);
 	if (c == EOF)
 	    break;
@@ -178,6 +181,9 @@ static int do_options(int arg_count, char **arg_strings)
 	    }
 	    dup2(fd, STDOUT_FILENO);
 	    close(fd);
+	    break;
+	case 'S':
+	    print_stats = true;
 	    break;
 	case 's':
 	    useshortxmlids = true;
