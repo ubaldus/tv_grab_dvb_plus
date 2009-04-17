@@ -8,7 +8,6 @@ tv_grab_dvb_plus_SOURCES = \
 	filter.cpp \
 	loadepg.cpp \
 	main.cpp \
-	menuitems.cpp \
 	misc.cpp \
 	osdbase.cpp \
 	thread.cpp \
