@@ -249,10 +249,6 @@ class cTaskLoadepg : public cThread
     void LoadFromSatellite( void );
     void LoadFromCable( void );
     void Stop();
-#ifndef STANDALONE
-    void LoadFromFile( const char *FileEpg );
-    void LoadFromScript( const char *FileScript, const char *FileEpg );
-#endif
     bool IsLoopRunning() const { return IsRunning; }
 };
 

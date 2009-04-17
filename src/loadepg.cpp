@@ -1035,9 +1035,6 @@ void cTaskLoadepg::Action( void )
 		{
 	          VdrChannel = Channels.GetByNumber( EpgDevice->CurrentChannel() );
 	          EpgChannel = new cChannel();
-#ifndef STANDALONE
-	          *EpgChannel = *VdrChannel;
-#endif
 #if APIVERSNUM >= 10700
                   EpgChannel->cChannel::SetSatTransponderData( cSource::FromString( SourceName ), Frequency, Polarization, SymbolRate, DVBFE_FEC_AUTO, DVBFE_MOD_AUTO, DVBFE_DELSYS_DVBS, DVBFE_ROLLOFF_UNKNOWN );
 #elif APIVERSNUM == 10514	      
@@ -1117,16 +1114,6 @@ void cTaskLoadepg::Action( void )
 	}
 	Setup.UpdateChannels = SetupUpdateChannels;
         break;
-#ifndef STANDALONE
-      case DATA_FORMAT_FILE:
-        LoadFromFile( ( lProviders + CurrentProvider )->Parm1 );
-	cCondWait::SleepMs( 5000 );
-        break;
-      case DATA_FORMAT_SCRIPT:
-        LoadFromScript( ( lProviders + CurrentProvider )->Parm1, ( lProviders + CurrentProvider )->Parm2 );
-	cCondWait::SleepMs( 5000 );
-        break;
-#endif
       default:
         break;
     }
@@ -1181,9 +1168,6 @@ void cTaskLoadepg::Action( void )
       }
     }
   }
-#ifndef STANDALONE
-  Control->Error = IsError;
-#endif
   Setup.UpdateChannels = SetupUpdateChannels;
 }
 // }}}
@@ -1663,11 +1647,7 @@ void cTaskLoadepg::CreateFileChannels( const char *FileChannels )
       if( C->Nid > 0 && C->Tid > 0 && C->Sid > 0 )
       {
 	tChannelID ChVID = tChannelID( ( lProviders + CurrentProvider )->SourceId, C->Nid, C->Tid, C->Sid );
-#ifdef STANDALONE
 	cChannel *VC = NULL;
-#else
-	cChannel *VC = Channels.GetByChannelID( ChVID, true );
-#endif
 	if( VC )
 	{
 	  asprintf( &ServiceName, "%s", VC->Name() );
@@ -1715,85 +1695,6 @@ void cTaskLoadepg::CreateFileChannels( const char *FileChannels )
   }
 }
 // }}}
-
-#ifndef STANDALONE
-// cTaskLoadepg::LoadFromFile and cTaskLoadepg::LoadFromScript {{{
-void cTaskLoadepg::LoadFromFile( const char *FileEpg )
-{
-  char *FileTmp;
-  FILE *File;
-  asprintf( &FileTmp, "%s/%s", Config->Directory, FileEpg );
-  File = fopen( FileTmp, "r" );
-  if( File == NULL )
-  {
-    free( FileTmp );
-    asprintf( &FileTmp, "%s", FileEpg );
-    File = fopen( FileTmp, "r" );
-    if( File == NULL )
-    {
-      log_message(ERROR, "opening epg data file '%s' from function LoadFromFile(), %s", FileTmp, strerror( errno ) );
-      free( FileTmp );
-      IsError = true;
-      return;
-    }
-  }
-  fclose( File );
-#if APIVERSNUM >= 10500
-  const char *SysChar = cCharSetConv::SystemCharacterTable();
-  if( SysChar == NULL || ! strcasestr( SysChar, "ISO-8859-15" ) )
-  {
-    char *Cmd;
-    asprintf( &Cmd, "iconv -f ISO-8859-15 -t %s -o \"%s.converted\" \"%s\"", SysChar ? SysChar : "UTF-8", FileTmp, FileTmp );
-    SystemExec( Cmd );
-    free( Cmd );
-    asprintf( &Cmd, "mv \"%s.converted\" \"%s\"", FileTmp, FileTmp );
-    SystemExec( Cmd );
-    free( Cmd );
-  }
-#endif
-  File = fopen( FileTmp, "r" );
-  if( cSchedules::Read( File ) )
-  {
-    cSchedules::Cleanup( true );
-  }
-  fclose( File );
-}
-
-void cTaskLoadepg::LoadFromScript( const char *FileScript, const char *FileEpg )
-{
-  char *FileTmp;
-  FILE *File;
-  asprintf( &FileTmp, "%s/%s", Config->Directory, FileScript );
-  File = fopen( FileTmp, "r" );
-  if( File == NULL )
-  {
-    free( FileTmp );
-    asprintf( &FileTmp, "%s", FileScript );
-    File = fopen( FileTmp, "r" );
-    if( File == NULL )
-    {
-      log_message(ERROR, "opening script file '%s' from function LoadFromScript(), %s", FileTmp, strerror( errno ) );
-      free( FileTmp );
-      IsError = true;
-      return;
-    }
-  }
-  fclose( File );
-  if( system( FileTmp ) == -1 )
-  {
-    log_message(ERROR, "execute script file '%s' from function LoadFromScript()", FileTmp );
-    free( FileTmp );
-    IsError = true;
-    return;
-  }
-  else
-  {
-    LoadFromFile( FileEpg );
-  }
-  free( FileTmp );
-}
-// }}}
-#endif
 
 // cTaskLoadepg Filter Control {{{
 void cTaskLoadepg::AddFilter( unsigned short int Pid, unsigned char Tid, unsigned char Mask )
@@ -3372,33 +3273,17 @@ void cTaskLoadepg::CreateEpgXml( void )
 		{
 		  C->IsEpg = true;
 		  tChannelID ChVID = tChannelID( ( lProviders + CurrentProvider )->SourceId, C->Nid, C->Tid, C->Sid );
-#ifdef STANDALONE
 		  cChannel *VC = NULL;
-#else
-		  cChannel *VC = Channels.GetByChannelID( ChVID, true );
-		  if( VC )
-#endif
 		  {
-#ifdef STANDALONE
 		    KeyEC.OriginalSourceId = C->ChannelId;
 		    KeyEC.OriginalNid = C->Nid;
 		    KeyEC.OriginalTid = C->Tid;
 		    KeyEC.OriginalSid = C->Sid;
-#else
-		    KeyEC.OriginalSourceId = VC->Source();
-		    KeyEC.OriginalNid = VC->Nid();
-		    KeyEC.OriginalTid = VC->Tid();
-		    KeyEC.OriginalSid = VC->Sid();
-#endif
 		    EC = ( sEquivChannel * ) bsearch( &KeyEC, lEquivChannels, nEquivChannels, sizeof( sEquivChannel ), &bsearchEquivChannel );
 		    if( EC && Config->UseFileEquivalents )
 		    {
 		      tChannelID ChEID = tChannelID( EC->EquivSourceId, EC->EquivNid, EC->EquivTid, EC->EquivSid, EC->EquivRid );
-#ifdef STANDALONE
 		      cChannel *VEC = NULL;
-#else
-		      cChannel *VEC = Channels.GetByChannelID( ChEID, false );
-#endif
 		      if( VEC )
 		      {
 			//fprintf( File, "<se>C %s-%i-%i-%i-%i name=\"%s\"\n", *cSource::ToString( VEC->Source() ), VEC->Nid(), VEC->Tid(), VEC->Sid(), VEC->Rid(), VEC->Name() );
@@ -3550,11 +3435,7 @@ void cTaskLoadepg::CreateEpgXml( void )
 	if( C )
 	{
 	  tChannelID ChVID = tChannelID( ( lProviders + CurrentProvider )->SourceId, C->Nid, C->Tid, C->Sid );
-#ifdef STANDALONE
 	  cChannel *VC = NULL;
-#else
-	  cChannel *VC = Channels.GetByChannelID( ChVID, false );
-#endif
 	  if( VC )
 	  {
 	    KeyEC.OriginalSourceId = VC->Source();
@@ -3565,11 +3446,7 @@ void cTaskLoadepg::CreateEpgXml( void )
 	    if( EC && Config->UseFileEquivalents )
 	    {
 	      tChannelID ChEID = tChannelID( EC->EquivSourceId, EC->EquivNid, EC->EquivTid, EC->EquivSid, EC->EquivRid );
-#ifdef STANDALONE
 	      cChannel *VEC = NULL;
-#else
-	      cChannel *VEC = Channels.GetByChannelID( ChEID, false );
-#endif
 	      if( VEC )
 	      {
 		//fprintf( File, "<mhw>C %s-%i-%i-%i-%i %s\n", *cSource::ToString( VEC->Source() ), VEC->Nid(), VEC->Tid(), VEC->Sid(), VEC->Rid(), VEC->Name() );
@@ -3705,33 +3582,17 @@ void cTaskLoadepg::CreateEpgDataFile( void )
 		    {
 		      C->IsEpg = true;
 		      tChannelID ChVID = tChannelID( ( lProviders + CurrentProvider )->SourceId, C->Nid, C->Tid, C->Sid );
-#ifdef STANDALONE
 		      cChannel *VC = NULL;
-#else
-		      cChannel *VC = Channels.GetByChannelID( ChVID, true );
-		      if( VC )
-#endif
 		      {
-#ifdef STANDALONE
 		        KeyEC.OriginalSourceId = C->ChannelId;
 			KeyEC.OriginalNid = C->Nid;
 			KeyEC.OriginalTid = C->Tid;
 			KeyEC.OriginalSid = C->Sid;
-#else
-		        KeyEC.OriginalSourceId = VC->Source();
-			KeyEC.OriginalNid = VC->Nid();
-			KeyEC.OriginalTid = VC->Tid();
-			KeyEC.OriginalSid = VC->Sid();
-#endif
 			EC = ( sEquivChannel * ) bsearch( &KeyEC, lEquivChannels, nEquivChannels, sizeof( sEquivChannel ), &bsearchEquivChannel );
 			if( EC && Config->UseFileEquivalents )
 			{
 			  tChannelID ChEID = tChannelID( EC->EquivSourceId, EC->EquivNid, EC->EquivTid, EC->EquivSid, EC->EquivRid );
-#ifdef STANDALONE
 			  cChannel *VEC = NULL;
-#else
-			  cChannel *VEC = Channels.GetByChannelID( ChEID, false );
-#endif
 			  if( VEC )
 			  {
 			    fprintf( File, "<se>C %s-%i-%i-%i-%i name=\"%s\"\n", *cSource::ToString( VEC->Source() ), VEC->Nid(), VEC->Tid(), VEC->Sid(), VEC->Rid(), VEC->Name() );
@@ -3878,11 +3739,7 @@ void cTaskLoadepg::CreateEpgDataFile( void )
 	    if( C )
 	    {
 	      tChannelID ChVID = tChannelID( ( lProviders + CurrentProvider )->SourceId, C->Nid, C->Tid, C->Sid );
-#ifdef STANDALONE
 	      cChannel *VC = NULL;
-#else
-	      cChannel *VC = Channels.GetByChannelID( ChVID, false );
-#endif
 	      if( VC )
 	      {
                 KeyEC.OriginalSourceId = VC->Source();
@@ -3893,11 +3750,7 @@ void cTaskLoadepg::CreateEpgDataFile( void )
 		if( EC && Config->UseFileEquivalents )
 		{
 		  tChannelID ChEID = tChannelID( EC->EquivSourceId, EC->EquivNid, EC->EquivTid, EC->EquivSid, EC->EquivRid );
-#ifdef STANDALONE
 		  cChannel *VEC = NULL;
-#else
-		  cChannel *VEC = Channels.GetByChannelID( ChEID, false );
-#endif
 		  if( VEC )
 		  {
 		    fprintf( File, "<mhw>C %s-%i-%i-%i-%i %s\n", *cSource::ToString( VEC->Source() ), VEC->Nid(), VEC->Tid(), VEC->Sid(), VEC->Rid(), VEC->Name() );
@@ -3961,9 +3814,6 @@ void cTaskLoadepg::CreateEpgDataFile( void )
       }
       fclose( File );
       fclose( Err );
-#ifndef STANDALONE
-      LoadFromFile( FILE_EPG_TMP );
-#endif
       CreateFileChannels( FILE_EPG_CHANNELS );
     }
     else

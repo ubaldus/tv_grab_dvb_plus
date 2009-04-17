@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -Wall -DSTANDALONE -I@top_srcdir@/include
+AM_CPPFLAGS = -Wall -I@top_srcdir@/include
 
 bin_PROGRAMS = tv_grab_dvb_plus
 
