@@ -98,7 +98,6 @@ static void ReadConfigLoadepg( void )
   char *Line;
   FILE *File;
   char *FileName;
-  bool IsSkyThemesNull = false;
   if( lProviders )
   {
     if( nProviders > 0 )
@@ -136,7 +135,7 @@ static void ReadConfigLoadepg( void )
   nProviders = 0;
   nEquivChannels = 0;
   
-  // Read loadepg.conf
+  // Read epg.conf
   asprintf( &FileName, "%s/%s", Config->Directory, LOADEPG_FILE_CONF );
   log_message(TRACE, "read config file \"%s\"", FileName);
   File = fopen( FileName, "r" );
@@ -170,17 +169,6 @@ static void ReadConfigLoadepg( void )
 	    asprintf( &( lProviders + nProviders )->Parm2, "%s", string3 );
 	    asprintf( &( lProviders + nProviders )->Parm3, "%s", string4 );
 	    nProviders ++;
-	  }
-          else if( sscanf( Line, "SKYBOX=%[^:] :%i :%c :%[^:] :%i :%s ", string1, &int1, &char1, string2, &int2, string3 ) == 6 )
-	  {
-	    asprintf( &( lProviders + nProviders )->Title, "%s", string1 );
-	    ( lProviders + nProviders )->DataFormat = DATA_FORMAT_SKYBOX;
-	    ( lProviders + nProviders )->SourceId = cSource::FromString( string2 );
-	    asprintf( &( lProviders + nProviders )->Parm1, "%i:%c:%s:%i", int1, char1, string2, int2 );
-	    asprintf( &( lProviders + nProviders )->Parm2, "%s", string3 );
-	    asprintf( &( lProviders + nProviders )->Parm3, '\0' );
-	    nProviders ++;
-	    IsSkyThemesNull = true;
 	  }
           else if( sscanf( Line, "MHW_1=%[^:] :%i :%c :%[^:] :%i ", string1, &int1, &char1, string2, &int2 ) == 5 )
 	  {
@@ -234,51 +222,6 @@ static void ReadConfigLoadepg( void )
       }
     }
   }
-  
-  // IsSkyThemes (IT)
-  if( IsSkyThemesNull )
-  {
-    File = fopen( FileName, "w" );
-    if( File )
-    {
-      for( int i = 0; i < nProviders; i ++ )
-      {
-        switch( ( lProviders + i )->DataFormat )
-	{
-	  case DATA_FORMAT_SKYBOX:
-	    if( strcasestr( ( lProviders +i )->Parm2, "sky_it.dict" ) != NULL )
-	    {
-	      fprintf( File, "SKYBOX=%s:%s:%s:sky_it.themes\n", ( lProviders +i )->Title, ( lProviders +i )->Parm1, ( lProviders +i )->Parm2 );
-	    }
-	    if( strcasestr( ( lProviders +i )->Parm2, "sky_uk.dict" ) != NULL )
-	    {
-	      fprintf( File, "SKYBOX=%s:%s:%s:sky_uk.themes\n", ( lProviders +i )->Title, ( lProviders +i )->Parm1, ( lProviders +i )->Parm2 );
-	    }
-	    if( strcasestr( ( lProviders +i )->Parm2, "sky_au.dict" ) != NULL )
-	    {
-	      fprintf( File, "SKYBOX=%s:%s:%s:sky_au.themes\n", ( lProviders +i )->Title, ( lProviders +i )->Parm1, ( lProviders +i )->Parm2 );
-	    }
-	    break;
-	  case DATA_FORMAT_MHW_1:
-	    fprintf( File, "MHW_1=%s:%s\n", ( lProviders +i )->Title, ( lProviders +i )->Parm1 );
-	    break;
-	  case DATA_FORMAT_MHW_2:
-	    fprintf( File, "MHW_2=%s:%s\n", ( lProviders +i )->Title, ( lProviders +i )->Parm1 );
-	    break;
-	  case DATA_FORMAT_FILE:
-	    fprintf( File, "FILE=%s:%s\n", ( lProviders +i )->Title, ( lProviders +i )->Parm1 );
-	    break;
-	  case DATA_FORMAT_SCRIPT:
-	    fprintf( File, "SCRIPT=%s:%s:%s\n", ( lProviders +i )->Title, ( lProviders +i )->Parm1, ( lProviders +i )->Parm2 );
-	    break;
-	  default:
-	    break;
-	};
-      }
-      fclose( File );
-    }
-  }
-  free( FileName );
   
   // Read loadepg.equiv
   asprintf( &FileName, "%s/%s", Config->Directory, LOADEPG_FILE_EQUIV );
@@ -1520,72 +1463,6 @@ void cTaskLoadepg::CreateXmlChannels( )
 	ServiceName = NULL;
       }
     }
-  }
-}
-// }}}
-
-// cTaskLoadepg::CreateFileChannels {{{
-void cTaskLoadepg::CreateFileChannels( const char *FileChannels )
-{
-  FILE *File;
-  char *ChID;
-  char *ServiceName;
-  File = fopen( FileChannels, "w" );
-  if( File )
-  {
-    fprintf( File, "|  ID  | %-26.26s | %-22.22s | EPG | %-8.8s |\n", "Channel ID", "Channel Name", "Sky Num." );
-    fprintf( File, "|------|-%-26.26s-|-%-22.22s-|-----|-%-8.8s-|\n", "------------------------------", "-----------------------------", "--------------------" );
-    for( int i = 0; i < nChannels; i ++ )
-    {
-      sChannel *C = ( lChannels + i );
-      if( C->Nid > 0 && C->Tid > 0 && C->Sid > 0 )
-      {
-	tChannelID ChVID = tChannelID( ( lProviders + CurrentProvider )->SourceId, C->Nid, C->Tid, C->Sid );
-	cChannel *VC = NULL;
-	if( VC )
-	{
-	  asprintf( &ServiceName, "%s", VC->Name() );
-	}
-	else if (C->name)
-	{
-	  asprintf( &ServiceName, "%s - %s", C->name, C->shortname );
-	}
-	else
-	{
-	  asprintf( &ServiceName, " " );
-	}
-        asprintf( &ChID, "%s-%i-%i-%i-0", *cSource::ToString( ( lProviders + CurrentProvider )->SourceId ), C->Nid, C->Tid, C->Sid );
-        fprintf( File, "|% 5d | %-26.26s | %-22.22s |", C->ChannelId, ChID, ServiceName );
-	if( C->IsEpg )
-	{
-	  if( C->IsFound )
-	  {
-	    fprintf( File, " %-3.3s |", "YES" );
-	  }
-	  else
-	  {
-	    fprintf( File, " %-3.3s |", "NO" );
-	  }
-	}
-	else
-	{
-	  fprintf( File, " %-3.3s |", "..." );
-	}
-        fprintf( File, "  % 6d  |\n", C->SkyNumber );
-	if( ChID )
-	{
-	  free( ChID );
-	  ChID = NULL;
-	}
-	if( ServiceName )
-	{
-	  free( ServiceName );
-	  ServiceName = NULL;
-	}
-      }
-    }
-    fprintf( File, "|------|-%-26.26s-|-%-22.22s-|-----|-%-8.8s-|\n", "------------------------------", "-----------------------------", "--------------------" );
-    fclose( File );
   }
 }
 // }}}

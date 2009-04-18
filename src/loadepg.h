@@ -238,7 +238,6 @@ class cTaskLoadepg : public cThread
     unsigned char DecodeText[4096];
     unsigned char DecodeErrorText[4096];
     int DecodeHuffmanCode( unsigned char *Data, int Length );
-    void CreateFileChannels( const char *FileChannels );
     void CreateXmlChannels( );
     void CreateEpgXml( void );
   protected:
