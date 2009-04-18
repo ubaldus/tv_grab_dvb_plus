@@ -231,6 +231,7 @@ static void ReadConfigLoadepg(void)
 				if (sscanf(string1, "%[^-]-%i -%i -%i -%i ", string3, &int1, &int2, &int3, &int4) != 5) {
 				    int4 = 0;
 				}
+#if 0
 				//tChannelID OriginalChID = tChannelID(cSource::FromString(string3), int1,
 				//				     int2, int3, int4);
 				cChannel *OriginalChannel = NULL;	// Channels.GetByChannelID( OriginalChID, false );
@@ -263,6 +264,7 @@ static void ReadConfigLoadepg(void)
 				} else {
 				    log_message(WARNING, "not found epg channel \'%s\' in channels.conf", string1);
 				}
+#endif
 			    }
 		    }
 		}
@@ -313,6 +315,7 @@ static int qsortEquivChannels(const void *A, const void *B)
     return 0;
 }
 
+#ifdef MAYBENEEDED
 static int bsearchEquivChannel(const void *A, const void *B)
 {
     sEquivChannel *ChannelA = (sEquivChannel *) A;
@@ -349,6 +352,7 @@ static int bsearchEquivChannel(const void *A, const void *B)
     }
     return 0;
 }
+#endif
 
 static int qsortChannels(const void *A, const void *B)
 {
@@ -1141,8 +1145,8 @@ void cTaskLoadepg::CreateXmlChannels()
     for (int i = 0; i < nChannels; i++) {
 	sChannel *C = (lChannels + i);
 	if (C->Nid > 0 && C->Tid > 0 && C->Sid > 0) {
-	    tChannelID ChVID = tChannelID((lProviders + CurrentProvider)->SourceId,
-		    C->Nid, C->Tid, C->Sid);
+	    //tChannelID ChVID = tChannelID((lProviders + CurrentProvider)->SourceId,
+	    //	C->Nid, C->Tid, C->Sid);
 	    if (C->providername == NULL)
 		continue;
 	    if (strcmp(C->providername, "(null)") == 0)
@@ -1584,7 +1588,7 @@ void cTaskLoadepg::SupplementChannelsSKYBOX(int FilterId, unsigned char *Data, i
 					    sd->getServiceType(), Key.Nid, lChannels[10].Nid, Key.Tid, lChannels[10].Tid, Key.Sid, lChannels[10].Sid);
 				    sd->serviceName.getText(NameBuf, ShortNameBuf, sizeof(NameBuf), sizeof(ShortNameBuf));
 				    char *pn = compactspace(NameBuf);
-				    char *ps = compactspace(ShortNameBuf);
+				    //char *ps = compactspace(ShortNameBuf);
 				    sd->providerName.getText(ProviderNameBuf, sizeof(ProviderNameBuf));
 				    char *provname = compactspace(ProviderNameBuf);
 				    if (C) {
@@ -1693,16 +1697,19 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data, int Leng
 			    // 0x05 = Other Channel
 			    //if( Data[p3+2] == 0x01 || Data[p3+2] == 0x02 || Data[p3+2] == 0x05 )
 			    //{
+			    //
+			    //full decoding from firmware left for ref
+			    //
 			    unsigned short Sid = (Data[p3] << 8) | Data[p3 + 1];
-			    unsigned char unk1 = Data[p3 + 2];
+			    //unsigned char unk1 = Data[p3 + 2];
 			    unsigned short ChannelId = (Data[p3 + 3] << 8) | Data[p3 + 4];
 			    unsigned short SkyNumber = (Data[p3 + 5] << 8) | Data[p3 + 6];
-			    unsigned short Flags = (Data[p3 + 7] << 8) | Data[p3 + 8];
-			    unsigned short unkval = Flags >> 4;
-			    int unkflag1 = (Flags & 8) >> 3;
-			    int unkflag2 = (Flags & 4) >> 2;
-			    int unkflag3 = (Flags & 2) >> 1;
-			    int unkflag4 = (Flags & 1);
+			    //unsigned short Flags = (Data[p3 + 7] << 8) | Data[p3 + 8];
+			    //unsigned short unkval = Flags >> 4;
+			    //int unkflag1 = (Flags & 8) >> 3;
+			    //int unkflag2 = (Flags & 4) >> 2;
+			    //int unkflag3 = (Flags & 2) >> 1;
+			    //int unkflag4 = (Flags & 1);
 			    /*
 			     * 
 			     */
@@ -2405,7 +2412,6 @@ void cTaskLoadepg::GetSummariesMHW2(int FilterId, unsigned char *Data, int Lengt
 // cTaskLoadepg::CreateEpgXml {{{
 void cTaskLoadepg::CreateEpgXml(void)
 {
-    char *ChannelName;
     log_message(INFO, "found %i equivalents channels", nEquivChannels);
     log_message(INFO, "found %i themes", nThemes);
     log_message(INFO, "found %i channels", nChannels);
@@ -2434,7 +2440,6 @@ void cTaskLoadepg::CreateEpgXml(void)
 			bool IsChannel;
 			bool IsEquivChannel;
 			sChannel KeyC, *C;
-			sEquivChannel KeyEC, *EC;
 			i = 0;
 			prev_i = 0;
 			EventId = 1;
@@ -2523,7 +2528,6 @@ void cTaskLoadepg::CreateEpgXml(void)
 	int prev_i;
 	unsigned char ChannelId;
 	sChannel KeyC, *C;
-	sEquivChannel KeyEC, *EC;
 	bool IsChannel;
 	bool IsEquivChannel;
 	i = 0;
@@ -2551,6 +2555,7 @@ void cTaskLoadepg::CreateEpgXml(void)
 		KeyC.ChannelId = T->ChannelId;
 		C = (sChannel *) bsearch(&KeyC, lChannels, nChannels, sizeof(sChannel), &bsearchChannelByChannelId);
 		if (C) {
+#if 0
 		    tChannelID ChVID = tChannelID((lProviders + CurrentProvider)->SourceId, C->Nid,
 			    C->Tid, C->Sid);
 		    cChannel *VC = NULL;
@@ -2583,6 +2588,7 @@ void cTaskLoadepg::CreateEpgXml(void)
 			    C->IsFound = true;
 			}
 		    }
+#endif
 		}
 		ChannelId = T->ChannelId;
 	    }
