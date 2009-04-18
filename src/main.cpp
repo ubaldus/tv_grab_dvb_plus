@@ -48,7 +48,6 @@ char *ProgName;
 
 int adapter = 0;
 int demuxno = 0;
-int vdrmode = 0;
 bool useshortxmlids = false;
 
 int format = DATA_FORMAT_DVB;
@@ -70,7 +69,7 @@ char conf[1024] = "./conf";
 static void usage()
 {
     fprintf(stderr,
-	    "usage: %s [-h] [-C] [-d] [-I] [-S] [-s] [-u] [-v] [-a adapter] [-c dir] [-f format] [-i file] [-O offset] [-o file] [-t timeout]\n\n"
+	    "usage: %s [-h] [-C] [-d] [-I] [-S] [-s] [-u] [-a adapter] [-c dir] [-f format] [-i file] [-O offset] [-o file] [-t timeout]\n\n"
 	    "\t-h (--help)             output this help text\n"
 	    "\t-C (--chanids)          use channel identifiers from file 'chanidents'\n"
 	    "\t                        (default sidnumber.dvb.guide)\n"
@@ -78,7 +77,6 @@ static void usage()
 	    "\t-S (--stats)            output runtime statistics (default false)\n"
 	    "\t-s (--short-xml)        output short xml ids (default false)\n"
 	    "\t-u (--updated-info)     output updated info (will result in repeated information) (default false)\n"
-	    "\t-v (--vdr)              vdr output mode (default false)\n"
 	    "\t-a (--adapter) adapter# change the adapter number (default 0)\n"
 	    "\t-c (--conf)    dir      change the config directory (default ./conf)\n"
 	    "\t-d (--debug)   level    output debug infoi (none|trace|debug|warning|error) (default error)\n"
@@ -112,7 +110,6 @@ static int do_options(int arg_count, char **arg_strings)
 	{"stats", 0, 0, 'S'},
 	{"timeout", 1, 0, 't'},
 	{"updated-info", 0, 0, 'u'},
-	{"vdr", 0, 0, 'v'},
 	{0, 0, 0, 0}
     };
     int Option_Index = 0;
@@ -120,8 +117,9 @@ static int do_options(int arg_count, char **arg_strings)
     char *f;
 
     while (1) {
-	int c = getopt_long(arg_count, arg_strings, "a:Cc:d:f:hIi:O:o:Sst:uv",
-			    Long_Options, &Option_Index);
+	int c =
+	    getopt_long(arg_count, arg_strings, "a:Cc:d:f:hIi:O:o:Sst:u",
+			Long_Options, &Option_Index);
 	if (c == EOF)
 	    break;
 	switch (c) {
@@ -173,7 +171,8 @@ static int do_options(int arg_count, char **arg_strings)
 	    }
 	    break;
 	case 'o':
-	    if ((fd = open(optarg, O_CREAT | O_TRUNC | O_WRONLY, 0666)) < 0) {
+	    if ((fd =
+		 open(optarg, O_CREAT | O_TRUNC | O_WRONLY, 0666)) < 0) {
 		log_message(ERROR, "can't write to file %s", optarg);
 		usage();
 	    }
@@ -196,12 +195,10 @@ static int do_options(int arg_count, char **arg_strings)
 	case 'u':
 	    ignore_updates = false;
 	    break;
-	case 'v':
-	    vdrmode = 1;
-	    break;
 	case 0:
 	default:
-	    log_message(ERROR, "unknown getopt error - returned code %02x", c);
+	    log_message(ERROR, "unknown getopt error - returned code %02x",
+			c);
 	    _exit(1);
 	}
     }
@@ -213,11 +210,9 @@ static int do_options(int arg_count, char **arg_strings)
  */
 static void header()
 {
-    if (!vdrmode) {
-	printf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-	printf("<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n");
-	printf("<tv generator-info-name=\"tv_grab_dvb_plus\">\n");
-    }
+    printf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    printf("<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n");
+    printf("<tv generator-info-name=\"tv_grab_dvb_plus\">\n");
 }
 
 /* 
@@ -225,9 +220,7 @@ static void header()
  */
 static void footer()
 {
-    if (!vdrmode) {
-	printf("</tv>\n");
-    }
+    printf("</tv>\n");
 }
 
 /* 
@@ -360,7 +353,8 @@ static int openInput(int format)
 /* 
  * Main function
  */
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     char *chanidfile;
 
     /* Remove path from command */
@@ -395,8 +389,9 @@ int main(int argc, char **argv) {
 	    asprintf(&chanidfile, "%s/%s", conf, CHANIDENTS);
 	    break;
 	}
-        if (use_chanidents && !load_channel_table(chanidfile)) {
-	    log_message(WARNING, "error loading %s, continuing", chanidfile);
+	if (use_chanidents && !load_channel_table(chanidfile)) {
+	    log_message(WARNING, "error loading %s, continuing",
+			chanidfile);
 	}
     }
 

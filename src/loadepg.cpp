@@ -27,11 +27,9 @@
 sConfig *Config;
 cTaskLoadepg *Task;
 
-extern char *ProgName;
 extern char conf[1024];
 
 extern int adapter;
-extern int vdrmode;
 extern bool useshortxmlids;
 
 int CurrentProvider;
@@ -966,15 +964,8 @@ void cTaskLoadepg::Action( void )
         }
 	if( sscanf( ( lProviders + CurrentProvider )->Parm1, "%i :%c :%[^:]:%i", &Frequency, &Polarization, SourceName, &SymbolRate ) == 4 )
 	{
-	  int DeviceID = cDevice::NumDevices() - 1;
-	  DeviceID = 0;
-	  while( DeviceID >= 0 )
-	  {
 	    DvbAdapterNumber = -1;
 	    HasSwitched = false;
-	    //EpgDevice = cDevice::GetDevice( DeviceID );
-	    //if( EpgDevice )
-	    {
 	      DvbAdapterNumber = adapter;
 	      if( DvbAdapterNumber != -1 )
 	      {
@@ -991,9 +982,6 @@ void cTaskLoadepg::Action( void )
 		  TimeoutRotor = time( NULL ) + TIMEOUT_ROTOR;
 		  TunningTransponder:;
 	          cCondWait::SleepMs( 2000 );
-	          //if( EpgDevice->HasLock() )
-	          if( 1 )
-	          {
 		    log_message(TRACE, "tuned transponder with adapter number=%i", DvbAdapterNumber );
 		    LoadFromSatellite();
 		    if( IsError )
@@ -1007,33 +995,9 @@ void cTaskLoadepg::Action( void )
 		    {
 		      break;
 		    }
-		  }
-		  else
-		  {
-		    if( ( Config->DvbAdapterHasRotor - 1 ) == DvbAdapterNumber )
-		    {
-		      if( time( NULL ) < TimeoutRotor )
-		      {
-		        goto TunningTransponder;
-		      }
-		    }
-		    if( HasSwitched )
-		    {
-		      EpgDevice->SwitchChannel( VdrChannel, true );
-		      HasSwitched = false;
-		    }
-		    IsError = true;
-		    if( ( Config->DvbAdapterNumber - 1 ) == DvbAdapterNumber )
-		    {
-		      break;
-		    }
-		  }
 		  EpgChannel = NULL;
 		}
 	      }
-	    }
-	    DeviceID --;
-	  }
 	  if( DvbAdapterNumber == -1 )
 	  {
 	    log_message(ERROR, "none of the devices provides this source %s", SourceName );
@@ -1491,9 +1455,6 @@ void cTaskLoadepg::LoadFromSatellite( void )
   }
   if( ! IsError )
   {
-    if (vdrmode)
-      CreateEpgDataFile();
-    else
       CreateEpgXml();
   }
 }
@@ -3305,329 +3266,6 @@ void cTaskLoadepg::CreateEpgXml( void )
   }
   CreateXmlChannels( );
 }
-// }}}
-
-// cTaskLoadepg::CreateEpgDataFile {{{
-void cTaskLoadepg::CreateEpgDataFile( void )
-{
-  FILE *File;
-  FILE *Err;
-  char *ChannelName;
-  log_message(INFO, "found %i equivalents channels", nEquivChannels );
-  log_message(INFO, "found %i themes", nThemes );
-  log_message(INFO, "found %i channels", nChannels );
-  log_message(INFO, "found %i titles", nTitles );
-  log_message(INFO, "found %i summaries", nSummaries );
-  qsort( lEquivChannels, nEquivChannels, sizeof( sEquivChannel ), &qsortEquivChannels );
-  qsort( lChannels, nChannels, sizeof( sChannel ), &qsortChannels );
-  qsort( lTitles, nTitles, sizeof( sTitle ), &qsortTitles );
-  qsort( lSummaries, nSummaries, sizeof( sSummary ), &qsortSummaries );
-  File = fopen( FILE_EPG_TMP, "w" );
-  Err = fopen( FILE_EPG_ERR, "w" );
-  if( File )
-  {
-    if( Err )
-    {
-      if( ( lProviders + CurrentProvider )->DataFormat == DATA_FORMAT_SKYBOX )
-      {
-        // SKYBOX
-        if( ReadFileDictionary() )
-        {
-          ReadFileThemes();
-	  if( nChannels > 0 )
-          {
-            if( nTitles > 0 )
-      	    {
-  	      if( nSummaries > 0 )
-    	      {
-  	        int i;
-		int prev_i;
-		int EventId;
-	        unsigned short int ChannelId;
-	        bool IsChannel;
-		bool IsEquivChannel;
-	        sChannel KeyC, *C;
-		sEquivChannel KeyEC, *EC;
-	        i = 0;
-		prev_i = 0;
-		EventId = 1;
-	        ChannelId = 0;
-	        IsChannel = false;
-		IsEquivChannel = false;
-	        while( i < nTitles )
-	        {
-	          sTitle *T = ( lTitles + i );
-	          if( ChannelId != T->ChannelId )
-		  {
-		    if( IsChannel )
-		    {
-		      if( ChannelId > 0 )
-		      {
-		        fprintf( File, "c\n" );
-		      }
-		    }
-		    if( IsEquivChannel )
-		    {
-		      if( ChannelId > 0 )
-		      {
-		        fprintf( File, "c\n" );
-		      }
-		      i = prev_i;
-		      T = ( lTitles + i );
-		    }
-		    IsChannel = false;
-		    IsEquivChannel = false;
-		    KeyC.ChannelId = T->ChannelId;
-		    C = ( sChannel * ) bsearch( &KeyC, lChannels, nChannels, sizeof( sChannel ), &bsearchChannelByChannelId );
-		    if( C )
-		    {
-		      C->IsEpg = true;
-		      tChannelID ChVID = tChannelID( ( lProviders + CurrentProvider )->SourceId, C->Nid, C->Tid, C->Sid );
-		      cChannel *VC = NULL;
-		      {
-		        KeyEC.OriginalSourceId = C->ChannelId;
-			KeyEC.OriginalNid = C->Nid;
-			KeyEC.OriginalTid = C->Tid;
-			KeyEC.OriginalSid = C->Sid;
-			EC = ( sEquivChannel * ) bsearch( &KeyEC, lEquivChannels, nEquivChannels, sizeof( sEquivChannel ), &bsearchEquivChannel );
-			if( EC && Config->UseFileEquivalents )
-			{
-			  tChannelID ChEID = tChannelID( EC->EquivSourceId, EC->EquivNid, EC->EquivTid, EC->EquivSid, EC->EquivRid );
-			  cChannel *VEC = NULL;
-			  if( VEC )
-			  {
-			    fprintf( File, "<se>C %s-%i-%i-%i-%i name=\"%s\"\n", *cSource::ToString( VEC->Source() ), VEC->Nid(), VEC->Tid(), VEC->Sid(), VEC->Rid(), VEC->Name() );
-			    asprintf( &ChannelName, "%s", VEC->Name() );
-		            IsEquivChannel = true;
-			    prev_i = i;
-			  }
-			  EC->OriginalSourceId = 0;
-			  EC->OriginalNid = 0;
-			  EC->OriginalTid = 0;
-			  EC->OriginalSid = 0;
-			  qsort( lEquivChannels, nEquivChannels, sizeof( sEquivChannel ), &qsortEquivChannels );
-			}
-			else
-			{
-			  //fprintf( File, "C %s-%i-%i-%i-%i %s\n", *cSource::ToString( VC->Source() ), VC->Nid(), VC->Tid(), VC->Sid(), VC->Rid(), VC->Name() );
-			  fprintf( File, "<sky>C %i-%i-%i-%i sky=%i\n", C->ChannelId, C->Nid, C->Tid, C->Sid, C->SkyNumber );
-			  //asprintf( &ChannelName, "%s", VC->Name() );
-			  asprintf( &ChannelName, "%i", C->SkyNumber );
-		          IsChannel = true;
-			  C->IsFound = true;
-			}
-		      }
-		    }
-		    ChannelId = T->ChannelId;
-	          }
-		  if( IsChannel || IsEquivChannel )
-		  {
-		    fprintf( File, "E %u %u %u\n", EventId, ( T->StartTime + EpgTimeOffset ), T->Duration );
-		    if( DecodeHuffmanCode( &bTitles[T->pData], T->lenData ) )
-		    {
-		      CleanString( DecodeText );
-		      fprintf( File, "T %s\n", DecodeText );
-		      if( DecodeErrorText[0] != '\0' )
-		      {
-		        if( IsChannel )
-			{
-		          time_t StartTime;
-			  StartTime = ( T->StartTime + EpgTimeOffset );
-		          fprintf( Err, "Channel: %s - %s\n", ChannelName, ctime( &StartTime ) );
-		          fprintf( Err, "T %s%s\n\n", DecodeText, DecodeErrorText );
-			}
-		      }
-		      if(is_logging(TRACE))
-		      {
-	                time_t StartTime;
-	                char *DateTime;
-	                StartTime = ( T->StartTime + EpgTimeOffset );
-	                asprintf( &DateTime, "%s", ctime( &StartTime ) );
-			log_message(TRACE, "S - %s", DateTime );
-		      }
-		      sTheme *ST = ( lThemes + T->ThemeId );
-		      if( ST->Name[0] != '\0' )
-		      {
-		        log_message(TRACE, "S %s", ST->Name );
-		      }
-		      else
-		      {
-		        if( is_logging(DEBUG) )
-			{
-			  time_t StartTime;
-			  StartTime = ( T->StartTime + EpgTimeOffset );
-			  fprintf( Err, "Channel: %s - %s - ThemeId=0x%02x\n", ChannelName, ctime( &StartTime ), T->ThemeId );
-			}
-		      }
-		      sSummary KeyS, *S;
-		      KeyS.ChannelId = T->ChannelId;
-		      KeyS.MjdTime = T->MjdTime;
-		      KeyS.EventId = T->EventId;
-		      S = ( sSummary * ) bsearch( &KeyS, lSummaries, nSummaries, sizeof( sSummary ), &bsearchSummarie );
-		      if( S )
-		      {
-		        if( DecodeHuffmanCode( &bSummaries[S->pData], S->lenData ) )
-		        {
-		          CleanString( DecodeText );
-			  fprintf( File, "D %s\n", DecodeText );
-		        }
-			if( DecodeErrorText[0] != '\0' )
-			{
-			  if( IsChannel )
-			  {
-			    time_t StartTime;
-			    StartTime = ( T->StartTime + EpgTimeOffset );
-			    fprintf( Err, "Channel: %s - %s\n", ChannelName, ctime( &StartTime ) );
-			    fprintf( Err, "D %s%s\n\n", DecodeText, DecodeErrorText );
-			  }
-			}
-		      }
-		    }
-		    fprintf( File, "e\n" );
-		  }
-	          i ++;
-		  EventId ++;
-	        }
-	        if( IsChannel || IsEquivChannel )
-	        {
-	          fprintf( File, "c\n" );
-	        }
-	      }
-	    }
-          }
-        }
-      }
-      else
-      {
-        // MHW_1 && MHW_2
-	int i;
-	int prev_i;
-	unsigned char ChannelId;
-	sChannel KeyC, *C;
-	sEquivChannel KeyEC, *EC;
-	bool IsChannel;
-	bool IsEquivChannel;
-	i = 0;
-	prev_i = 0;
-	ChannelId = 0xff;
-	IsChannel = false;
-	IsEquivChannel = false;
-	while( i < nTitles )
-	{
-	  sTitle *T = ( lTitles + i );
-	  if( ChannelId != T->ChannelId )
-	  {
-	    if( IsChannel )
-	    {
-	      if( ChannelId < 0xff )
-	      {
-	        fprintf( File, "c\n" );
-	      }
-	    }
-	    if( IsEquivChannel )
-	    {
-	      if( ChannelId > 0 )
-	      {
-	        fprintf( File, "c\n" );
-	      }
-	      i = prev_i;
-	      T = ( lTitles + i );
-	    }
-	    IsChannel = false;
-	    IsEquivChannel = false;
-	    KeyC.ChannelId = T->ChannelId;
-	    C = ( sChannel * ) bsearch( &KeyC, lChannels, nChannels, sizeof( sChannel ), &bsearchChannelByChannelId );
-	    if( C )
-	    {
-	      tChannelID ChVID = tChannelID( ( lProviders + CurrentProvider )->SourceId, C->Nid, C->Tid, C->Sid );
-	      cChannel *VC = NULL;
-	      if( VC )
-	      {
-                KeyEC.OriginalSourceId = VC->Source();
-		KeyEC.OriginalNid = VC->Nid();
-		KeyEC.OriginalTid = VC->Tid();
-		KeyEC.OriginalSid = VC->Sid();
-		EC = ( sEquivChannel * ) bsearch( &KeyEC, lEquivChannels, nEquivChannels, sizeof( sEquivChannel ), &bsearchEquivChannel );
-		if( EC && Config->UseFileEquivalents )
-		{
-		  tChannelID ChEID = tChannelID( EC->EquivSourceId, EC->EquivNid, EC->EquivTid, EC->EquivSid, EC->EquivRid );
-		  cChannel *VEC = NULL;
-		  if( VEC )
-		  {
-		    fprintf( File, "<mhw>C %s-%i-%i-%i-%i %s\n", *cSource::ToString( VEC->Source() ), VEC->Nid(), VEC->Tid(), VEC->Sid(), VEC->Rid(), VEC->Name() );
-		    asprintf( &ChannelName, "%s", VEC->Name() );
-		    IsEquivChannel = true;
-		    prev_i = i;
-		  }
-		  EC->OriginalSourceId = 0;
-		  EC->OriginalNid = 0;
-		  EC->OriginalTid = 0;
-		  EC->OriginalSid = 0;
-		  qsort( lEquivChannels, nEquivChannels, sizeof( sEquivChannel ), &qsortEquivChannels );
-		}
-		else
-		{
-		  fprintf( File, "<mhw>C %s-%i-%i-%i-%i %s\n", *cSource::ToString( VC->Source() ), VC->Nid(), VC->Tid(), VC->Sid(), VC->Rid(), VC->Name() );
-		  asprintf( &ChannelName, "%s", VC->Name() );
-		  IsChannel = true;
-		  C->IsFound = true;
-		}
-	      }
-	    }
-	    ChannelId = T->ChannelId;
-	  }
-	  if( IsChannel || IsEquivChannel )
-	  {
-	    fprintf( File, "E %u %u %u 01 FF\n", T->EventId, ( T->StartTime + EpgTimeOffset ), T->Duration );
-	    fprintf( File, "T %s\n", &bTitles[T->pData] );
-	    if( ( lThemes + T->ThemeId )->Name[0] != '\0' )
-	    {
-	      if( is_logging(TRACE) )
-	      {
-	        time_t StartTime;
-	        char *DateTime;
-	        StartTime = ( T->StartTime + EpgTimeOffset );
-	        asprintf( &DateTime, "%s", ctime( &StartTime ) );
-	        fprintf( File, "S %s - %d\' - %s", ( lThemes + T->ThemeId )->Name, T->Duration / 60, DateTime );
-	      }
-	      else
-	      {
-	        fprintf( File, "S %s - %d\'\n", ( lThemes + T->ThemeId )->Name, T->Duration / 60 );
-	      }
-	    }
-	    sSummary KeyS, *S;
-	    KeyS.ChannelId = 0;
-	    KeyS.MjdTime = 0;
-	    KeyS.EventId = T->EventId;
-	    S = ( sSummary * ) bsearch( &KeyS, lSummaries, nSummaries, sizeof( sSummary ), &bsearchSummarie );
-	    if( S )
-	    {
-	      fprintf( File, "D %s\n", &bSummaries[S->pData] );
-	    }
-	    fprintf( File, "e\n" );
-	  }
-	  i ++;
-        }
-	if(  IsChannel || IsEquivChannel )
-	{
-	  fprintf( File, "c\n" );
-	}
-      }
-      fclose( File );
-      fclose( Err );
-      CreateFileChannels( FILE_EPG_CHANNELS );
-    }
-    else
-    {
-      log_message(ERROR, "can't open file '%s', %s", FILE_EPG_ERR, strerror( errno ) );
-    }
-  }
-  else
-  {
-    log_message(ERROR, "can't open file '%s', %s", FILE_EPG_TMP, strerror( errno ) );
-  }
-};
-/// }}}
 // }}}
 
 // EPGGrabber {{{
