@@ -201,7 +201,7 @@ static void ReadConfigLoadepg(void)
 	if (is_logging(DEBUG)) {
 	    for (int i = 0; i < nProviders; i++) {
 		log_message(DEBUG, "%s|%i|%s|%s|%s",
-			    (lProviders + i)->Title, (lProviders + i)->SourceId, (lProviders + i)->Parm1, (lProviders + i)->Parm2, (lProviders + i)->Parm3);
+			(lProviders + i)->Title, (lProviders + i)->SourceId, (lProviders + i)->Parm1, (lProviders + i)->Parm2, (lProviders + i)->Parm3);
 	    }
 	}
     }
@@ -240,8 +240,8 @@ static void ReadConfigLoadepg(void)
 					    int4 = 0;
 					}
 					tChannelID EquivChID = tChannelID(cSource::FromString(string3),
-									  int1, int2, int3,
-									  int4);
+						int1, int2, int3,
+						int4);
 					//cChannel *EquivChannel = Channels.GetByChannelID( EquivChID, false );
 					cChannel *EquivChannel = NULL;	//Channels.GetByChannelID( EquivChID, false );
 					if (EquivChannel) {
@@ -629,7 +629,7 @@ static int bsearchSummarie(const void *A, const void *B)
 // cTaskLoadepg {{{
 // cTaskLoadepg Construction {{{
 cTaskLoadepg::cTaskLoadepg(void)
-:  cThread("cTaskLoadepg")
+    :  cThread("cTaskLoadepg")
 {
 }
 
@@ -697,89 +697,89 @@ void cTaskLoadepg::Action(void)
     if (Running()) {
 	log_message(TRACE, "start task");
 	switch ((lProviders + CurrentProvider)->DataFormat) {
-	case DATA_FORMAT_SKYBOX:
-	case DATA_FORMAT_MHW_1:
-	case DATA_FORMAT_MHW_2:
-	    lThemes = (sTheme *) calloc(MAX_THEMES, sizeof(sTheme));
-	    if (!lThemes) {
-		log_message(ERROR, "failed to allocate memory for lThemes");
-		goto endrunning;
-	    }
-	    lChannels = (sChannel *) calloc(MAX_CHANNELS, sizeof(sChannel));
-	    if (!lChannels) {
-		log_message(ERROR, "failed to allocate memory for lChannels");
-		goto endrunning;
-	    }
-	    lBouquets = (sBouquet *) calloc(MAX_BOUQUETS, sizeof(sBouquet));
-	    if (!lBouquets) {
-		log_message(ERROR, "failed to allocate memory for lBouquets");
-		goto endrunning;
-	    }
-	    lTitles = (sTitle *) calloc(MAX_TITLES, sizeof(sTitle));
-	    if (!lTitles) {
-		log_message(ERROR, "failed to allocate memory for lTitles");
-		goto endrunning;
-	    }
-	    lSummaries = (sSummary *) calloc(MAX_SUMMARIES, sizeof(sSummary));
-	    if (!lSummaries) {
-		log_message(ERROR, "failed to allocate memory for lSummaries");
-		goto endrunning;
-	    }
-	    bChannels = (unsigned char *) calloc(MAX_BUFFER_SIZE_CHANNELS, sizeof(unsigned char));
-	    if (!bChannels) {
-		log_message(ERROR, "failed to allocate memory for bChannels");
-		goto endrunning;
-	    }
-	    bTitles = (unsigned char *) calloc(MAX_BUFFER_SIZE_TITLES, sizeof(unsigned char));
-	    if (!bTitles) {
-		log_message(ERROR, "failed to allocate memory for bTitles");
-		goto endrunning;
-	    }
-	    bSummaries = (unsigned char *) calloc(MAX_BUFFER_SIZE_SUMMARIES, sizeof(unsigned char));
-	    if (!bSummaries) {
-		log_message(ERROR, "failed to allocate memory for bSummaries");
-		goto endrunning;
-	    }
-	    cCondWait::SleepMs(2000);
-	    log_message(TRACE, "tuned transponder with adapter number=%i", adapter);
-	    LoadFromSatellite();
-	default:
-	    break;
+	    case DATA_FORMAT_SKYBOX:
+	    case DATA_FORMAT_MHW_1:
+	    case DATA_FORMAT_MHW_2:
+		lThemes = (sTheme *) calloc(MAX_THEMES, sizeof(sTheme));
+		if (!lThemes) {
+		    log_message(ERROR, "failed to allocate memory for lThemes");
+		    goto endrunning;
+		}
+		lChannels = (sChannel *) calloc(MAX_CHANNELS, sizeof(sChannel));
+		if (!lChannels) {
+		    log_message(ERROR, "failed to allocate memory for lChannels");
+		    goto endrunning;
+		}
+		lBouquets = (sBouquet *) calloc(MAX_BOUQUETS, sizeof(sBouquet));
+		if (!lBouquets) {
+		    log_message(ERROR, "failed to allocate memory for lBouquets");
+		    goto endrunning;
+		}
+		lTitles = (sTitle *) calloc(MAX_TITLES, sizeof(sTitle));
+		if (!lTitles) {
+		    log_message(ERROR, "failed to allocate memory for lTitles");
+		    goto endrunning;
+		}
+		lSummaries = (sSummary *) calloc(MAX_SUMMARIES, sizeof(sSummary));
+		if (!lSummaries) {
+		    log_message(ERROR, "failed to allocate memory for lSummaries");
+		    goto endrunning;
+		}
+		bChannels = (unsigned char *) calloc(MAX_BUFFER_SIZE_CHANNELS, sizeof(unsigned char));
+		if (!bChannels) {
+		    log_message(ERROR, "failed to allocate memory for bChannels");
+		    goto endrunning;
+		}
+		bTitles = (unsigned char *) calloc(MAX_BUFFER_SIZE_TITLES, sizeof(unsigned char));
+		if (!bTitles) {
+		    log_message(ERROR, "failed to allocate memory for bTitles");
+		    goto endrunning;
+		}
+		bSummaries = (unsigned char *) calloc(MAX_BUFFER_SIZE_SUMMARIES, sizeof(unsigned char));
+		if (!bSummaries) {
+		    log_message(ERROR, "failed to allocate memory for bSummaries");
+		    goto endrunning;
+		}
+		cCondWait::SleepMs(2000);
+		log_message(TRACE, "tuned transponder with adapter number=%i", adapter);
+		LoadFromSatellite();
+	    default:
+		break;
 	}
-      endrunning:;
-	if (lThemes) {
-	    free(lThemes);
-	    lThemes = NULL;
-	}
-	if (lChannels) {
-	    free(lChannels);
-	    lChannels = NULL;
-	}
-	if (lBouquets) {
-	    free(lBouquets);
-	    lBouquets = NULL;
-	}
-	if (lTitles) {
-	    free(lTitles);
-	    lTitles = NULL;
-	}
-	if (lSummaries) {
-	    free(lSummaries);
-	    lSummaries = NULL;
-	}
-	if (bChannels) {
-	    free(bChannels);
-	    bChannels = NULL;
-	}
-	if (bTitles) {
-	    free(bTitles);
-	    bTitles = NULL;
-	}
-	if (bSummaries) {
-	    free(bSummaries);
-	    bSummaries = NULL;
-	}
-	log_message(DEBUG, "end task");
+endrunning:;
+	   if (lThemes) {
+	       free(lThemes);
+	       lThemes = NULL;
+	   }
+	   if (lChannels) {
+	       free(lChannels);
+	       lChannels = NULL;
+	   }
+	   if (lBouquets) {
+	       free(lBouquets);
+	       lBouquets = NULL;
+	   }
+	   if (lTitles) {
+	       free(lTitles);
+	       lTitles = NULL;
+	   }
+	   if (lSummaries) {
+	       free(lSummaries);
+	       lSummaries = NULL;
+	   }
+	   if (bChannels) {
+	       free(bChannels);
+	       bChannels = NULL;
+	   }
+	   if (bTitles) {
+	       free(bTitles);
+	       bTitles = NULL;
+	   }
+	   if (bSummaries) {
+	       free(bSummaries);
+	       bSummaries = NULL;
+	   }
+	   log_message(DEBUG, "end task");
     }
 }
 // }}}
@@ -813,70 +813,70 @@ int cTaskLoadepg::DecodeHuffmanCode(unsigned char *Data, int Length)
 	    lastByte = i;
 	    lastMask = Mask;
 	}
-      loop1:;
-	if (IsFound) {
-	    lastByte = i;
-	    lastMask = Mask;
-	    IsFound = false;
-	}
-	if ((Byte & Mask) == 0) {
-	    if (CodeError) {
-		DecodeErrorText[q] = 0x30;
-		q++;
-		goto nextloop1;
-	    }
-	    if (nH->P0 != NULL) {
-		nH = nH->P0;
-		if (nH->Value != NULL) {
-		    // handle 0 code
-		    if (nH->Value[0] == 0) {
-			memcpy(&DecodeText[p], nH->Value, 1);
-			p += 1;
-		    } else {
-			memcpy(&DecodeText[p], nH->Value, strlen(nH->Value));
-			p += strlen(nH->Value);
-		    }
-		    nH = &H;
-		    IsFound = true;
-		}
-	    } else {
-		memcpy(&DecodeText[p], "<...?...>", 9);
-		p += 9;
-		i = lastByte;
-		Byte = Data[lastByte];
-		Mask = lastMask;
-		CodeError = true;
-		goto loop1;
-	    }
-	} else {
-	    if (CodeError) {
-		DecodeErrorText[q] = 0x31;
-		q++;
-		goto nextloop1;
-	    }
-	    if (nH->P1 != NULL) {
-		nH = nH->P1;
-		if (nH->Value != NULL) {
-		    memcpy(&DecodeText[p], nH->Value, strlen(nH->Value));
-		    p += strlen(nH->Value);
-		    nH = &H;
-		    IsFound = true;
-		}
-	    } else {
-		memcpy(&DecodeText[p], "<...?...>", 9);
-		p += 9;
-		i = lastByte;
-		Byte = Data[lastByte];
-		Mask = lastMask;
-		CodeError = true;
-		goto loop1;
-	    }
-	}
-      nextloop1:;
-	Mask = Mask >> 1;
-	if (Mask > 0) {
-	    goto loop1;
-	}
+loop1:;
+      if (IsFound) {
+	  lastByte = i;
+	  lastMask = Mask;
+	  IsFound = false;
+      }
+      if ((Byte & Mask) == 0) {
+	  if (CodeError) {
+	      DecodeErrorText[q] = 0x30;
+	      q++;
+	      goto nextloop1;
+	  }
+	  if (nH->P0 != NULL) {
+	      nH = nH->P0;
+	      if (nH->Value != NULL) {
+		  // handle 0 code
+		  if (nH->Value[0] == 0) {
+		      memcpy(&DecodeText[p], nH->Value, 1);
+		      p += 1;
+		  } else {
+		      memcpy(&DecodeText[p], nH->Value, strlen(nH->Value));
+		      p += strlen(nH->Value);
+		  }
+		  nH = &H;
+		  IsFound = true;
+	      }
+	  } else {
+	      memcpy(&DecodeText[p], "<...?...>", 9);
+	      p += 9;
+	      i = lastByte;
+	      Byte = Data[lastByte];
+	      Mask = lastMask;
+	      CodeError = true;
+	      goto loop1;
+	  }
+      } else {
+	  if (CodeError) {
+	      DecodeErrorText[q] = 0x31;
+	      q++;
+	      goto nextloop1;
+	  }
+	  if (nH->P1 != NULL) {
+	      nH = nH->P1;
+	      if (nH->Value != NULL) {
+		  memcpy(&DecodeText[p], nH->Value, strlen(nH->Value));
+		  p += strlen(nH->Value);
+		  nH = &H;
+		  IsFound = true;
+	      }
+	  } else {
+	      memcpy(&DecodeText[p], "<...?...>", 9);
+	      p += 9;
+	      i = lastByte;
+	      Byte = Data[lastByte];
+	      Mask = lastMask;
+	      CodeError = true;
+	      goto loop1;
+	  }
+      }
+nextloop1:;
+	  Mask = Mask >> 1;
+	  if (Mask > 0) {
+	      goto loop1;
+	  }
     }
     DecodeText[p] = '\0';
     DecodeErrorText[q] = '\0';
@@ -914,54 +914,54 @@ bool cTaskLoadepg::ReadFileDictionary(void)
 		if (sscanf(Line, "%c=%[^\n]\n", string1, string2) == 2) {
 		    goto codingstart;
 		} else if (sscanf(Line, "\\x%2x=%[^\n]\n", &charcode, string2)
-			   == 2) {
+			== 2) {
 		    string1[0] = charcode;
 		    goto codingstart;
 		} else if (sscanf(Line, "%[^=]=%[^\n]\n", string1, string2)
-			   == 2) {
-		  codingstart:;
-		    nH = &H;
-		    LenPrefix = strlen(string2);
-		    for (i = 0; i < LenPrefix; i++) {
-			switch (string2[i]) {
-			case '0':
-			    if (nH->P0 == NULL) {
-				nH->P0 = new sNodeH();
-				nH = nH->P0;
-				nH->Value = NULL;
-				nH->P0 = NULL;
-				nH->P1 = NULL;
-				if ((LenPrefix - 1) == i) {
-				    asprintf(&nH->Value, "%s", string1);
-				}
-			    } else {
-				nH = nH->P0;
-				if (nH->Value != NULL || (LenPrefix - 1) == i) {
-				    log_message(ERROR, "huffman prefix code already exists for \"%s\"=%s with '%s'", string1, string2, nH->Value);
-				}
+			== 2) {
+codingstart:;
+	    nH = &H;
+	    LenPrefix = strlen(string2);
+	    for (i = 0; i < LenPrefix; i++) {
+		switch (string2[i]) {
+		    case '0':
+			if (nH->P0 == NULL) {
+			    nH->P0 = new sNodeH();
+			    nH = nH->P0;
+			    nH->Value = NULL;
+			    nH->P0 = NULL;
+			    nH->P1 = NULL;
+			    if ((LenPrefix - 1) == i) {
+				asprintf(&nH->Value, "%s", string1);
 			    }
-			    break;
-			case '1':
-			    if (nH->P1 == NULL) {
-				nH->P1 = new sNodeH();
-				nH = nH->P1;
-				nH->Value = NULL;
-				nH->P0 = NULL;
-				nH->P1 = NULL;
-				if ((LenPrefix - 1) == i) {
-				    asprintf(&nH->Value, "%s", string1);
-				}
-			    } else {
-				nH = nH->P1;
-				if (nH->Value != NULL || (LenPrefix - 1) == i) {
-				    log_message(ERROR, "huffman prefix code already exists for \"%s\"=%s with '%s'", string1, string2, nH->Value);
-				}
+			} else {
+			    nH = nH->P0;
+			    if (nH->Value != NULL || (LenPrefix - 1) == i) {
+				log_message(ERROR, "huffman prefix code already exists for \"%s\"=%s with '%s'", string1, string2, nH->Value);
 			    }
-			    break;
-			default:
-			    break;
 			}
-		    }
+			break;
+		    case '1':
+			if (nH->P1 == NULL) {
+			    nH->P1 = new sNodeH();
+			    nH = nH->P1;
+			    nH->Value = NULL;
+			    nH->P0 = NULL;
+			    nH->P1 = NULL;
+			    if ((LenPrefix - 1) == i) {
+				asprintf(&nH->Value, "%s", string1);
+			    }
+			} else {
+			    nH = nH->P1;
+			    if (nH->Value != NULL || (LenPrefix - 1) == i) {
+				log_message(ERROR, "huffman prefix code already exists for \"%s\"=%s with '%s'", string1, string2, nH->Value);
+			    }
+			}
+			break;
+		    default:
+			break;
+		}
+	    }
 		}
 	    }
 	}
@@ -983,38 +983,38 @@ bool cTaskLoadepg::ReadFileDictionary(void)
 		if (sscanf(Line, "%c=%[^\n]\n", string1, string2) == 2) {
 		    goto verifystart;
 		} else if (sscanf(Line, "\\x%2x=%[^\n]\n", &charcode, string2)
-			   == 2) {
+			== 2) {
 		    string1[0] = charcode;
 		    goto verifystart;
 		} else if (sscanf(Line, "%[^=]=%[^\n]\n", string1, string2)
-			   == 2) {
-		  verifystart:;
-		    nH = &H;
-		    LenPrefix = strlen(string2);
-		    for (i = 0; i < LenPrefix; i++) {
-			switch (string2[i]) {
-			case '0':
-			    if (nH->P0 != NULL) {
-				nH = nH->P0;
-			    }
-			    break;
-			case '1':
-			    if (nH->P1 != NULL) {
-				nH = nH->P1;
-			    }
-			    break;
-			default:
-			    break;
+			== 2) {
+verifystart:;
+	    nH = &H;
+	    LenPrefix = strlen(string2);
+	    for (i = 0; i < LenPrefix; i++) {
+		switch (string2[i]) {
+		    case '0':
+			if (nH->P0 != NULL) {
+			    nH = nH->P0;
 			}
-		    }
-		    if (nH->Value != NULL) {
-			if (memcmp(nH->Value, string1, strlen(nH->Value))
-			    != 0) {
-			    log_message(ERROR, "huffman prefix value '%s' not equal to '%s'", nH->Value, string1);
+			break;
+		    case '1':
+			if (nH->P1 != NULL) {
+			    nH = nH->P1;
 			}
-		    } else {
-			log_message(ERROR, "huffman prefix value is not exists for \"%s\"=%s", string1, string2);
-		    }
+			break;
+		    default:
+			break;
+		}
+	    }
+	    if (nH->Value != NULL) {
+		if (memcmp(nH->Value, string1, strlen(nH->Value))
+			!= 0) {
+		    log_message(ERROR, "huffman prefix value '%s' not equal to '%s'", nH->Value, string1);
+		}
+	    } else {
+		log_message(ERROR, "huffman prefix value is not exists for \"%s\"=%s", string1, string2);
+	    }
 		}
 	    }
 	}
@@ -1071,43 +1071,43 @@ void cTaskLoadepg::LoadFromSatellite(void)
     GetLocalTimeOffset();
     AddFilter(0x14, 0x70, 0xfc);	// TOT && TDT
     switch ((lProviders + CurrentProvider)->DataFormat) {
-    case DATA_FORMAT_SKYBOX:
-	AddFilter(0x11, 0x4a);
-	AddFilter(0x11, 0x46);
-	AddFilter(0x30, 0xa0, 0xfc);
-	AddFilter(0x31, 0xa0, 0xfc);
-	AddFilter(0x32, 0xa0, 0xfc);
-	AddFilter(0x33, 0xa0, 0xfc);
-	AddFilter(0x34, 0xa0, 0xfc);
-	AddFilter(0x35, 0xa0, 0xfc);
-	AddFilter(0x36, 0xa0, 0xfc);
-	AddFilter(0x37, 0xa0, 0xfc);
-	AddFilter(0x40, 0xa8, 0xfc);
-	AddFilter(0x41, 0xa8, 0xfc);
-	AddFilter(0x42, 0xa8, 0xfc);
-	AddFilter(0x43, 0xa8, 0xfc);
-	AddFilter(0x44, 0xa8, 0xfc);
-	AddFilter(0x45, 0xa8, 0xfc);
-	AddFilter(0x46, 0xa8, 0xfc);
-	AddFilter(0x47, 0xa8, 0xfc);
-	PollingFilters(2000);
-	break;
-    case DATA_FORMAT_MHW_1:
-	AddFilter(0xd2, 0x90);
-	AddFilter(0xd3, 0x90);
-	AddFilter(0xd3, 0x91);
-	AddFilter(0xd3, 0x92);
-	PollingFilters(3000);
-	break;
-    case DATA_FORMAT_MHW_2:
-	AddFilter(0x231, 0xc8);
-	AddFilter(0x234, 0xe6);
-	AddFilter(0x236, 0x96);
-	PollingFilters(3000);
-	break;
-    default:
-	IsError = true;
-	break;
+	case DATA_FORMAT_SKYBOX:
+	    AddFilter(0x11, 0x4a);
+	    AddFilter(0x11, 0x46);
+	    AddFilter(0x30, 0xa0, 0xfc);
+	    AddFilter(0x31, 0xa0, 0xfc);
+	    AddFilter(0x32, 0xa0, 0xfc);
+	    AddFilter(0x33, 0xa0, 0xfc);
+	    AddFilter(0x34, 0xa0, 0xfc);
+	    AddFilter(0x35, 0xa0, 0xfc);
+	    AddFilter(0x36, 0xa0, 0xfc);
+	    AddFilter(0x37, 0xa0, 0xfc);
+	    AddFilter(0x40, 0xa8, 0xfc);
+	    AddFilter(0x41, 0xa8, 0xfc);
+	    AddFilter(0x42, 0xa8, 0xfc);
+	    AddFilter(0x43, 0xa8, 0xfc);
+	    AddFilter(0x44, 0xa8, 0xfc);
+	    AddFilter(0x45, 0xa8, 0xfc);
+	    AddFilter(0x46, 0xa8, 0xfc);
+	    AddFilter(0x47, 0xa8, 0xfc);
+	    PollingFilters(2000);
+	    break;
+	case DATA_FORMAT_MHW_1:
+	    AddFilter(0xd2, 0x90);
+	    AddFilter(0xd3, 0x90);
+	    AddFilter(0xd3, 0x91);
+	    AddFilter(0xd3, 0x92);
+	    PollingFilters(3000);
+	    break;
+	case DATA_FORMAT_MHW_2:
+	    AddFilter(0x231, 0xc8);
+	    AddFilter(0x234, 0xe6);
+	    AddFilter(0x236, 0x96);
+	    PollingFilters(3000);
+	    break;
+	default:
+	    IsError = true;
+	    break;
     }
     if (!IsError) {
 	CreateEpgXml();
@@ -1142,7 +1142,7 @@ void cTaskLoadepg::CreateXmlChannels()
 	sChannel *C = (lChannels + i);
 	if (C->Nid > 0 && C->Tid > 0 && C->Sid > 0) {
 	    tChannelID ChVID = tChannelID((lProviders + CurrentProvider)->SourceId,
-					  C->Nid, C->Tid, C->Sid);
+		    C->Nid, C->Tid, C->Sid);
 	    if (C->providername == NULL)
 		continue;
 	    if (strcmp(C->providername, "(null)") == 0)
@@ -1358,90 +1358,90 @@ void cTaskLoadepg::ReadBuffer(int FilterId, int Fd)
     } else {
 	if (Bytes > 3) {
 	    switch ((lProviders + CurrentProvider)->DataFormat) {
-	    case DATA_FORMAT_SKYBOX:
-		if (!SI::CRC32::isValid((const char *) Buffer, Bytes)) {
-		    return;
-		}
-		switch (Buffer[0]) {
-		case 0x73:
-		    GetSatelliteTimeOffset(FilterId, Buffer, Bytes);
+		case DATA_FORMAT_SKYBOX:
+		    if (!SI::CRC32::isValid((const char *) Buffer, Bytes)) {
+			return;
+		    }
+		    switch (Buffer[0]) {
+			case 0x73:
+			    GetSatelliteTimeOffset(FilterId, Buffer, Bytes);
+			    break;
+			case 0x46:
+			    SupplementChannelsSKYBOX(FilterId, Buffer, Bytes - 4);
+			    break;
+			case 0x4a:
+			    GetChannelsSKYBOX(FilterId, Buffer, Bytes - 4);
+			    break;
+			case 0xa0:
+			case 0xa1:
+			case 0xa2:
+			case 0xa3:
+			    GetTitlesSKYBOX(FilterId, Buffer, Bytes - 4);
+			    break;
+			case 0xa8:
+			case 0xa9:
+			case 0xaa:
+			case 0xab:
+			    GetSummariesSKYBOX(FilterId, Buffer, Bytes - 4);
+			    break;
+			default:
+			    break;
+		    }
 		    break;
-		case 0x46:
-		    SupplementChannelsSKYBOX(FilterId, Buffer, Bytes - 4);
+		case DATA_FORMAT_MHW_1:
+		    if (Buffer[0] == 0x73) {
+			GetSatelliteTimeOffset(FilterId, Buffer, Bytes);
+		    }
+		    if (Filters[FilterId].Pid == 0xd2) {
+			switch (Buffer[0]) {
+			    case 0x90:
+				GetTitlesMHW1(FilterId, Buffer, Bytes);
+				break;
+			    default:
+				break;
+			}
+		    }
+		    if (Filters[FilterId].Pid == 0xd3) {
+			switch (Buffer[0]) {
+			    case 0x90:
+				GetSummariesMHW1(FilterId, Buffer, Bytes);
+				break;
+			    case 0x91:
+				GetChannelsMHW1(FilterId, Buffer, Bytes);
+				break;
+			    case 0x92:
+				GetThemesMHW1(FilterId, Buffer, Bytes);
+				break;
+			    default:
+				break;
+			}
+		    }
 		    break;
-		case 0x4a:
-		    GetChannelsSKYBOX(FilterId, Buffer, Bytes - 4);
-		    break;
-		case 0xa0:
-		case 0xa1:
-		case 0xa2:
-		case 0xa3:
-		    GetTitlesSKYBOX(FilterId, Buffer, Bytes - 4);
-		    break;
-		case 0xa8:
-		case 0xa9:
-		case 0xaa:
-		case 0xab:
-		    GetSummariesSKYBOX(FilterId, Buffer, Bytes - 4);
+		case DATA_FORMAT_MHW_2:
+		    if (Buffer[0] == 0x73) {
+			GetSatelliteTimeOffset(FilterId, Buffer, Bytes);
+		    }
+		    switch (Buffer[0]) {
+			case 0xc8:
+			    if (Buffer[3] == 0x00) {
+				GetChannelsMHW2(FilterId, Buffer, Bytes);
+			    }
+			    if (Buffer[3] == 0x01) {
+				GetThemesMHW2(FilterId, Buffer, Bytes);
+			    }
+			    break;
+			case 0xe6:
+			    GetTitlesMHW2(FilterId, Buffer, Bytes);
+			    break;
+			case 0x96:
+			    GetSummariesMHW2(FilterId, Buffer, Bytes);
+			    break;
+			default:
+			    break;
+		    }
 		    break;
 		default:
 		    break;
-		}
-		break;
-	    case DATA_FORMAT_MHW_1:
-		if (Buffer[0] == 0x73) {
-		    GetSatelliteTimeOffset(FilterId, Buffer, Bytes);
-		}
-		if (Filters[FilterId].Pid == 0xd2) {
-		    switch (Buffer[0]) {
-		    case 0x90:
-			GetTitlesMHW1(FilterId, Buffer, Bytes);
-			break;
-		    default:
-			break;
-		    }
-		}
-		if (Filters[FilterId].Pid == 0xd3) {
-		    switch (Buffer[0]) {
-		    case 0x90:
-			GetSummariesMHW1(FilterId, Buffer, Bytes);
-			break;
-		    case 0x91:
-			GetChannelsMHW1(FilterId, Buffer, Bytes);
-			break;
-		    case 0x92:
-			GetThemesMHW1(FilterId, Buffer, Bytes);
-			break;
-		    default:
-			break;
-		    }
-		}
-		break;
-	    case DATA_FORMAT_MHW_2:
-		if (Buffer[0] == 0x73) {
-		    GetSatelliteTimeOffset(FilterId, Buffer, Bytes);
-		}
-		switch (Buffer[0]) {
-		case 0xc8:
-		    if (Buffer[3] == 0x00) {
-			GetChannelsMHW2(FilterId, Buffer, Bytes);
-		    }
-		    if (Buffer[3] == 0x01) {
-			GetThemesMHW2(FilterId, Buffer, Bytes);
-		    }
-		    break;
-		case 0xe6:
-		    GetTitlesMHW2(FilterId, Buffer, Bytes);
-		    break;
-		case 0x96:
-		    GetSummariesMHW2(FilterId, Buffer, Bytes);
-		    break;
-		default:
-		    break;
-		}
-		break;
-	    default:
-		break;
 	    }
 	}
     }
@@ -1489,36 +1489,36 @@ void cTaskLoadepg::GetSatelliteTimeOffset(int FilterId, unsigned char *Data, int
 	    int SatelliteTimeOffsetH;
 	    int SatelliteTimeOffsetM;
 	    switch (DescriptorTag) {
-	    case 0x58:
-		unsigned char SatelliteCountryCode[4];
-		for (int i = 0; i < 3; i++) {
-		    SatelliteCountryCode[i] = Data[p1 + 2 + i];
-		}
-		SatelliteCountryCode[3] = '\0';
-		CleanString(SatelliteCountryCode);
-		SatelliteCountryRegionId = (Data[p1 + 5] & 0xfc) >> 6;
-		SatelliteTimeOffsetPolarity = (Data[p1 + 5] & 0x01);
-		SatelliteTimeOffsetH = BcdToInt(Data[p1 + 6]);
-		SatelliteTimeOffsetM = BcdToInt(Data[p1 + 7]);
-		if (SatelliteTimeOffsetPolarity == 1) {
-		    SatelliteTimeOffset = 0 - (SatelliteTimeOffsetH * 3600);
-		} else {
-		    SatelliteTimeOffset = SatelliteTimeOffsetH * 3600;
-		}
-		EpgTimeOffset = (LocalTimeOffset - SatelliteTimeOffset);
-		log_message(INFO, "satellite time offset=[UTC]%+i", SatelliteTimeOffset / 3600);
-		log_message(INFO, "EPG time offset=%+i seconds", EpgTimeOffset);
-		if (is_logging(DEBUG)) {
-		    log_message(DEBUG, "satellite time UTC: %s %02i:%02i:%02i", GetStringMJD(satMJD), satH, satM, satS);
-		    log_message(DEBUG, "satellite country code=%s", SatelliteCountryCode);
-		    log_message(DEBUG, "satellite country region ID=%i", SatelliteCountryRegionId);
-		    log_message(DEBUG, "satellite local time offset polarity=%i", SatelliteTimeOffsetPolarity);
-		    log_message(DEBUG, "satellite local time offset=%02i:%02i", SatelliteTimeOffsetH, SatelliteTimeOffsetM);
-		}
-		break;
-	    default:
-		//fprintf( stderr, "0x%02x\n", DescriptorTag );
-		break;
+		case 0x58:
+		    unsigned char SatelliteCountryCode[4];
+		    for (int i = 0; i < 3; i++) {
+			SatelliteCountryCode[i] = Data[p1 + 2 + i];
+		    }
+		    SatelliteCountryCode[3] = '\0';
+		    CleanString(SatelliteCountryCode);
+		    SatelliteCountryRegionId = (Data[p1 + 5] & 0xfc) >> 6;
+		    SatelliteTimeOffsetPolarity = (Data[p1 + 5] & 0x01);
+		    SatelliteTimeOffsetH = BcdToInt(Data[p1 + 6]);
+		    SatelliteTimeOffsetM = BcdToInt(Data[p1 + 7]);
+		    if (SatelliteTimeOffsetPolarity == 1) {
+			SatelliteTimeOffset = 0 - (SatelliteTimeOffsetH * 3600);
+		    } else {
+			SatelliteTimeOffset = SatelliteTimeOffsetH * 3600;
+		    }
+		    EpgTimeOffset = (LocalTimeOffset - SatelliteTimeOffset);
+		    log_message(INFO, "satellite time offset=[UTC]%+i", SatelliteTimeOffset / 3600);
+		    log_message(INFO, "EPG time offset=%+i seconds", EpgTimeOffset);
+		    if (is_logging(DEBUG)) {
+			log_message(DEBUG, "satellite time UTC: %s %02i:%02i:%02i", GetStringMJD(satMJD), satH, satM, satS);
+			log_message(DEBUG, "satellite country code=%s", SatelliteCountryCode);
+			log_message(DEBUG, "satellite country region ID=%i", SatelliteCountryRegionId);
+			log_message(DEBUG, "satellite local time offset polarity=%i", SatelliteTimeOffsetPolarity);
+			log_message(DEBUG, "satellite local time offset=%02i:%02i", SatelliteTimeOffsetH, SatelliteTimeOffsetM);
+		    }
+		    break;
+		default:
+		    //fprintf( stderr, "0x%02x\n", DescriptorTag );
+		    break;
 	    }
 	    p1 += (DescriptorLength + 2);
 	    DescriptorsLoopLength -= (DescriptorLength + 2);
@@ -1568,74 +1568,74 @@ void cTaskLoadepg::SupplementChannelsSKYBOX(int FilterId, unsigned char *Data, i
 	SI::Descriptor * d;
 	for (SI::Loop::Iterator it2; (d = SiSdtService.serviceDescriptors.getNext(it2));) {
 	    switch (d->getDescriptorTag()) {
-	    case SI::ServiceDescriptorTag:
-		{
-		    SI::ServiceDescriptor * sd = (SI::ServiceDescriptor *) d;
-		    switch (sd->getServiceType()) {
-		    case 0x01:	// digital television service
-		    case 0x02:	// digital radio sound service
-		    case 0x04:	// NVOD reference service
-		    case 0x05:	// NVOD time-shifted service
-			{
-			    char NameBuf[1024];
-			    char ShortNameBuf[1024];
-			    char ProviderNameBuf[1024];
-			    log_message(TRACE, "B %02x %x-%x %x-%x %x-%x",
-					sd->getServiceType(), Key.Nid, lChannels[10].Nid, Key.Tid, lChannels[10].Tid, Key.Sid, lChannels[10].Sid);
-			    sd->serviceName.getText(NameBuf, ShortNameBuf, sizeof(NameBuf), sizeof(ShortNameBuf));
-			    char *pn = compactspace(NameBuf);
-			    char *ps = compactspace(ShortNameBuf);
-			    sd->providerName.getText(ProviderNameBuf, sizeof(ProviderNameBuf));
-			    char *provname = compactspace(ProviderNameBuf);
-			    if (C) {
-				if (C->name == NULL) {
-				    asprintf(&C->name, "%s", pn);
-				    asprintf(&C->providername, "%s", provname);
-				    //asprintf( &C->shortname, "%s", ps);
+		case SI::ServiceDescriptorTag:
+		    {
+			SI::ServiceDescriptor * sd = (SI::ServiceDescriptor *) d;
+			switch (sd->getServiceType()) {
+			    case 0x01:	// digital television service
+			    case 0x02:	// digital radio sound service
+			    case 0x04:	// NVOD reference service
+			    case 0x05:	// NVOD time-shifted service
+				{
+				    char NameBuf[1024];
+				    char ShortNameBuf[1024];
+				    char ProviderNameBuf[1024];
+				    log_message(TRACE, "B %02x %x-%x %x-%x %x-%x",
+					    sd->getServiceType(), Key.Nid, lChannels[10].Nid, Key.Tid, lChannels[10].Tid, Key.Sid, lChannels[10].Sid);
+				    sd->serviceName.getText(NameBuf, ShortNameBuf, sizeof(NameBuf), sizeof(ShortNameBuf));
+				    char *pn = compactspace(NameBuf);
+				    char *ps = compactspace(ShortNameBuf);
+				    sd->providerName.getText(ProviderNameBuf, sizeof(ProviderNameBuf));
+				    char *provname = compactspace(ProviderNameBuf);
+				    if (C) {
+					if (C->name == NULL) {
+					    asprintf(&C->name, "%s", pn);
+					    asprintf(&C->providername, "%s", provname);
+					    //asprintf( &C->shortname, "%s", ps);
+					}
+				    }
+				}
+				break;
+			    default:
+				break;
+			}
+		    }
+		    break;
+		case SI::MultilingualServiceNameDescriptorTag:
+		    {
+			if (C == NULL)
+			    break;
+			SI::MultilingualServiceNameDescriptor * md = (SI::MultilingualServiceNameDescriptor *) d;
+			SI::MultilingualServiceNameDescriptor::Name n;
+			for (SI::Loop::Iterator it2; (md->nameLoop.getNext(n, it2));) {
+			    // languageCode char[4]
+			    // name String
+			    if (strncmp(n.languageCode, "aka", 3) == 0) {
+				if (C->shortname == NULL) {
+				    char b[100];
+				    n.name.getText(b, sizeof(b));
+				    C->shortname = strdup(b);
+				    nChannelUpdates++;
+				}
+			    } else {
+				if (!C->IsNameUpdated) {
+				    if (C->name) {
+					free(C->name);
+					C->name = NULL;
+				    }
+				    //C->name = n.name.getText();
+				    char b[100];
+				    n.name.getText(b, sizeof(b));
+				    C->name = strdup(b);
+				    C->IsNameUpdated = true;
+				    //nChannelUpdates++;
 				}
 			    }
 			}
-			break;
-		    default:
-			break;
 		    }
-		}
-		break;
-	    case SI::MultilingualServiceNameDescriptorTag:
-		{
-		    if (C == NULL)
-			break;
-		    SI::MultilingualServiceNameDescriptor * md = (SI::MultilingualServiceNameDescriptor *) d;
-		    SI::MultilingualServiceNameDescriptor::Name n;
-		    for (SI::Loop::Iterator it2; (md->nameLoop.getNext(n, it2));) {
-			// languageCode char[4]
-			// name String
-			if (strncmp(n.languageCode, "aka", 3) == 0) {
-			    if (C->shortname == NULL) {
-				char b[100];
-				n.name.getText(b, sizeof(b));
-				C->shortname = strdup(b);
-				nChannelUpdates++;
-			    }
-			} else {
-			    if (!C->IsNameUpdated) {
-				if (C->name) {
-				    free(C->name);
-				    C->name = NULL;
-				}
-				//C->name = n.name.getText();
-				char b[100];
-				n.name.getText(b, sizeof(b));
-				C->name = strdup(b);
-				C->IsNameUpdated = true;
-				//nChannelUpdates++;
-			    }
-			}
-		    }
-		}
-		break;
-	    default:
-		break;
+		    break;
+		default:
+		    break;
 	    }
 	}
     }
@@ -1678,72 +1678,72 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data, int Leng
 		p2 += (DescriptorLength + 2);
 		TransportDescriptorsLength -= (DescriptorLength + 2);
 		switch (DescriptorTag) {
-		case 0x41:	// service_list
-		    break;
-		case 0x5f:	// private data specifier indicates BSkyB
-		    break;
-		case 0x93:	// unknown private
-		    break;
-		case 0xb1:
-		    p3 += 2;
-		    DescriptorLength -= 2;
-		    while (DescriptorLength > 0) {
-			// 0x01 = Video Channel
-			// 0x02 = Audio Channel
-			// 0x05 = Other Channel
-			//if( Data[p3+2] == 0x01 || Data[p3+2] == 0x02 || Data[p3+2] == 0x05 )
-			//{
-			unsigned short Sid = (Data[p3] << 8) | Data[p3 + 1];
-			unsigned char unk1 = Data[p3 + 2];
-			unsigned short ChannelId = (Data[p3 + 3] << 8) | Data[p3 + 4];
-			unsigned short SkyNumber = (Data[p3 + 5] << 8) | Data[p3 + 6];
-			unsigned short Flags = (Data[p3 + 7] << 8) | Data[p3 + 8];
-			unsigned short unkval = Flags >> 4;
-			int unkflag1 = (Flags & 8) >> 3;
-			int unkflag2 = (Flags & 4) >> 2;
-			int unkflag3 = (Flags & 2) >> 1;
-			int unkflag4 = (Flags & 1);
-			/*
-			 * 
-			 */
-			if (SkyNumber > 100 && SkyNumber < 1000) {
-			    if (ChannelId > 0) {
-				sChannel Key, *C;
-				Key.ChannelId = ChannelId;
-				Key.Nid = Nid;
-				Key.Tid = Tid;
-				Key.Sid = Sid;
-				C = (sChannel *) bsearch(&Key, lChannels, nChannels, sizeof(sChannel), &bsearchChannelByChID);
-				if (C == NULL) {
-				    C = (lChannels + nChannels);
-				    C->ChannelId = ChannelId;
-				    C->Nid = Nid;
-				    C->Tid = Tid;
-				    C->Sid = Sid;
-				    C->SkyNumber = SkyNumber;
-				    C->pData = 0;
-				    C->lenData = 0;
-				    C->IsFound = false;
-				    C->IsEpg = false;
-				    nChannels++;
-				    incr_stat("channels.count");
-				    if (nChannels >= MAX_CHANNELS) {
-					log_message(ERROR, "channels found more than %i", MAX_CHANNELS);
-					IsError = true;
-					return;
+		    case 0x41:	// service_list
+			break;
+		    case 0x5f:	// private data specifier indicates BSkyB
+			break;
+		    case 0x93:	// unknown private
+			break;
+		    case 0xb1:
+			p3 += 2;
+			DescriptorLength -= 2;
+			while (DescriptorLength > 0) {
+			    // 0x01 = Video Channel
+			    // 0x02 = Audio Channel
+			    // 0x05 = Other Channel
+			    //if( Data[p3+2] == 0x01 || Data[p3+2] == 0x02 || Data[p3+2] == 0x05 )
+			    //{
+			    unsigned short Sid = (Data[p3] << 8) | Data[p3 + 1];
+			    unsigned char unk1 = Data[p3 + 2];
+			    unsigned short ChannelId = (Data[p3 + 3] << 8) | Data[p3 + 4];
+			    unsigned short SkyNumber = (Data[p3 + 5] << 8) | Data[p3 + 6];
+			    unsigned short Flags = (Data[p3 + 7] << 8) | Data[p3 + 8];
+			    unsigned short unkval = Flags >> 4;
+			    int unkflag1 = (Flags & 8) >> 3;
+			    int unkflag2 = (Flags & 4) >> 2;
+			    int unkflag3 = (Flags & 2) >> 1;
+			    int unkflag4 = (Flags & 1);
+			    /*
+			     * 
+			     */
+			    if (SkyNumber > 100 && SkyNumber < 1000) {
+				if (ChannelId > 0) {
+				    sChannel Key, *C;
+				    Key.ChannelId = ChannelId;
+				    Key.Nid = Nid;
+				    Key.Tid = Tid;
+				    Key.Sid = Sid;
+				    C = (sChannel *) bsearch(&Key, lChannels, nChannels, sizeof(sChannel), &bsearchChannelByChID);
+				    if (C == NULL) {
+					C = (lChannels + nChannels);
+					C->ChannelId = ChannelId;
+					C->Nid = Nid;
+					C->Tid = Tid;
+					C->Sid = Sid;
+					C->SkyNumber = SkyNumber;
+					C->pData = 0;
+					C->lenData = 0;
+					C->IsFound = false;
+					C->IsEpg = false;
+					nChannels++;
+					incr_stat("channels.count");
+					if (nChannels >= MAX_CHANNELS) {
+					    log_message(ERROR, "channels found more than %i", MAX_CHANNELS);
+					    IsError = true;
+					    return;
+					}
+					qsort(lChannels, nChannels, sizeof(sChannel), &qsortChannelsByChID);
 				    }
-				    qsort(lChannels, nChannels, sizeof(sChannel), &qsortChannelsByChID);
 				}
 			    }
+			    //}
+			    p3 += 9;
+			    DescriptorLength -= 9;
 			}
-			//}
-			p3 += 9;
-			DescriptorLength -= 9;
-		    }
-		    break;
-		default:
-		    log_message(ERROR, "unprocessed descriptor 0x%02x\n", DescriptorTag);
-		    break;
+			break;
+		    default:
+			log_message(ERROR, "unprocessed descriptor 0x%02x\n", DescriptorTag);
+			break;
 		}
 	    }
 	}
@@ -1761,18 +1761,18 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data, int Leng
 	}
 	B->LastSectionNumber = LastSectionNumber;
 	nBouquets++;
-      CheckBouquetSections:;
-	B->SectionNumber[SectionNumber] = SectionNumber;
-	EndBAT = true;
-	for (int i = 0; i < nBouquets; i++) {
-	    B = (lBouquets + i);
-	    for (int ii = 0; ii <= B->LastSectionNumber; ii++) {
-		if (B->SectionNumber[ii] == -1) {
-		    EndBAT = false;
-		    break;
-		}
-	    }
-	}
+CheckBouquetSections:;
+		     B->SectionNumber[SectionNumber] = SectionNumber;
+		     EndBAT = true;
+		     for (int i = 0; i < nBouquets; i++) {
+			 B = (lBouquets + i);
+			 for (int ii = 0; ii <= B->LastSectionNumber; ii++) {
+			     if (B->SectionNumber[ii] == -1) {
+				 EndBAT = false;
+				 break;
+			     }
+			 }
+		     }
     }
 }
 
@@ -1802,45 +1802,45 @@ void cTaskLoadepg::GetTitlesSKYBOX(int FilterId, unsigned char *Data, int Length
 	if (ChannelId > 0) {
 	    if (MjdTime > 0) {
 		p = 10;
-	      loop1:;
-		sTitle *T = (lTitles + nTitles);
-		T->ChannelId = ChannelId;
-		T->MjdTime = MjdTime;
-		T->EventId = (Data[p] << 8) | Data[p + 1];
-		Len1 = ((Data[p + 2] & 0x0f) << 8) | Data[p + 3];
-		if (Data[p + 4] != 0xb5) {
-		    log_message(WARNING, "data error signature for title");
-		    goto endloop1;
-		}
-		if (Len1 > Length) {
-		    log_message(WARNING, "data error length for title");
-		    goto endloop1;
-		}
-		p += 4;
-		Len2 = Data[p + 1] - 7;
-		T->StartTime = ((MjdTime - 40587) * 86400) + ((Data[p + 2] << 9) | (Data[p + 3] << 1));
-		T->Duration = ((Data[p + 4] << 9) | (Data[p + 5] << 1));
-		T->ThemeId = Data[p + 6];
-		T->pData = pT;
-		T->lenData = Len2;
-		if ((pT + Len2 + 2) > MAX_BUFFER_SIZE_TITLES) {
-		    log_message(ERROR, "buffer overflow, titles size more than %i bytes", MAX_BUFFER_SIZE_TITLES);
-		    IsError = true;
-		    return;
-		}
-		memcpy(&bTitles[pT], &Data[p + 9], Len2);
-		pT += (Len2 + 1);
-		p += Len1;
-		nTitles++;
-		if (nTitles >= MAX_TITLES) {
-		    log_message(ERROR, "titles found more than %i", MAX_TITLES);
-		    IsError = true;
-		    return;
-		}
-		if (p < Length) {
-		    goto loop1;
-		}
-	      endloop1:;
+loop1:;
+      sTitle *T = (lTitles + nTitles);
+      T->ChannelId = ChannelId;
+      T->MjdTime = MjdTime;
+      T->EventId = (Data[p] << 8) | Data[p + 1];
+      Len1 = ((Data[p + 2] & 0x0f) << 8) | Data[p + 3];
+      if (Data[p + 4] != 0xb5) {
+	  log_message(WARNING, "data error signature for title");
+	  goto endloop1;
+      }
+      if (Len1 > Length) {
+	  log_message(WARNING, "data error length for title");
+	  goto endloop1;
+      }
+      p += 4;
+      Len2 = Data[p + 1] - 7;
+      T->StartTime = ((MjdTime - 40587) * 86400) + ((Data[p + 2] << 9) | (Data[p + 3] << 1));
+      T->Duration = ((Data[p + 4] << 9) | (Data[p + 5] << 1));
+      T->ThemeId = Data[p + 6];
+      T->pData = pT;
+      T->lenData = Len2;
+      if ((pT + Len2 + 2) > MAX_BUFFER_SIZE_TITLES) {
+	  log_message(ERROR, "buffer overflow, titles size more than %i bytes", MAX_BUFFER_SIZE_TITLES);
+	  IsError = true;
+	  return;
+      }
+      memcpy(&bTitles[pT], &Data[p + 9], Len2);
+      pT += (Len2 + 1);
+      p += Len1;
+      nTitles++;
+      if (nTitles >= MAX_TITLES) {
+	  log_message(ERROR, "titles found more than %i", MAX_TITLES);
+	  IsError = true;
+	  return;
+      }
+      if (p < Length) {
+	  goto loop1;
+      }
+endloop1:;
 	    }
 	}
     }
@@ -1872,42 +1872,42 @@ void cTaskLoadepg::GetSummariesSKYBOX(int FilterId, unsigned char *Data, int Len
 	if (ChannelId > 0) {
 	    if (MjdTime > 0) {
 		p = 10;
-	      loop1:;
-		sSummary *S = (lSummaries + nSummaries);
-		S->ChannelId = ChannelId;
-		S->MjdTime = MjdTime;
-		S->EventId = (Data[p] << 8) | Data[p + 1];
-		Len1 = ((Data[p + 2] & 0x0f) << 8) | Data[p + 3];
-		if (Data[p + 4] != 0xb9) {
-		    log_message(WARNING, "data error signature for summary");
-		    goto endloop1;
-		}
-		if (Len1 > Length) {
-		    log_message(WARNING, "data error length for summary");
-		    goto endloop1;
-		}
-		p += 4;
-		Len2 = Data[p + 1];
-		S->pData = pS;
-		S->lenData = Len2;
-		if ((pS + Len2 + 2) > MAX_BUFFER_SIZE_SUMMARIES) {
-		    log_message(ERROR, "buffer overflow, summaries size more than %i bytes", MAX_BUFFER_SIZE_SUMMARIES);
-		    IsError = true;
-		    return;
-		}
-		memcpy(&bSummaries[pS], &Data[p + 2], Len2);
-		pS += (Len2 + 1);
-		p += Len1;
-		nSummaries++;
-		if (nSummaries >= MAX_SUMMARIES) {
-		    log_message(ERROR, "summaries found more than %i", MAX_SUMMARIES);
-		    IsError = true;
-		    return;
-		}
-		if (p < Length) {
-		    goto loop1;
-		}
-	      endloop1:;
+loop1:;
+      sSummary *S = (lSummaries + nSummaries);
+      S->ChannelId = ChannelId;
+      S->MjdTime = MjdTime;
+      S->EventId = (Data[p] << 8) | Data[p + 1];
+      Len1 = ((Data[p + 2] & 0x0f) << 8) | Data[p + 3];
+      if (Data[p + 4] != 0xb9) {
+	  log_message(WARNING, "data error signature for summary");
+	  goto endloop1;
+      }
+      if (Len1 > Length) {
+	  log_message(WARNING, "data error length for summary");
+	  goto endloop1;
+      }
+      p += 4;
+      Len2 = Data[p + 1];
+      S->pData = pS;
+      S->lenData = Len2;
+      if ((pS + Len2 + 2) > MAX_BUFFER_SIZE_SUMMARIES) {
+	  log_message(ERROR, "buffer overflow, summaries size more than %i bytes", MAX_BUFFER_SIZE_SUMMARIES);
+	  IsError = true;
+	  return;
+      }
+      memcpy(&bSummaries[pS], &Data[p + 2], Len2);
+      pS += (Len2 + 1);
+      p += Len1;
+      nSummaries++;
+      if (nSummaries >= MAX_SUMMARIES) {
+	  log_message(ERROR, "summaries found more than %i", MAX_SUMMARIES);
+	  IsError = true;
+	  return;
+      }
+      if (p < Length) {
+	  goto loop1;
+      }
+endloop1:;
 	    }
 	}
     }
@@ -2113,7 +2113,7 @@ void cTaskLoadepg::GetSummariesMHW1(int FilterId, unsigned char *Data, int Lengt
 		if (Summary->Byte7 == 0xff && Summary->Byte8 && Summary->Byte9 == 0xff) {
 		    if (nSummaries < MAX_SUMMARIES) {
 			if (memcmp(&InitialBuffer[FilterId][0], Data, 20)
-			    == 0) {
+				== 0) {
 			    Filters[FilterId].Step = 2;
 			} else {
 			    if (InitialBuffer[FilterId][0] == 0) {
@@ -2472,8 +2472,8 @@ void cTaskLoadepg::CreateEpgXml(void)
 				CleanString(DecodeText);
 				//printf("\t<title lang=\"%s\">%s</title>\n", xmllang(&evtdesc->lang_code1), xmlify(evt));
 				printf("\t<title lang=\"%s\">%s</title>\n",
-				       /* xmllang(&evtdesc->lang_code1) */
-				       "en", xmlify((const char *) DecodeText));
+					/* xmllang(&evtdesc->lang_code1) */
+					"en", xmlify((const char *) DecodeText));
 			    }
 			    sSummary KeyS, *S;
 			    KeyS.ChannelId = T->ChannelId;
@@ -2491,13 +2491,13 @@ void cTaskLoadepg::CreateEpgXml(void)
 					if (colon != NULL) {
 					    *colon = 0;
 					    printf("\t<subtitle lang=\"%s\">%s</subtitle>\n",
-						   /*xmllang(&levt->lang_code1) */
-						   "en", d);
+						    /*xmllang(&levt->lang_code1) */
+						    "en", d);
 					    d = colon + 2;
 					}
 					printf("\t<desc lang=\"%s\">",
-					       /*xmllang(&levt->lang_code1) */
-					       "en");
+						/*xmllang(&levt->lang_code1) */
+						"en");
 					printf("%s", d);
 					printf("</desc>\n");
 				    }
@@ -2552,7 +2552,7 @@ void cTaskLoadepg::CreateEpgXml(void)
 		C = (sChannel *) bsearch(&KeyC, lChannels, nChannels, sizeof(sChannel), &bsearchChannelByChannelId);
 		if (C) {
 		    tChannelID ChVID = tChannelID((lProviders + CurrentProvider)->SourceId, C->Nid,
-						  C->Tid, C->Sid);
+			    C->Tid, C->Sid);
 		    cChannel *VC = NULL;
 		    if (VC) {
 			KeyEC.OriginalSourceId = VC->Source();
@@ -2562,8 +2562,8 @@ void cTaskLoadepg::CreateEpgXml(void)
 			EC = (sEquivChannel *) bsearch(&KeyEC, lEquivChannels, nEquivChannels, sizeof(sEquivChannel), &bsearchEquivChannel);
 			if (EC && Config->UseFileEquivalents) {
 			    tChannelID ChEID = tChannelID(EC->EquivSourceId, EC->EquivNid,
-							  EC->EquivTid, EC->EquivSid,
-							  EC->EquivRid);
+				    EC->EquivTid, EC->EquivSid,
+				    EC->EquivRid);
 			    cChannel *VEC = NULL;
 			    if (VEC) {
 				//fprintf( File, "<mhw>C %s-%i-%i-%i-%i %s\n", *cSource::ToString( VEC->Source() ), VEC->Nid(), VEC->Tid(), VEC->Sid(), VEC->Rid(), VEC->Name() );
@@ -2701,4 +2701,4 @@ void EPGGrabber::Grab()
 
 // }}}
 
-// vim: foldmethod=marker ts=4 sw=2
+// vim: foldmethod=marker ts=8 sw=4
