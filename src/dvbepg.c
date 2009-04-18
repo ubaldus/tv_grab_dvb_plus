@@ -256,12 +256,12 @@ static void parseRatingDescription(void *data)
 	switch (pr->rating) {
 	case 0x00:		/*undefined */
 	    break;
-	case 0x01...0x0F:
+	case 0x01 ... 0x0F:
 	    printf("\t<rating system=\"dvb\">\n");
 	    printf("\t\t<value>%d</value>\n", pr->rating + 3);
 	    printf("\t</rating>\n");
 	    break;
-	case 0x10...0xFF:	/*broadcaster defined */
+	case 0x10 ... 0xFF:	/*broadcaster defined */
 	    break;
 	}
     }
