@@ -29,7 +29,6 @@
 #include <sys/vfs.h>
 #include <time.h>
 #include <unistd.h>
-#include "include/vdr/i18n.h"
 #include "include/vdr/thread.h"
 
 int SysLogLevel = 3;

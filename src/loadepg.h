@@ -21,7 +21,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 #include <vdr/thread.h>
+#include <vdr/tools.h>
 #include <sys/ioctl.h>
 #include <linux/dvb/frontend.h>
 #include <linux/dvb/dmx.h>
@@ -29,10 +33,6 @@
 #include "libsi/descriptor.h"
 
 #include "formats.h"
-
-#ifndef APIVERSNUM
-#include <vdr/config.h>
-#endif
 
 #define DVB_DEVICE_DEMUX "/dev/dvb/adapter%i/demux0"
 
