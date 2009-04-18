@@ -32,11 +32,11 @@ struct stats_table {
 	struct stats_table *next;
 };
 
-extern void incr_stat(char *n);
-extern void decr_stat(char *n);
-extern void add_to_stat(char *n, int i);
-extern void set_stat(char *n, int v);
-extern int get_stat(char *n);
+extern void incr_stat(const char *n);
+extern void decr_stat(const char *n);
+extern void add_to_stat(const char *n, int i);
+extern void set_stat(const char *n, int v);
+extern int get_stat(const char *n);
 
 
 #ifdef __cplusplus

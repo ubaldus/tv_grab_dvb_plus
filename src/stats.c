@@ -32,7 +32,7 @@ struct stats_table *stats;
  * return it
  * create a new entry if not found
  */
-struct stats_table *stats_entry(char *n) {
+struct stats_table *stats_entry(const char *n) {
 	struct stats_table *s;
 	struct stats_table *t;
 
@@ -56,35 +56,35 @@ struct stats_table *stats_entry(char *n) {
 	return t;
 }
 
-void incr_stat(char *n) {
+void incr_stat(const char *n) {
 	struct stats_table *s;
 
 	s = stats_entry(n);
 	s->value += 1;
 }
 
-void decr_stat(char *n) {
+void decr_stat(const char *n) {
 	struct stats_table *s;
 
 	s = stats_entry(n);
 	s->value -= 1;
 }
 
-void add_to_stat(char *n, int i) {
+void add_to_stat(const char *n, int i) {
 	struct stats_table *s;
 
 	s = stats_entry(n);
 	s->value += i;
 }
 
-void set_stat(char *n, int v) {
+void set_stat(const char *n, int v) {
 	struct stats_table *s;
 
 	s = stats_entry(n);
 	s->value = v;
 }
 
-int get_stat(char *n) {
+int get_stat(const char *n) {
 	struct stats_table *s;
 
 	s = stats_entry(n);
