@@ -21,9 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <vdr/plugin.h>
 #include <vdr/device.h>
-#include <vdr/remote.h>
 #include <vdr/thread.h>
 #include <sys/ioctl.h>
 #include <linux/dvb/frontend.h>
