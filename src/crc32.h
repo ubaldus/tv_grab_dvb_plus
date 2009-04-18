@@ -20,6 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-extern uint32_t dvb_crc32(const uint8_t *data, size_t len);
+extern uint32_t dvb_crc32(const uint8_t * data, size_t len);
 
 #endif

@@ -65,8 +65,7 @@ static void status()
 {
     log_raw_message(DEBUG,
 		    "\rStatus: %d pkts, %d prgms, %d updates, %d invalid, %d CRC err",
-		    packet_count, programme_count, update_count,
-		    invalid_date_count, crcerr_count);
+		    packet_count, programme_count, update_count, invalid_date_count, crcerr_count);
 }
 
 /* Parse 0x4D Short Event Descriptor */
@@ -84,8 +83,7 @@ static void parseEventDescription(void *data, enum ER round)
 	    return;
 	strncpy(evt, (char *) &evtdesc->data, evtlen);
 	evt[evtlen] = '\0';
-	printf("\t<title lang=\"%s\">%s</title>\n",
-	       lookup_language(&evtdesc->lang_code1), convert_text(evt));
+	printf("\t<title lang=\"%s\">%s</title>\n", lookup_language(&evtdesc->lang_code1), convert_text(evt));
 	return;
     }
 
@@ -97,8 +95,7 @@ static void parseEventDescription(void *data, enum ER round)
 	if (*dsc) {
 	    char *d = convert_text(dsc);
 	    if (d && *d)
-		printf("\t<sub-title lang=\"%s\">%s</sub-title>\n",
-		       lookup_language(&evtdesc->lang_code1), d);
+		printf("\t<sub-title lang=\"%s\">%s</sub-title>\n", lookup_language(&evtdesc->lang_code1), d);
 	}
     }
 }
@@ -109,17 +106,13 @@ static void parseLongEventDescription(void *data)
     assert(GetDescriptorTag(data) == 0x4E);
     struct descr_extended_event *levt = CastExtendedEventDescriptor(data);
     char dsc[256];
-    bool non_empty = (levt->descriptor_number
-		      || levt->last_descriptor_number
-		      || levt->length_of_items || levt->data[0]);
+    bool non_empty = (levt->descriptor_number || levt->last_descriptor_number || levt->length_of_items || levt->data[0]);
 
     if (non_empty && levt->descriptor_number == 0)
 	printf("\t<desc lang=\"%s\">", lookup_language(&levt->lang_code1));
 
     void *p = &levt->data;
-    void *data_end =
-	CastExtendedEventDescriptor(data) + DESCR_GEN_LEN +
-	GetDescriptorLength(data);
+    void *data_end = CastExtendedEventDescriptor(data) + DESCR_GEN_LEN + GetDescriptorLength(data);
     while (p < (void *) levt->data + levt->length_of_items) {
 	struct item_extended_event *name = p;
 	int name_len = name->item_description_length;
@@ -147,8 +140,7 @@ static void parseLongEventDescription(void *data)
 	printf("%s", convert_text(dsc));
     }
     //printf("/%d/%d/%s", levt->descriptor_number, levt->last_descriptor_number, convert_text(dsc));
-    if (non_empty
-	&& levt->descriptor_number == levt->last_descriptor_number)
+    if (non_empty && levt->descriptor_number == levt->last_descriptor_number)
 	printf("</desc>\n");
 }
 
@@ -174,8 +166,7 @@ static void parseComponentDescription(void *data, enum CR round, int *seen)
 	    //if ((dc->component_type-1)&0x08) //HD TV
 	    //if ((dc->component_type-1)&0x04) //30Hz else 25
 	    printf("\t<video>\n");
-	    printf("\t\t<aspect>%s</aspect>\n",
-		   lookup_aspect((dc->component_type - 1) & 0x03));
+	    printf("\t\t<aspect>%s</aspect>\n", lookup_aspect((dc->component_type - 1) & 0x03));
 	    printf("\t</video>\n");
 	    (*seen)++;
 	}
@@ -183,15 +174,13 @@ static void parseComponentDescription(void *data, enum CR round, int *seen)
     case 0x02:			// Audio Info
 	if (round == AUDIO && !*seen) {
 	    printf("\t<audio>\n");
-	    printf("\t\t<stereo>%s</stereo>\n",
-		   lookup_audio(dc->component_type));
+	    printf("\t\t<stereo>%s</stereo>\n", lookup_audio(dc->component_type));
 	    printf("\t</audio>\n");
 	    (*seen)++;
 	}
 	if (round == LANGUAGE) {
 	    if (!*seen) {
-		printf("\t<language>%s</language>\n",
-		       lookup_language(&dc->lang_code1));
+		printf("\t<language>%s</language>\n", lookup_language(&dc->lang_code1));
 	    } else {
 		//printf("\t<!--language>%s</language-->\n", lookup_language(&dc->lang_code1));
 	    }
@@ -233,11 +222,9 @@ static void parseContentDescription(void *data)
     struct descr_content *dc = CastContentDescriptor(data);
     int once[256 / 8 / sizeof(int)] = { 0, };
     void *p;
-    for (p = &dc->data; p < data + dc->descriptor_length;
-	 p += NIBBLE_CONTENT_LEN) {
+    for (p = &dc->data; p < data + dc->descriptor_length; p += NIBBLE_CONTENT_LEN) {
 	struct nibble_content *nc = p;
-	int c1 =
-	    (nc->content_nibble_level_1 << 4) + nc->content_nibble_level_2;
+	int c1 = (nc->content_nibble_level_1 << 4) + nc->content_nibble_level_2;
 #ifdef CATEGORY_UNKNOWN
 	int c2 = (nc->user_nibble_1 << 4) + nc->user_nibble_2;
 #endif
@@ -249,8 +236,7 @@ static void parseContentDescription(void *data)
 		    printf("\t<category>%s</category>\n", c);
 #ifdef CATEGORY_UNKNOWN
 		else
-		    printf("\t<!--category>%s %02X %02X</category-->\n",
-			   c + 1, c1, c2);
+		    printf("\t<!--category>%s %02X %02X</category-->\n", c + 1, c1, c2);
 	    else
 		printf("\t<!--category>%02X %02X</category-->\n", c1, c2);
 #endif
@@ -265,18 +251,17 @@ static void parseRatingDescription(void *data)
     assert(GetDescriptorTag(data) == 0x55);
     struct descr_parental_rating *pr = CastParentalRatingDescriptor(data);
     void *p;
-    for (p = &pr->data; p < data + pr->descriptor_length;
-	 p += PARENTAL_RATING_ITEM_LEN) {
+    for (p = &pr->data; p < data + pr->descriptor_length; p += PARENTAL_RATING_ITEM_LEN) {
 	struct parental_rating_item *pr = p;
 	switch (pr->rating) {
 	case 0x00:		/*undefined */
 	    break;
-	case 0x01 ... 0x0F:
+	case 0x01...0x0F:
 	    printf("\t<rating system=\"dvb\">\n");
 	    printf("\t\t<value>%d</value>\n", pr->rating + 3);
 	    printf("\t</rating>\n");
 	    break;
-	case 0x10 ... 0xFF:	/*broadcaster defined */
+	case 0x10...0xFF:	/*broadcaster defined */
 	    break;
 	}
     }
@@ -316,8 +301,7 @@ static void parseDescription(void *data, size_t len)
     for (round = 0; round < 8; round++) {
 	int seen = 0;		// no title/language/video/audio/subtitles seen in this round
 	void *p;
-	for (p = data; p < data + len;
-	     p += DESCR_GEN_LEN + GetDescriptorLength(p)) {
+	for (p = data; p < data + len; p += DESCR_GEN_LEN + GetDescriptorLength(p)) {
 	    struct descr_gen *desc = p;
 	    switch (GetDescriptorTag(desc)) {
 	    case 0:
@@ -387,8 +371,7 @@ static void parseDescription(void *data, size_t len)
 static bool validateDescription(void *data, size_t len)
 {
     void *p;
-    for (p = data; p < data + len;
-	 p += DESCR_GEN_LEN + GetDescriptorLength(p)) {
+    for (p = data; p < data + len; p += DESCR_GEN_LEN + GetDescriptorLength(p)) {
 	struct descr_gen *desc = p;
 	if (GetDescriptorTag(desc) == 0x4D) {
 	    struct descr_short_event *evtdesc = p;
@@ -407,8 +390,7 @@ static void parseMJD(long int mjd, struct tm *t)
 {
     int year = (int) ((mjd - 15078.2) / 365.25);
     int month = (int) ((mjd - 14956.1 - (int) (year * 365.25)) / 30.6001);
-    int day =
-	mjd - 14956 - (int) (year * 365.25) - (int) (month * 30.6001);
+    int day = mjd - 14956 - (int) (year * 365.25) - (int) (month * 30.6001);
     int i = (month == 14 || month == 15) ? 1 : 0;
     year += i;
     month = month - 2 - i * 12;
@@ -431,8 +413,7 @@ static void parseEIT(void *data, size_t len)
     len -= 4;			//remove CRC
 
     // For each event listing
-    for (p = &e->data; p < data + len;
-	 p += EIT_EVENT_LEN + GetEITDescriptorsLoopLength(p)) {
+    for (p = &e->data; p < data + len; p += EIT_EVENT_LEN + GetEITDescriptorsLoopLength(p)) {
 	struct eit_event *evt = p;
 	struct chninfo *c;
 	// find existing information?
@@ -492,19 +473,16 @@ static void parseEIT(void *data, size_t len)
 		return;
 	}
 	// a program must have a title that isn't empty
-	if (!validateDescription
-	    (&evt->data, GetEITDescriptorsLoopLength(evt))) {
+	if (!validateDescription(&evt->data, GetEITDescriptorsLoopLength(evt))) {
 	    return;
 	}
 
 	programme_count++;
 
 	printf("<programme channel=\"%s\" ", dvbxmltvid(GetServiceId(e)));
-	strftime(date_strbuf, sizeof(date_strbuf),
-		 "start=\"%Y%m%d%H%M%S %z\"", localtime(&start_time));
+	strftime(date_strbuf, sizeof(date_strbuf), "start=\"%Y%m%d%H%M%S %z\"", localtime(&start_time));
 	printf("%s ", date_strbuf);
-	strftime(date_strbuf, sizeof(date_strbuf),
-		 "stop=\"%Y%m%d%H%M%S %z\"", localtime(&stop_time));
+	strftime(date_strbuf, sizeof(date_strbuf), "stop=\"%Y%m%d%H%M%S %z\"", localtime(&stop_time));
 	printf("%s>\n ", date_strbuf);
 
 	//printf("\t<EventID>%i</EventID>\n", HILO(evt->event_id));
@@ -563,6 +541,5 @@ void readEventTables(int format)
     uncompressed = get_stat("freesathuffman.uncompressed");
     compressed = get_stat("freesathuffman.compressed");
     ratio = uncompressed / compressed;
-    log_message(DEBUG, "freesat huffman average expansion ratio: %f",
-		ratio);
+    log_message(DEBUG, "freesat huffman average expansion ratio: %f", ratio);
 }

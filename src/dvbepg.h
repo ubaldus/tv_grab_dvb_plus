@@ -26,10 +26,9 @@ extern "C" {
 
 #define DVB_EIT_PID 18
 
-extern void readEventTables(int format);
+    extern void readEventTables(int format);
 
 #ifdef __cplusplus
 }
-#endif 
-
+#endif
 #endif

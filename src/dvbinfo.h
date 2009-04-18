@@ -24,13 +24,12 @@
 extern "C" {
 #endif
 
-extern char *lookup_description(int id);
-extern char *lookup_language(u_char *l);
-extern char *lookup_aspect(int id);
-extern char *lookup_audio(int id);
+    extern char *lookup_description(int id);
+    extern char *lookup_language(u_char * l);
+    extern char *lookup_aspect(int id);
+    extern char *lookup_audio(int id);
 
 #ifdef __cplusplus
 }
-#endif 
-
+#endif
 #endif

@@ -35,11 +35,12 @@ extern bool use_chanidents;
 
 struct lookup_table *channelid_table;
 
-int load_channel_table(char *chanidfile) {
-        if (load_lookup(&channelid_table, chanidfile)) {
-	    return FAILURE;
-	}
-	return SUCCESS;
+int load_channel_table(char *chanidfile)
+{
+    if (load_lookup(&channelid_table, chanidfile)) {
+	return FAILURE;
+    }
+    return SUCCESS;
 }
 
 /*
@@ -49,11 +50,11 @@ int load_channel_table(char *chanidfile) {
  */
 char *dvbxmltvid(int chanid)
 {
-    char *returnstring = (char *)malloc(256);
+    char *returnstring = (char *) malloc(256);
     char *id;
 
     if (use_chanidents && channelid_table) {
-        asprintf(&id, "%d", chanid);
+	asprintf(&id, "%d", chanid);
 	char *c = slookup(channelid_table, id);
 	if (c)
 	    return c;
@@ -69,7 +70,7 @@ char *dvbxmltvid(int chanid)
  */
 char *skyxmltvid(char *chanid, char *provider)
 {
-    char *returnstring = (char *)malloc(256);
+    char *returnstring = (char *) malloc(256);
 
     if (use_chanidents && channelid_table) {
 	char *c = slookup(channelid_table, chanid);
