@@ -152,7 +152,8 @@ static void ReadConfigLoadepg(void)
 			log_message(TRACE, "is SKYBOX");
 			asprintf(&(lProviders + nProviders)->Title, "%s", string1);
 			(lProviders + nProviders)->DataFormat = DATA_FORMAT_SKYBOX;
-			(lProviders + nProviders)->SourceId = cSource::FromString(string2);
+			//(lProviders + nProviders)->SourceId = cSource::FromString(string2);
+			(lProviders + nProviders)->SourceId = 0;
 			asprintf(&(lProviders + nProviders)->Parm1, "%i:%c:%s:%i", int1, char1, string2, int2);
 			asprintf(&(lProviders + nProviders)->Parm2, "%s", string3);
 			asprintf(&(lProviders + nProviders)->Parm3, "%s", string4);
@@ -160,7 +161,8 @@ static void ReadConfigLoadepg(void)
 		    } else if (sscanf(Line, "MHW_1=%[^:] :%i :%c :%[^:] :%i ", string1, &int1, &char1, string2, &int2) == 5) {
 			asprintf(&(lProviders + nProviders)->Title, "%s", string1);
 			(lProviders + nProviders)->DataFormat = DATA_FORMAT_MHW_1;
-			(lProviders + nProviders)->SourceId = cSource::FromString(string2);
+			//(lProviders + nProviders)->SourceId = cSource::FromString(string2);
+			(lProviders + nProviders)->SourceId = 0;
 			asprintf(&(lProviders + nProviders)->Parm1, "%i:%c:%s:%i", int1, char1, string2, int2);
 			asprintf(&(lProviders + nProviders)->Parm2, '\0');
 			asprintf(&(lProviders + nProviders)->Parm3, '\0');
@@ -168,7 +170,8 @@ static void ReadConfigLoadepg(void)
 		    } else if (sscanf(Line, "MHW_2=%[^:] :%i :%c :%[^:] :%i ", string1, &int1, &char1, string2, &int2) == 5) {
 			asprintf(&(lProviders + nProviders)->Title, "%s", string1);
 			(lProviders + nProviders)->DataFormat = DATA_FORMAT_MHW_2;
-			(lProviders + nProviders)->SourceId = cSource::FromString(string2);
+			//(lProviders + nProviders)->SourceId = cSource::FromString(string2);
+			(lProviders + nProviders)->SourceId = 0;
 			asprintf(&(lProviders + nProviders)->Parm1, "%i:%c:%s:%i", int1, char1, string2, int2);
 			asprintf(&(lProviders + nProviders)->Parm2, '\0');
 			asprintf(&(lProviders + nProviders)->Parm3, '\0');
@@ -228,8 +231,8 @@ static void ReadConfigLoadepg(void)
 				if (sscanf(string1, "%[^-]-%i -%i -%i -%i ", string3, &int1, &int2, &int3, &int4) != 5) {
 				    int4 = 0;
 				}
-				tChannelID OriginalChID = tChannelID(cSource::FromString(string3), int1,
-								     int2, int3, int4);
+				//tChannelID OriginalChID = tChannelID(cSource::FromString(string3), int1,
+				//				     int2, int3, int4);
 				cChannel *OriginalChannel = NULL;	// Channels.GetByChannelID( OriginalChID, false );
 				if (OriginalChannel) {
 				    if (sscanf(string2, "%[^-]-%i -%i -%i ", string3, &int1, &int2, &int3) == 4) {

@@ -7,11 +7,8 @@ tv_grab_dvb_plus_SOURCES = \
 	filter.cpp \
 	loadepg.cpp \
 	main.cpp \
-	misc.cpp \
-	osdbase.cpp \
 	thread.cpp \
 	tools.cpp \
-	vdrcompat.cpp \
 	\
 	chanid.c \
 	crc32.c \
