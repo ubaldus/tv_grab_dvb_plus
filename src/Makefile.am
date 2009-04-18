@@ -4,7 +4,6 @@ bin_PROGRAMS = tv_grab_dvb_plus
 
 tv_grab_dvb_plus_LDADD = ../libsi/libsi.a
 tv_grab_dvb_plus_SOURCES = \
-	device.cpp \
 	filter.cpp \
 	loadepg.cpp \
 	main.cpp \

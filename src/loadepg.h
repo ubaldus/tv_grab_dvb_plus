@@ -192,7 +192,6 @@ class cTaskLoadepg : public cThread
     int DvbAdapterNumber;
     cChannel *VdrChannel;
     cChannel *EpgChannel;
-    cDevice *EpgDevice;
     sNodeH H;
     sNodeH *nH;
     bool HasSwitched;
