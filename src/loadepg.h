@@ -188,13 +188,8 @@ typedef struct
 class cTaskLoadepg : public cThread
 {
   private:
-    int SetupUpdateChannels;
-    int DvbAdapterNumber;
-    cChannel *VdrChannel;
-    cChannel *EpgChannel;
     sNodeH H;
     sNodeH *nH;
-    bool HasSwitched;
     bool IsError;
     bool IsRunning;
     bool EndBAT;

@@ -628,12 +628,10 @@ static int bsearchSummarie(const void *A, const void *B)
 cTaskLoadepg::cTaskLoadepg(void)
 :  cThread("cTaskLoadepg")
 {
-    SetupUpdateChannels = Setup.UpdateChannels;
 }
 
 cTaskLoadepg::~cTaskLoadepg()
 {
-    Setup.UpdateChannels = SetupUpdateChannels;
     for (int i = 0; i < nActiveFilters; i++) {
 	StopFilter(i);
     }
@@ -677,9 +675,7 @@ cTaskLoadepg::~cTaskLoadepg()
 // cTaskLoadepg Thread {{{
 void cTaskLoadepg::Action(void)
 {
-    SetupUpdateChannels = Setup.UpdateChannels;
     IsError = false;
-    VdrChannel = NULL;
     nThemes = 0;
     nChannels = 0;
     nChannelUpdates = 0;
@@ -701,8 +697,6 @@ void cTaskLoadepg::Action(void)
 	case DATA_FORMAT_SKYBOX:
 	case DATA_FORMAT_MHW_1:
 	case DATA_FORMAT_MHW_2:
-	    //SetupUpdateChannels = Setup.UpdateChannels;
-	    //Setup.UpdateChannels = 0;
 	    lThemes = (sTheme *) calloc(MAX_THEMES, sizeof(sTheme));
 	    if (!lThemes) {
 		log_message(ERROR, "failed to allocate memory for lThemes");
@@ -1334,7 +1328,6 @@ void cTaskLoadepg::PollingFilters(int Timeout)
 	StopFilter(i);
     }
 }
-
 // }}}
 
 // cTaskLoadepg::Stop {{{
@@ -1344,7 +1337,6 @@ void cTaskLoadepg::Stop()
     IsRunning = false;
     Cancel(2);
 }
-
 // }}}
 
 // cTaskLoadepg::ReadBuffer {{{
