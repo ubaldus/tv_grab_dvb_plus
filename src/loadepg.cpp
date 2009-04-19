@@ -633,7 +633,9 @@ static int bsearchSummarie(const void *A, const void *B)
 // cTaskLoadepg {{{
 // cTaskLoadepg Construction {{{
 cTaskLoadepg::cTaskLoadepg(void)
+#ifdef USETHREADS
     :  cThread("cTaskLoadepg")
+#endif
 {
 }
 
@@ -674,7 +676,9 @@ cTaskLoadepg::~cTaskLoadepg()
 	free(bSummaries);
 	bSummaries = NULL;
     }
+#ifdef USETHREADS
     Cancel(2);
+#endif
 }
 
 // }}}
@@ -698,7 +702,10 @@ void cTaskLoadepg::Action(void)
     pT = 0;
     pS = 0;
     EpgTimeOffset = 0;
-    if (Running()) {
+#ifdef USETHREADS
+    if (Running()) 
+#endif
+    {
 	log_message(TRACE, "start task");
 	switch ((lProviders + CurrentProvider)->DataFormat) {
 	    case DATA_FORMAT_SKYBOX:
@@ -744,7 +751,9 @@ void cTaskLoadepg::Action(void)
 		    log_message(ERROR, "failed to allocate memory for bSummaries");
 		    goto endrunning;
 		}
+#ifdef USETHREADS
 		cCondWait::SleepMs(2000);
+#endif
 		log_message(TRACE, "tuned transponder with adapter number=%i", adapter);
 		LoadFromSatellite();
 	    default:
@@ -1094,20 +1103,20 @@ void cTaskLoadepg::LoadFromSatellite(void)
 	    AddFilter(0x45, 0xa8, 0xfc);
 	    AddFilter(0x46, 0xa8, 0xfc);
 	    AddFilter(0x47, 0xa8, 0xfc);
-	    PollingFilters(2000);
+	    PollingFilters(10500);	// needs to be this due to TOT and TDT 10sec repeat
 	    break;
 	case DATA_FORMAT_MHW_1:
 	    AddFilter(0xd2, 0x90);
 	    AddFilter(0xd3, 0x90);
 	    AddFilter(0xd3, 0x91);
 	    AddFilter(0xd3, 0x92);
-	    PollingFilters(3000);
+	    PollingFilters(10500);
 	    break;
 	case DATA_FORMAT_MHW_2:
 	    AddFilter(0x231, 0xc8);
 	    AddFilter(0x234, 0xe6);
 	    AddFilter(0x236, 0x96);
-	    PollingFilters(3000);
+	    PollingFilters(10500);
 	    break;
 	default:
 	    IsError = true;
@@ -1342,7 +1351,9 @@ void cTaskLoadepg::Stop()
 {
     log_message(TRACE, "stop");
     IsRunning = false;
+#ifdef USETHREADS
     Cancel(2);
+#endif
 }
 // }}}
 
@@ -2680,6 +2691,7 @@ void EPGGrabber::Grab()
     ReadConfigLoadepg();
     Task = new cTaskLoadepg();
     if (Task) {
+#ifdef USETHREADS
 	Task->Start();
 	time_t starttime = time(NULL);
 	while (Task->Active()) {
@@ -2699,6 +2711,9 @@ void EPGGrabber::Grab()
 	    }
 	}
 	Task->Stop();
+#else
+	Task->Action();
+#endif
 	// stop load epg
 	delete(Task);
 	Task = NULL;
