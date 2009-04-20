@@ -26,9 +26,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#ifdef USETHREADS
-#include <vdr/thread.h>
-#endif
 #include <vdr/tools.h>
 #include <sys/ioctl.h>
 #include <linux/dvb/frontend.h>
@@ -194,9 +191,6 @@ typedef struct
 } sActiveFilter;
 
 class cTaskLoadepg 
-#ifdef USETHREADS
-	: public cThread
-#endif
 {
   private:
     sNodeH H;
@@ -245,13 +239,8 @@ class cTaskLoadepg
     int DecodeHuffmanCode( unsigned char *Data, int Length );
     void CreateXmlChannels( );
     void CreateEpgXml( void );
-#ifdef USETHREADS
-  protected:
-#else
   public:
-#endif
     virtual void Action( void );
-  public:
     cTaskLoadepg( void );
     ~cTaskLoadepg();
     void LoadFromSatellite( void );

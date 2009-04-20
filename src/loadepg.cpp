@@ -411,9 +411,6 @@ static int bsearchSummarie(const void *A, const void *B)
 // cTaskLoadepg {{{
 // cTaskLoadepg Construction {{{
 cTaskLoadepg::cTaskLoadepg(void)
-#ifdef USETHREADS
-    :  cThread("cTaskLoadepg")
-#endif
 {
 }
 
@@ -454,9 +451,6 @@ cTaskLoadepg::~cTaskLoadepg()
 	free(bSummaries);
 	bSummaries = NULL;
     }
-#ifdef USETHREADS
-    Cancel(2);
-#endif
 }
 
 // }}}
@@ -480,98 +474,90 @@ void cTaskLoadepg::Action(void)
     pT = 0;
     pS = 0;
     EpgTimeOffset = 0;
-#ifdef USETHREADS
-    if (Running()) 
-#endif
-    {
-	log_message(TRACE, "start task");
-	switch (format) {
-	    case DATA_FORMAT_SKYBOX:
-	    case DATA_FORMAT_MHW_1:
-	    case DATA_FORMAT_MHW_2:
-		lThemes = (sTheme *) calloc(MAX_THEMES, sizeof(sTheme));
-		if (!lThemes) {
-		    log_message(ERROR, "failed to allocate memory for lThemes");
-		    goto endrunning;
-		}
-		lChannels = (sChannel *) calloc(MAX_CHANNELS, sizeof(sChannel));
-		if (!lChannels) {
-		    log_message(ERROR, "failed to allocate memory for lChannels");
-		    goto endrunning;
-		}
-		lBouquets = (sBouquet *) calloc(MAX_BOUQUETS, sizeof(sBouquet));
-		if (!lBouquets) {
-		    log_message(ERROR, "failed to allocate memory for lBouquets");
-		    goto endrunning;
-		}
-		lTitles = (sTitle *) calloc(MAX_TITLES, sizeof(sTitle));
-		if (!lTitles) {
-		    log_message(ERROR, "failed to allocate memory for lTitles");
-		    goto endrunning;
-		}
-		lSummaries = (sSummary *) calloc(MAX_SUMMARIES, sizeof(sSummary));
-		if (!lSummaries) {
-		    log_message(ERROR, "failed to allocate memory for lSummaries");
-		    goto endrunning;
-		}
-		bChannels = (unsigned char *) calloc(MAX_BUFFER_SIZE_CHANNELS, sizeof(unsigned char));
-		if (!bChannels) {
-		    log_message(ERROR, "failed to allocate memory for bChannels");
-		    goto endrunning;
-		}
-		bTitles = (unsigned char *) calloc(MAX_BUFFER_SIZE_TITLES, sizeof(unsigned char));
-		if (!bTitles) {
-		    log_message(ERROR, "failed to allocate memory for bTitles");
-		    goto endrunning;
-		}
-		bSummaries = (unsigned char *) calloc(MAX_BUFFER_SIZE_SUMMARIES, sizeof(unsigned char));
-		if (!bSummaries) {
-		    log_message(ERROR, "failed to allocate memory for bSummaries");
-		    goto endrunning;
-		}
-#ifdef USETHREADS
-		cCondWait::SleepMs(2000);
-#endif
-		log_message(TRACE, "tuned transponder with adapter number=%i", adapter);
-		LoadFromSatellite();
-	    default:
-		break;
-	}
-endrunning:;
-	   if (lThemes) {
-	       free(lThemes);
-	       lThemes = NULL;
-	   }
-	   if (lChannels) {
-	       free(lChannels);
-	       lChannels = NULL;
-	   }
-	   if (lBouquets) {
-	       free(lBouquets);
-	       lBouquets = NULL;
-	   }
-	   if (lTitles) {
-	       free(lTitles);
-	       lTitles = NULL;
-	   }
-	   if (lSummaries) {
-	       free(lSummaries);
-	       lSummaries = NULL;
-	   }
-	   if (bChannels) {
-	       free(bChannels);
-	       bChannels = NULL;
-	   }
-	   if (bTitles) {
-	       free(bTitles);
-	       bTitles = NULL;
-	   }
-	   if (bSummaries) {
-	       free(bSummaries);
-	       bSummaries = NULL;
-	   }
-	   log_message(DEBUG, "end task");
+    log_message(TRACE, "start task");
+    switch (format) {
+        case DATA_FORMAT_SKYBOX:
+        case DATA_FORMAT_MHW_1:
+        case DATA_FORMAT_MHW_2:
+    	lThemes = (sTheme *) calloc(MAX_THEMES, sizeof(sTheme));
+    	if (!lThemes) {
+    	    log_message(ERROR, "failed to allocate memory for lThemes");
+    	    goto endrunning;
+    	}
+    	lChannels = (sChannel *) calloc(MAX_CHANNELS, sizeof(sChannel));
+    	if (!lChannels) {
+    	    log_message(ERROR, "failed to allocate memory for lChannels");
+    	    goto endrunning;
+    	}
+    	lBouquets = (sBouquet *) calloc(MAX_BOUQUETS, sizeof(sBouquet));
+    	if (!lBouquets) {
+    	    log_message(ERROR, "failed to allocate memory for lBouquets");
+    	    goto endrunning;
+    	}
+    	lTitles = (sTitle *) calloc(MAX_TITLES, sizeof(sTitle));
+    	if (!lTitles) {
+    	    log_message(ERROR, "failed to allocate memory for lTitles");
+    	    goto endrunning;
+    	}
+    	lSummaries = (sSummary *) calloc(MAX_SUMMARIES, sizeof(sSummary));
+    	if (!lSummaries) {
+    	    log_message(ERROR, "failed to allocate memory for lSummaries");
+    	    goto endrunning;
+    	}
+    	bChannels = (unsigned char *) calloc(MAX_BUFFER_SIZE_CHANNELS, sizeof(unsigned char));
+    	if (!bChannels) {
+    	    log_message(ERROR, "failed to allocate memory for bChannels");
+    	    goto endrunning;
+    	}
+    	bTitles = (unsigned char *) calloc(MAX_BUFFER_SIZE_TITLES, sizeof(unsigned char));
+    	if (!bTitles) {
+    	    log_message(ERROR, "failed to allocate memory for bTitles");
+    	    goto endrunning;
+    	}
+    	bSummaries = (unsigned char *) calloc(MAX_BUFFER_SIZE_SUMMARIES, sizeof(unsigned char));
+    	if (!bSummaries) {
+    	    log_message(ERROR, "failed to allocate memory for bSummaries");
+    	    goto endrunning;
+    	}
+    	log_message(TRACE, "tuned transponder with adapter number=%i", adapter);
+    	LoadFromSatellite();
+        default:
+    	break;
     }
+endrunning:;
+       if (lThemes) {
+           free(lThemes);
+           lThemes = NULL;
+       }
+       if (lChannels) {
+           free(lChannels);
+           lChannels = NULL;
+       }
+       if (lBouquets) {
+           free(lBouquets);
+           lBouquets = NULL;
+       }
+       if (lTitles) {
+           free(lTitles);
+           lTitles = NULL;
+       }
+       if (lSummaries) {
+           free(lSummaries);
+           lSummaries = NULL;
+       }
+       if (bChannels) {
+           free(bChannels);
+           bChannels = NULL;
+       }
+       if (bTitles) {
+           free(bTitles);
+           bTitles = NULL;
+       }
+       if (bSummaries) {
+           free(bSummaries);
+           bSummaries = NULL;
+       }
+       log_message(DEBUG, "end task");
 }
 // }}}
 
@@ -1149,9 +1135,6 @@ void cTaskLoadepg::Stop()
 {
     log_message(TRACE, "stop");
     IsRunning = false;
-#ifdef USETHREADS
-    Cancel(2);
-#endif
 }
 // }}}
 
@@ -2388,25 +2371,6 @@ EPGGrabber::~EPGGrabber()
 	}
 	free(Config);
     }
-#ifdef notdef
-    if (lProviders) {
-	for (int i = 0; i < nProviders; i++) {
-	    if ((lProviders + i)->Title) {
-		free((lProviders + i)->Title);
-	    }
-	    if ((lProviders + i)->Parm1) {
-		free((lProviders + i)->Parm1);
-	    }
-	    if ((lProviders + i)->Parm2) {
-		free((lProviders + i)->Parm2);
-	    }
-	}
-	free(lProviders);
-    }
-    if (lEquivChannels) {
-	free(lEquivChannels);
-    }
-#endif
     if (Task) {
 	delete(Task);
     }
@@ -2419,29 +2383,7 @@ void EPGGrabber::Grab()
 {
     Task = new cTaskLoadepg();
     if (Task) {
-#ifdef USETHREADS
-	Task->Start();
-	time_t starttime = time(NULL);
-	while (Task->Active()) {
-	    usleep(1000000);
-	    time_t now = time(NULL);
-	    time_t diff = now - starttime;
-	    if (Task->IsLoopRunning()) {
-		if (is_logging(DEBUG)) {
-		    log_message(DEBUG, "%d found %d channels %d titles %d summaries", diff, nChannels, nTitles, nSummaries);
-		} else {
-		    log_raw_message(INFO, "\r%d found %d channels %d titles %d summaries\r", diff, nChannels, nTitles, nSummaries);
-		}
-	    }
-	    if (diff >= 60) {
-		log_message(ERROR, "timed out");
-		break;
-	    }
-	}
-	Task->Stop();
-#else
 	Task->Action();
-#endif
 	// stop load epg
 	delete(Task);
 	Task = NULL;
