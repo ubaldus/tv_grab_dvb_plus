@@ -20,17 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define CHANIDENTS    "chanidents"
 
-    extern int load_channel_table(char *chanidfile);
-    extern char *dvbxmltvid(int chanid);
-    extern char *skyxmltvid(char *chanid, char *provider);
+extern int load_channel_table(char *chanidfile);
+extern char *dvbxmltvid(int chanid);
+extern char *skyxmltvid(char *chanid, char *provider);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

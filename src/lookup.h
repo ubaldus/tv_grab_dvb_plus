@@ -21,25 +21,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-union lookup_key {
+struct int_lookup_table {
 	int i;
-	char *c;
-};
-struct lookup_table {
-	union lookup_key u;
 	char *desc;
 };
 
-extern char *lookup(const struct lookup_table *l, int id);
-extern char *slookup(const struct lookup_table *l, char *id);
-extern int load_lookup(struct lookup_table **l, const char *file);
+struct str_lookup_table {
+	char *c;
+	char *desc;
+};
 
-#ifdef __cplusplus
-}
-#endif 
+extern char *lookup(const struct int_lookup_table *l, int id);
+extern char *slookup(const struct str_lookup_table *l, char *id);
+extern int load_lookup(struct str_lookup_table **l, const char *file);
 
 #endif

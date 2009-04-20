@@ -33,6 +33,7 @@
 extern char *ProgName;
 
 #define MAX 1024
+
 static char buf[MAX * 6]; /* UTF-8 needs up to 6 bytes */
 static char result[MAX * 6]; /* xml-ification needs up to 6 bytes */
 
@@ -66,40 +67,41 @@ static const struct encoding {
 	int (*handler)(char *t, const char **s, const char *d);
 	const char *data;
 } encoding[256] = {
-	[0x00] = {encoding_reserved, NULL},
-	[0x01] = {encoding_fixed, "ISO-8859-5"},
-	[0x02] = {encoding_fixed, "ISO-8859-6"},
-	[0x03] = {encoding_fixed, "ISO-8859-7"},
-	[0x04] = {encoding_fixed, "ISO-8859-8"},
-	[0x05] = {encoding_fixed, "ISO-8859-9"},
-	[0x06] = {encoding_fixed, "ISO-8859-10"},
-	[0x07] = {encoding_fixed, "ISO-8859-11"},
-	[0x08] = {encoding_fixed, "ISO-8859-12"},
-	[0x09] = {encoding_fixed, "ISO-8859-13"},
-	[0x0A] = {encoding_fixed, "ISO-8859-14"},
-	[0x0B] = {encoding_fixed, "ISO-8859-15"},
-	[0x0C] = {encoding_reserved, NULL},
-	[0x0D] = {encoding_reserved, NULL},
-	[0x0E] = {encoding_reserved, NULL},
-	[0x0F] = {encoding_reserved, NULL},
-	[0x10] = {encoding_variable, "ISO-8859-%d"},
-	[0x11] = {encoding_fixed, "ISO-10646/UCS2"}, // FIXME: UCS-2 LE/BE ???
-	[0x12] = {encoding_fixed, "KSC_5601"}, // TODO needs newer iconv
-	[0x13] = {encoding_fixed, "GB_2312-80"},
-	[0x14] = {encoding_fixed, "BIG5"},
-	[0x15] = {encoding_fixed, "ISO-10646/UTF8"},
-	[0x16] = {encoding_reserved, NULL},
-	[0x17] = {encoding_reserved, NULL},
-	[0x18] = {encoding_reserved, NULL},
-	[0x19] = {encoding_reserved, NULL},
-	[0x1A] = {encoding_reserved, NULL},
-	[0x1B] = {encoding_reserved, NULL},
-	[0x1C] = {encoding_reserved, NULL},
-	[0x1D] = {encoding_reserved, NULL},
-	[0x1E] = {encoding_reserved, NULL},
-	[0x1F] = {encoding_freesat, "ISO-10646/UTF8"},
-	[0x20 ... 0xFF] = {encoding_default, NULL},
+	/*[0x00] =*/ {encoding_reserved, NULL},
+	/*[0x01] =*/ {encoding_fixed, "ISO-8859-5"},
+	/*[0x02] =*/ {encoding_fixed, "ISO-8859-6"},
+	/*[0x03] =*/ {encoding_fixed, "ISO-8859-7"},
+	/*[0x04] =*/ {encoding_fixed, "ISO-8859-8"},
+	/*[0x05] =*/ {encoding_fixed, "ISO-8859-9"},
+	/*[0x06] =*/ {encoding_fixed, "ISO-8859-10"},
+	/*[0x07] =*/ {encoding_fixed, "ISO-8859-11"},
+	/*[0x08] =*/ {encoding_fixed, "ISO-8859-12"},
+	/*[0x09] =*/ {encoding_fixed, "ISO-8859-13"},
+	/*[0x0A] =*/ {encoding_fixed, "ISO-8859-14"},
+	/*[0x0B] =*/ {encoding_fixed, "ISO-8859-15"},
+	/*[0x0C] =*/ {encoding_reserved, NULL},
+	/*[0x0D] =*/ {encoding_reserved, NULL},
+	/*[0x0E] =*/ {encoding_reserved, NULL},
+	/*[0x0F] =*/ {encoding_reserved, NULL},
+	/*[0x10] =*/ {encoding_variable, "ISO-8859-%d"},
+	/*[0x11] =*/ {encoding_fixed, "ISO-10646/UCS2"}, // FIXME: UCS-2 LE/BE ???
+	/*[0x12] =*/ {encoding_fixed, "KSC_5601"}, // TODO needs newer iconv
+	/*[0x13] =*/ {encoding_fixed, "GB_2312-80"},
+	/*[0x14] =*/ {encoding_fixed, "BIG5"},
+	/*[0x15] =*/ {encoding_fixed, "ISO-10646/UTF8"},
+	/*[0x16] =*/ {encoding_reserved, NULL},
+	/*[0x17] =*/ {encoding_reserved, NULL},
+	/*[0x18] =*/ {encoding_reserved, NULL},
+	/*[0x19] =*/ {encoding_reserved, NULL},
+	/*[0x1A] =*/ {encoding_reserved, NULL},
+	/*[0x1B] =*/ {encoding_reserved, NULL},
+	/*[0x1C] =*/ {encoding_reserved, NULL},
+	/*[0x1D] =*/ {encoding_reserved, NULL},
+	/*[0x1E] =*/ {encoding_reserved, NULL},
+	/*[0x1F] =*/ {encoding_freesat, "ISO-10646/UTF8"},
+	/*[0x20 ... 0xFF] = {encoding_default, NULL},*/
 };
+
 static char cs_old[16];
 static iconv_t cd;
 
@@ -113,8 +115,13 @@ char *convert_text(const char *s) {
 	size_t ret;
 
 	int i = (int)(unsigned char)s[0];
-	if (encoding[i].handler(cs_new, &s, encoding[i].data))
-		return "";
+	if (i < 0x1F) {
+		if (encoding[i].handler(cs_new, &s, encoding[i].data))
+			return "";
+	} else {
+		if (encoding_default(cs_new, &s, NULL))
+			return "";
+	}
 	if (i == 0x1F) {
 		s = (char *)freesat_huffman_to_string((unsigned char *)s, strlen(s));
 	}

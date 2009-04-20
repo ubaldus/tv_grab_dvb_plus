@@ -20,10 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define INFO    5
 #define ERROR   4
 #define WARNING 3
@@ -35,9 +31,5 @@ extern void log_level(char *l);
 extern int is_logging(int l);
 extern void log_message(int l, const char *format, ...);
 extern void log_raw_message(int l, const char *format, ...);
-
-#ifdef __cplusplus
-}
-#endif 
 
 #endif

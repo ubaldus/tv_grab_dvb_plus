@@ -20,10 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 extern bool print_stats;
 
 struct stats_table {
@@ -37,10 +33,5 @@ extern void decr_stat(const char *n);
 extern void add_to_stat(const char *n, int i);
 extern void set_stat(const char *n, int v);
 extern int get_stat(const char *n);
-
-
-#ifdef __cplusplus
-}
-#endif 
 
 #endif

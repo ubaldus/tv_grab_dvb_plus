@@ -25,15 +25,15 @@
 #include "lookup.h"
 
 
-char *lookup(const struct lookup_table *l, int id) {
-	while ((l->u.i != id) && (l->u.i != -1)) {
+char *lookup(const struct int_lookup_table *l, int id) {
+	while ((l->i != -1) && (l->i != id)) {
 		l++;
 	}
 	return l->desc;
 }
 
-char *slookup(const struct lookup_table *l, char *id) {
-	while ((l->u.i != -1) && strcmp(l->u.c, id)) {
+char *slookup(const struct str_lookup_table *l, char *id) {
+	while ((l->c != NULL) && strcmp(l->c, id)) {
 		l++;
 	}
 	return l->desc;
@@ -44,10 +44,10 @@ char *slookup(const struct lookup_table *l, char *id) {
  * The table is a single allocation consisting of two parts:
  * first the array of structs, followed by a char-array of strings
  */
-int load_lookup(struct lookup_table **l, const char *file) {
+int load_lookup(struct str_lookup_table **l, const char *file) {
 	char name[256];
 	char value[256];
-	int n = 1, size = sizeof(struct lookup_table);
+	int n = 1, size = sizeof(struct str_lookup_table);
 
 	if (file == NULL) {
 		return -1;
@@ -61,11 +61,11 @@ int load_lookup(struct lookup_table **l, const char *file) {
 	// 1st: determine size needed
 	while (fscanf(fd, "%255s %255s", name, value) == 2) {
 		n++;
-		size += sizeof(struct lookup_table);
+		size += sizeof(struct str_lookup_table);
 		size += strlen(name) + 1;
 		size += strlen(value) + 1;
 	}
-	struct lookup_table *p = *l = malloc(size);
+	struct str_lookup_table *p = *l = (struct str_lookup_table *)malloc(size);
 	if (p == NULL) {
 		return -1;
 	}
@@ -78,11 +78,11 @@ int load_lookup(struct lookup_table **l, const char *file) {
 		p->desc = c;
 		c += strlen(c) + 1;
 		strcpy(c, d);
-		p->u.c = c;
+		p->c = c;
 		c += strlen(d) + 1;
 		p++;
 	}
-	p->u.i = -1;
+	p->c = NULL;
 	p->desc = NULL;
 
 	fclose(fd);

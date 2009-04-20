@@ -20,15 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define DVB_EIT_PID 18
 
-    extern void readEventTables(int format);
+extern void readEventTables(int format);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

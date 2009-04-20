@@ -30,11 +30,11 @@
 #include "stats.h"
 #include "log.h"
 
-unsigned char *freesat_huffman_to_string(unsigned char *src, uint size)
+unsigned char *freesat_huffman_to_string(u_char *src, uint size)
 {
-    int i;
+    uint i;
     unsigned char *uncompressed;
-    int p;
+    uint p;
     unsigned int value;
     unsigned int byte;
     unsigned int bit;

@@ -243,7 +243,7 @@ class cTaskLoadepg
     void CreateXmlChannels( );
     void CreateEpgXml( void );
   public:
-    virtual void Action( void );
+    void Action( void );
     cTaskLoadepg( void );
     ~cTaskLoadepg();
     void LoadFromSatellite( void );

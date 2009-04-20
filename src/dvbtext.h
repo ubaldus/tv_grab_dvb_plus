@@ -21,16 +21,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 extern char *convert_text(const char *s);
 extern char *xmlify(const char *s);
 extern char *iso6937_encoding;
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

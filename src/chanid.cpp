@@ -33,7 +33,7 @@
 
 extern bool use_chanidents;
 
-struct lookup_table *channelid_table;
+struct str_lookup_table *channelid_table;
 
 int load_channel_table(char *chanidfile)
 {

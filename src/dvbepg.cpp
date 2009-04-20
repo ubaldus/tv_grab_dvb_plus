@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -111,10 +112,10 @@ static void parseLongEventDescription(void *data)
     if (non_empty && levt->descriptor_number == 0)
 	printf("\t<desc lang=\"%s\">", lookup_language(&levt->lang_code1));
 
-    void *p = &levt->data;
-    void *data_end = CastExtendedEventDescriptor(data) + DESCR_GEN_LEN + GetDescriptorLength(data);
-    while (p < (void *) levt->data + levt->length_of_items) {
-	struct item_extended_event *name = p;
+    u_char *p = (u_char *)&levt->data;
+    u_char *data_end = (u_char *)(CastExtendedEventDescriptor(data) + DESCR_GEN_LEN + GetDescriptorLength(data));
+    while (p < (u_char *) levt->data + levt->length_of_items) {
+	struct item_extended_event *name = (struct item_extended_event *)p;
 	int name_len = name->item_description_length;
 	assert(p + ITEM_EXTENDED_EVENT_LEN + name_len < data_end);
 	strncpy(dsc, (char *) &name->data, name_len);
@@ -123,7 +124,7 @@ static void parseLongEventDescription(void *data)
 
 	p += ITEM_EXTENDED_EVENT_LEN + name_len;
 
-	struct item_extended_event *value = p;
+	struct item_extended_event *value = (struct item_extended_event *)p;
 	int value_len = value->item_description_length;
 	assert(p + ITEM_EXTENDED_EVENT_LEN + value_len < data_end);
 	strncpy(dsc, (char *) &value->data, value_len);
@@ -132,7 +133,7 @@ static void parseLongEventDescription(void *data)
 
 	p += ITEM_EXTENDED_EVENT_LEN + value_len;
     }
-    struct item_extended_event *text = p;
+    struct item_extended_event *text = (struct item_extended_event *)p;
     int len = text->item_description_length;
     if (non_empty && len) {
 	strncpy(dsc, (char *) &text->data, len);
@@ -216,14 +217,14 @@ static inline bool get_bit(int *bf, int b)
 }
 
 /* Parse 0x54 Content Descriptor */
-static void parseContentDescription(void *data)
+static void parseContentDescription(u_char *data)
 {
     assert(GetDescriptorTag(data) == 0x54);
     struct descr_content *dc = CastContentDescriptor(data);
     int once[256 / 8 / sizeof(int)] = { 0, };
-    void *p;
-    for (p = &dc->data; p < data + dc->descriptor_length; p += NIBBLE_CONTENT_LEN) {
-	struct nibble_content *nc = p;
+    u_char *p;
+    for (p = (u_char *)(&dc->data); p < (u_char *)(data + dc->descriptor_length); p += NIBBLE_CONTENT_LEN) {
+	struct nibble_content *nc = (struct nibble_content *)p;
 	int c1 = (nc->content_nibble_level_1 << 4) + nc->content_nibble_level_2;
 #ifdef CATEGORY_UNKNOWN
 	int c2 = (nc->user_nibble_1 << 4) + nc->user_nibble_2;
@@ -246,13 +247,13 @@ static void parseContentDescription(void *data)
 }
 
 /* Parse 0x55 Rating Descriptor */
-static void parseRatingDescription(void *data)
+static void parseRatingDescription(u_char *data)
 {
     assert(GetDescriptorTag(data) == 0x55);
     struct descr_parental_rating *pr = CastParentalRatingDescriptor(data);
-    void *p;
-    for (p = &pr->data; p < data + pr->descriptor_length; p += PARENTAL_RATING_ITEM_LEN) {
-	struct parental_rating_item *pr = p;
+    u_char *p;
+    for (p = (u_char *)(&pr->data); p < (u_char *)(data + pr->descriptor_length); p += PARENTAL_RATING_ITEM_LEN) {
+	struct parental_rating_item *pr = (struct parental_rating_item *)p;
 	switch (pr->rating) {
 	case 0x00:		/*undefined */
 	    break;
@@ -274,9 +275,9 @@ static int parsePrivateDataSpecifier(void *data)
     return GetPrivateDataSpecifier(data);
 }
 
-static void parseUnknown(void *data)
+static void parseUnknown(u_char *data)
 {
-    struct descr_component *dc = data;
+    struct descr_component *dc = (struct descr_component *)data;
     char buf[256];
 
     int len = GetDescriptorLength(data);
@@ -294,15 +295,15 @@ static void parseUnknown(void *data)
 'video', 'audio', 'previously-shown', 'premiere', 'last-chance',
 'new', 'subtitles', 'rating', 'star-rating'
 */
-static void parseDescription(void *data, size_t len)
+static void parseDescription(u_char *data, size_t len)
 {
     int round, pds = 0;
 
     for (round = 0; round < 8; round++) {
 	int seen = 0;		// no title/language/video/audio/subtitles seen in this round
-	void *p;
-	for (p = data; p < data + len; p += DESCR_GEN_LEN + GetDescriptorLength(p)) {
-	    struct descr_gen *desc = p;
+	u_char *p;
+	for (p = data; p < (u_char *)(data + len); p += DESCR_GEN_LEN + GetDescriptorLength(p)) {
+	    struct descr_gen *desc = (struct descr_gen *)p;
 	    switch (GetDescriptorTag(desc)) {
 	    case 0:
 		break;
@@ -331,11 +332,11 @@ static void parseDescription(void *data, size_t len)
 		break;
 	    case 0x54:		// content desc [category]
 		if (round == 3)
-		    parseContentDescription(desc);
+		    parseContentDescription((u_char *)desc);
 		break;
 	    case 0x55:		// Parental Rating Descriptor [rating]
 		if (round == 7)
-		    parseRatingDescription(desc);
+		    parseRatingDescription((u_char *)desc);
 		break;
 	    case 0x5f:		// Private Data Specifier
 		pds = parsePrivateDataSpecifier(desc);
@@ -360,7 +361,7 @@ static void parseDescription(void *data, size_t len)
 	    case 0x86:		// Eacem Stream Identifier Descriptor
 	    default:
 		if (round == 0) {
-		    parseUnknown(desc);
+		    parseUnknown((u_char *)desc);
 		}
 	    }
 	}
@@ -368,13 +369,13 @@ static void parseDescription(void *data, size_t len)
 }
 
 /* Check that program has at least a title as is required by xmltv.dtd */
-static bool validateDescription(void *data, size_t len)
+static bool validateDescription(u_char *data, size_t len)
 {
-    void *p;
-    for (p = data; p < data + len; p += DESCR_GEN_LEN + GetDescriptorLength(p)) {
-	struct descr_gen *desc = p;
+    u_char *p;
+    for (p = data; p < (u_char *)(data + len); p += DESCR_GEN_LEN + GetDescriptorLength(p)) {
+	struct descr_gen *desc = (struct descr_gen *)p;
 	if (GetDescriptorTag(desc) == 0x4D) {
-	    struct descr_short_event *evtdesc = p;
+	    struct descr_short_event *evtdesc = (struct descr_short_event *)p;
 	    // make sure that title isn't empty
 	    if (evtdesc->event_name_length)
 		return true;
@@ -403,18 +404,18 @@ static void parseMJD(long int mjd, struct tm *t)
 }
 
 /* Parse Event Information Table */
-static void parseEIT(void *data, size_t len)
+static void parseEIT(u_char *data, size_t len)
 {
-    struct eit *e = data;
-    void *p;
+    struct eit *e = (struct eit *)data;
+    u_char *p;
     struct tm dvb_time;
     char date_strbuf[256];
 
     len -= 4;			//remove CRC
 
     // For each event listing
-    for (p = &e->data; p < data + len; p += EIT_EVENT_LEN + GetEITDescriptorsLoopLength(p)) {
-	struct eit_event *evt = p;
+    for (p = (u_char *)(&e->data); p < (u_char *)(data + len); p += EIT_EVENT_LEN + GetEITDescriptorsLoopLength(p)) {
+	struct eit_event *evt = (struct eit_event *)p;
 	struct chninfo *c;
 	// find existing information?
 	for (c = channels; c != NULL; c = c->next) {
@@ -435,7 +436,7 @@ static void parseEIT(void *data, size_t len)
 
 	// its a new program
 	if (c == NULL) {
-	    chninfo_t *nc = malloc(sizeof(struct chninfo));
+	    chninfo_t *nc = (chninfo_t *)malloc(sizeof(struct chninfo));
 	    nc->sid = HILO(e->service_id);
 	    nc->eid = HILO(evt->event_id);
 	    nc->ver = e->version_number;
@@ -473,7 +474,7 @@ static void parseEIT(void *data, size_t len)
 		return;
 	}
 	// a program must have a title that isn't empty
-	if (!validateDescription(&evt->data, GetEITDescriptorsLoopLength(evt))) {
+	if (!validateDescription((u_char *)(&evt->data), GetEITDescriptorsLoopLength(evt))) {
 	    return;
 	}
 
@@ -489,55 +490,43 @@ static void parseEIT(void *data, size_t len)
 	//printf("\t<RunningStatus>%i</RunningStatus>\n", evt->running_status);
 	//1 Airing, 2 Starts in a few seconds, 3 Pausing, 4 About to air
 
-	parseDescription(&evt->data, GetEITDescriptorsLoopLength(evt));
+	parseDescription((u_char *)(&evt->data), GetEITDescriptorsLoopLength(evt));
 	printf("</programme>\n");
     }
 }
 
 /*
- * Read EIT segments from DVB-demuxer or file
+ * Read EIT segments from DVB-demuxer
  */
 void readEventTables(int format)
 {
     int r = 0;
-    int n = 0;
-    char buf[1 << 12], *bhead = buf;
+    u_char buf[1 << 12];
+    size_t l;
     int compressed;
     int uncompressed;
     float ratio;
 
-    /* The dvb demultiplexer simply outputs individual whole packets (good),
-     * but reading captured data from a file needs re-chunking. (bad). */
-    do {
-	if (n < sizeof(struct si_tab))
-	    goto read_more;
-	struct si_tab *tab = (struct si_tab *) bhead;
-	if (GetTableId(tab) == 0)
-	    goto read_more;
-	size_t l = sizeof(struct si_tab) + GetSectionLength(tab);
-	if (n < l)
-	    goto read_more;
+    while (1) {
+	r = read(STDIN_FILENO, buf, sizeof(buf));
+	if (r < 0) {
+	    log_message(DEBUG, "did not read any more");
+	    break;
+	}
 	packet_count++;
-	if (dvb_crc32((uint8_t *) bhead, l) != 0) {
-	    /* data or length is wrong. skip bytewise. */
-	    //l = 1; // FIXME
+	struct si_tab *tab = (struct si_tab *) buf;
+	if (GetTableId(tab) == 0) {
+	    continue;
+	}
+	l = sizeof(struct si_tab) + GetSectionLength(tab);
+	if (dvb_crc32((uint8_t *) buf, l) != 0) {
+	    log_message(ERROR, "data or length is wrong. skipping packet.");
 	    crcerr_count++;
-	} else
-	    parseEIT(bhead, l);
+	} else {
+	    parseEIT(buf, l);
+	}
 	status();
-	/* remove packet */
-	n -= l;
-	bhead += l;
-	continue;
-      read_more:
-	/* move remaining data to front of buffer */
-	if (n > 0)
-	    memmove(buf, bhead, n);
-	/* fill with fresh data */
-	r = read(STDIN_FILENO, buf + n, sizeof(buf) - n);
-	bhead = buf;
-	n += r;
-    } while (r > 0);
+    }
     uncompressed = get_stat("freesathuffman.uncompressed");
     compressed = get_stat("freesathuffman.compressed");
     ratio = uncompressed / compressed;
