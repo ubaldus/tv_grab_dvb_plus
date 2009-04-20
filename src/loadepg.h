@@ -23,10 +23,13 @@
 
 //#define USETHREADS
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <vdr/tools.h>
+#include <poll.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <sys/ioctl.h>
 #include <linux/dvb/frontend.h>
 #include <linux/dvb/dmx.h>
