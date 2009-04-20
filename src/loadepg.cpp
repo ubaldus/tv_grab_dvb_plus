@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ctype.h"
+
 #include "constants.h"
 #include "loadepg.h"
 #include "dvbtext.h"
@@ -62,6 +64,48 @@ int Yesterday;
 int YesterdayEpoch;
 
 // misc functions {{{
+
+char *stripspace(char *s)
+{
+  if (s && *s) {
+     for (char *p = s + strlen(s) - 1; p >= s; p--) {
+         if (!isspace(*p))
+            break;
+         *p = 0;
+         }
+     }
+  return s;
+}
+
+char *skipspace(const char *s)
+{
+  while (*s && isspace(*s))
+        s++;
+  return (char *)s;
+}
+
+char *compactspace(char *s)
+{
+  if (s && *s) {
+     char *t = stripspace(skipspace(s));
+     char *p = t;
+     while (p && *p) {
+           char *q = skipspace(p);
+           if (q - p > 1)
+              memmove(p + 1, q, strlen(q) + 1);
+           p++;
+           }
+     if (t != s)
+        memmove(s, t, strlen(t) + 1);
+     }
+  return s;
+}
+
+bool isempty(const char *s)
+{
+  return !(s && *skipspace(s));
+}
+
 static int BcdToInt(unsigned char Bcd)
 {
     return (((Bcd & 0xf0) >> 4) * 10) + (Bcd & 0x0f);
