@@ -51,6 +51,7 @@ int demuxno = 0;
 bool useshortxmlids = false;
 
 int format = DATA_FORMAT_DVB;
+int sky_country;
 
 int timeout = 10;
 int time_offset = 0;
@@ -81,7 +82,8 @@ static void usage()
 	    "\t-c (--conf)    dir      change the config directory (default ./conf)\n"
 	    "\t-d (--debug)   level    output debug infoi (none|trace|debug|warning|error) (default error)\n"
 	    "\t-d (--demux)   demux#   change the demux number (default 0)\n"
-	    "\t-f (--format)  format   format of incoming data (dvb|freesat|sky|mhw1|mhw2) (default dvb)\n"
+	    "\t-f (--format)  format   format of incoming data (dvb|freesat|skyXX|mhw1|mhw2) (default dvb)\n"
+	    "\t                        (XX can be AU, IT or UK - case insensitive)\n"
 	    "\t-i (--input)   file     read from file/device instead of %s\n"
 	    "\t-O (--offset)  offset   time offset in hours from -12 to 12 (default 0)\n"
 	    "\t-o (--output)  file     write output to file (default stdout)\n"
@@ -114,7 +116,6 @@ static int do_options(int arg_count, char **arg_strings)
     };
     int Option_Index = 0;
     int fd;
-    char *f;
 
     while (1) {
 	int c =
@@ -140,19 +141,25 @@ static int do_options(int arg_count, char **arg_strings)
 	    log_level(optarg);
 	    break;
 	case 'f':
-	    f = optarg;
-	    if (strcasecmp(f, "dvb") == 0) {
+	    if (strcasecmp(optarg, "dvb") == 0) {
 		format = DATA_FORMAT_DVB;
-	    } else if (strcasecmp(f, "freesat") == 0) {
+	    } else if (strcasecmp(optarg, "freesat") == 0) {
 		format = DATA_FORMAT_FREESAT;
-	    } else if (strcasecmp(f, "sky") == 0) {
+	    } else if (strcasecmp(optarg, "skyau") == 0) {
 		format = DATA_FORMAT_SKYBOX;
-	    } else if (strcasecmp(f, "mhw1") == 0) {
+		sky_country = SKY_AU;
+	    } else if (strcasecmp(optarg, "skyit") == 0) {
+		format = DATA_FORMAT_SKYBOX;
+		sky_country = SKY_IT;
+	    } else if (strcasecmp(optarg, "skyuk") == 0) {
+		format = DATA_FORMAT_SKYBOX;
+		sky_country = SKY_UK;
+	    } else if (strcasecmp(optarg, "mhw1") == 0) {
 		format = DATA_FORMAT_MHW_1;
-	    } else if (strcasecmp(f, "mhw2") == 0) {
+	    } else if (strcasecmp(optarg, "mhw2") == 0) {
 		format = DATA_FORMAT_MHW_2;
 	    } else {
-		log_message(ERROR, "invalid format \"%s\"", f);
+		log_message(ERROR, "invalid format \"%s\"", optarg);
 		usage();
 	    }
 	    break;

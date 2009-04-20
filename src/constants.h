@@ -31,6 +31,10 @@
 #define DATA_FORMAT_FILE 6
 #define DATA_FORMAT_SCRIPT 9
 
+#define SKY_AU 1
+#define SKY_IT 2
+#define SKY_UK 3
+
 #define MAX_FILTERS 24
 
 #endif

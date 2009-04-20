@@ -24,6 +24,9 @@
 #include "stats.h"
 #include "log.h"
 
+extern int format;
+extern int sky_country;
+
 sConfig *Config;
 cTaskLoadepg *Task;
 
@@ -31,13 +34,6 @@ extern char conf[1024];
 
 extern int adapter;
 extern bool useshortxmlids;
-
-int CurrentProvider;
-int nProviders;
-sProvider *lProviders;
-
-int nEquivChannels;
-sEquivChannel *lEquivChannels;
 
 int nThemes;
 sTheme *lThemes;
@@ -91,268 +87,6 @@ static char *GetStringMJD(int MJD)
 }
 
 // }}}
-
-// ReadConfigLoadepg {{{
-static void ReadConfigLoadepg(void)
-{
-    char Buffer[1024];
-    char *Line;
-    FILE *File;
-    char *FileName;
-    if (lProviders) {
-	if (nProviders > 0) {
-	    for (int i = 0; i < nProviders; i++) {
-		if ((lProviders + i)->Title) {
-		    free((lProviders + i)->Title);
-		}
-		if ((lProviders + i)->Parm1) {
-		    free((lProviders + i)->Parm1);
-		}
-		if ((lProviders + i)->Parm2) {
-		    free((lProviders + i)->Parm2);
-		}
-		if ((lProviders + i)->Parm3) {
-		    free((lProviders + i)->Parm3);
-		}
-	    }
-	}
-	free(lProviders);
-	lProviders = NULL;
-    }
-    if (lEquivChannels) {
-	free(lEquivChannels);
-	lEquivChannels = NULL;
-    }
-    lProviders = (sProvider *) calloc(MAX_PROVIDERS, sizeof(sProvider));
-    lEquivChannels = (sEquivChannel *) calloc(MAX_CHANNELS, sizeof(sEquivChannel));
-    nProviders = 0;
-    nEquivChannels = 0;
-
-    // Read epg.conf
-    asprintf(&FileName, "%s/%s", Config->Directory, LOADEPG_FILE_CONF);
-    log_message(TRACE, "read config file \"%s\"", FileName);
-    File = fopen(FileName, "r");
-    if (File) {
-	char string1[256];
-	char string2[256];
-	char string3[256];
-	char string4[256];
-	char char1;
-	int int1;
-	int int2;
-	memset(Buffer, 0, sizeof(Buffer));
-	while ((Line = fgets(Buffer, sizeof(Buffer), File)) != NULL) {
-	    Line = compactspace(skipspace(stripspace(Line)));
-	    log_message(TRACE, "line is '%s'", Line);
-	    if (!isempty(Line)) {
-		if (Line[0] == '#')
-		    continue;
-		if (nProviders < MAX_PROVIDERS) {
-		    if (sscanf(Line, "SKYBOX=%[^:] :%i :%c :%[^:] :%i :%[^:] :%s ", string1, &int1, &char1, string2, &int2, string3, string4) == 7) {
-			log_message(TRACE, "is SKYBOX");
-			asprintf(&(lProviders + nProviders)->Title, "%s", string1);
-			(lProviders + nProviders)->DataFormat = DATA_FORMAT_SKYBOX;
-			//(lProviders + nProviders)->SourceId = cSource::FromString(string2);
-			(lProviders + nProviders)->SourceId = 0;
-			asprintf(&(lProviders + nProviders)->Parm1, "%i:%c:%s:%i", int1, char1, string2, int2);
-			asprintf(&(lProviders + nProviders)->Parm2, "%s", string3);
-			asprintf(&(lProviders + nProviders)->Parm3, "%s", string4);
-			nProviders++;
-		    } else if (sscanf(Line, "MHW_1=%[^:] :%i :%c :%[^:] :%i ", string1, &int1, &char1, string2, &int2) == 5) {
-			asprintf(&(lProviders + nProviders)->Title, "%s", string1);
-			(lProviders + nProviders)->DataFormat = DATA_FORMAT_MHW_1;
-			//(lProviders + nProviders)->SourceId = cSource::FromString(string2);
-			(lProviders + nProviders)->SourceId = 0;
-			asprintf(&(lProviders + nProviders)->Parm1, "%i:%c:%s:%i", int1, char1, string2, int2);
-			asprintf(&(lProviders + nProviders)->Parm2, '\0');
-			asprintf(&(lProviders + nProviders)->Parm3, '\0');
-			nProviders++;
-		    } else if (sscanf(Line, "MHW_2=%[^:] :%i :%c :%[^:] :%i ", string1, &int1, &char1, string2, &int2) == 5) {
-			asprintf(&(lProviders + nProviders)->Title, "%s", string1);
-			(lProviders + nProviders)->DataFormat = DATA_FORMAT_MHW_2;
-			//(lProviders + nProviders)->SourceId = cSource::FromString(string2);
-			(lProviders + nProviders)->SourceId = 0;
-			asprintf(&(lProviders + nProviders)->Parm1, "%i:%c:%s:%i", int1, char1, string2, int2);
-			asprintf(&(lProviders + nProviders)->Parm2, '\0');
-			asprintf(&(lProviders + nProviders)->Parm3, '\0');
-			nProviders++;
-		    } else if (sscanf(Line, "FILE=%[^:] :%s ", string1, string2) == 2) {
-			asprintf(&(lProviders + nProviders)->Title, "%s", string1);
-			(lProviders + nProviders)->DataFormat = DATA_FORMAT_FILE;
-			(lProviders + nProviders)->SourceId = 0;
-			asprintf(&(lProviders + nProviders)->Parm1, "%s", string2);
-			asprintf(&(lProviders + nProviders)->Parm2, '\0');
-			asprintf(&(lProviders + nProviders)->Parm3, '\0');
-			nProviders++;
-		    } else if (sscanf(Line, "SCRIPT=%[^:] :%[^:] :%s ", string1, string2, string3) == 3) {
-			asprintf(&(lProviders + nProviders)->Title, "%s", string1);
-			(lProviders + nProviders)->DataFormat = DATA_FORMAT_SCRIPT;
-			(lProviders + nProviders)->SourceId = 0;
-			asprintf(&(lProviders + nProviders)->Parm1, "%s", string2);
-			asprintf(&(lProviders + nProviders)->Parm2, "%s", string3);
-			asprintf(&(lProviders + nProviders)->Parm3, '\0');
-			nProviders++;
-		    }
-		}
-	    }
-	    memset(Buffer, 0, sizeof(Buffer));
-	}
-	fclose(File);
-	if (is_logging(DEBUG)) {
-	    for (int i = 0; i < nProviders; i++) {
-		log_message(DEBUG, "%s|%i|%s|%s|%s",
-			(lProviders + i)->Title, (lProviders + i)->SourceId, (lProviders + i)->Parm1, (lProviders + i)->Parm2, (lProviders + i)->Parm3);
-	    }
-	}
-    }
-    // Read loadepg.equiv
-    asprintf(&FileName, "%s/%s", Config->Directory, LOADEPG_FILE_EQUIV);
-    File = fopen(FileName, "r");
-    if (File) {
-	memset(Buffer, 0, sizeof(Buffer));
-	char string1[256];
-	char string2[256];
-	char string3[256];
-	int int1;
-	int int2;
-	int int3;
-	int int4;
-	while ((Line = fgets(Buffer, sizeof(Buffer), File)) != NULL) {
-	    Line = compactspace(skipspace(stripspace(Line)));
-	    if (!isempty(Line)) {
-		if (sscanf(Line, "%[^ ] %[^ ] %[^\n]\n", string1, string2, string3) == 3) {
-		    if (string1[0] != '#' && string1[0] != ';') {
-			int1 = 0;
-			int2 = 0;
-			int3 = 0;
-			int4 = 0;
-			if (sscanf(string1, "%[^-]-%i -%i -%i ", string3, &int1, &int2, &int3) == 4)
-			    if (sscanf(string2, "%[^-]-%i -%i -%i ", string3, &int1, &int2, &int3) == 4) {
-				if (sscanf(string1, "%[^-]-%i -%i -%i -%i ", string3, &int1, &int2, &int3, &int4) != 5) {
-				    int4 = 0;
-				}
-#if 0
-				//tChannelID OriginalChID = tChannelID(cSource::FromString(string3), int1,
-				//				     int2, int3, int4);
-				cChannel *OriginalChannel = NULL;	// Channels.GetByChannelID( OriginalChID, false );
-				if (OriginalChannel) {
-				    if (sscanf(string2, "%[^-]-%i -%i -%i ", string3, &int1, &int2, &int3) == 4) {
-					if (sscanf(string2, "%[^-]-%i -%i -%i -%i ", string3, &int1, &int2, &int3, &int4) != 5) {
-					    int4 = 0;
-					}
-					tChannelID EquivChID = tChannelID(cSource::FromString(string3),
-						int1, int2, int3,
-						int4);
-					//cChannel *EquivChannel = Channels.GetByChannelID( EquivChID, false );
-					cChannel *EquivChannel = NULL;	//Channels.GetByChannelID( EquivChID, false );
-					if (EquivChannel) {
-					    (lEquivChannels + nEquivChannels)->OriginalSourceId = OriginalChannel->Source();
-					    (lEquivChannels + nEquivChannels)->OriginalNid = OriginalChannel->Nid();
-					    (lEquivChannels + nEquivChannels)->OriginalTid = OriginalChannel->Tid();
-					    (lEquivChannels + nEquivChannels)->OriginalSid = OriginalChannel->Sid();
-					    (lEquivChannels + nEquivChannels)->OriginalRid = OriginalChannel->Rid();
-					    (lEquivChannels + nEquivChannels)->EquivSourceId = EquivChannel->Source();
-					    (lEquivChannels + nEquivChannels)->EquivNid = EquivChannel->Nid();
-					    (lEquivChannels + nEquivChannels)->EquivTid = EquivChannel->Tid();
-					    (lEquivChannels + nEquivChannels)->EquivSid = EquivChannel->Sid();
-					    (lEquivChannels + nEquivChannels)->EquivRid = EquivChannel->Rid();
-					    nEquivChannels++;
-					} else {
-					    log_message(WARNING, "not found equivalent channel \'%s\' in channels.conf", string2);
-					}
-				    }
-				} else {
-				    log_message(WARNING, "not found epg channel \'%s\' in channels.conf", string1);
-				}
-#endif
-			    }
-		    }
-		}
-	    }
-	}
-	fclose(File);
-    }
-    free(FileName);
-}
-
-// }}}
-
-// Sort Functions {{{
-static int qsortEquivChannels(const void *A, const void *B)
-{
-    sEquivChannel *ChannelA = (sEquivChannel *) A;
-    sEquivChannel *ChannelB = (sEquivChannel *) B;
-    if (ChannelA->OriginalSourceId > ChannelB->OriginalSourceId) {
-	return 1;
-    }
-    if (ChannelA->OriginalSourceId < ChannelB->OriginalSourceId) {
-	return -1;
-    }
-    if (ChannelA->OriginalSourceId == ChannelB->OriginalSourceId) {
-	if (ChannelA->OriginalNid > ChannelB->OriginalNid) {
-	    return 1;
-	}
-	if (ChannelA->OriginalNid < ChannelB->OriginalNid) {
-	    return -1;
-	}
-	if (ChannelA->OriginalNid == ChannelB->OriginalNid) {
-	    if (ChannelA->OriginalTid > ChannelB->OriginalTid) {
-		return 1;
-	    }
-	    if (ChannelA->OriginalTid < ChannelB->OriginalTid) {
-		return -1;
-	    }
-	    if (ChannelA->OriginalTid == ChannelB->OriginalTid) {
-		if (ChannelA->OriginalSid > ChannelB->OriginalSid) {
-		    return 1;
-		}
-		if (ChannelA->OriginalSid < ChannelB->OriginalSid) {
-		    return -1;
-		}
-	    }
-	}
-    }
-    return 0;
-}
-
-#ifdef MAYBENEEDED
-static int bsearchEquivChannel(const void *A, const void *B)
-{
-    sEquivChannel *ChannelA = (sEquivChannel *) A;
-    sEquivChannel *ChannelB = (sEquivChannel *) B;
-    if (ChannelA->OriginalSourceId > ChannelB->OriginalSourceId) {
-	return 1;
-    }
-    if (ChannelA->OriginalSourceId < ChannelB->OriginalSourceId) {
-	return -1;
-    }
-    if (ChannelA->OriginalSourceId == ChannelB->OriginalSourceId) {
-	if (ChannelA->OriginalNid > ChannelB->OriginalNid) {
-	    return 1;
-	}
-	if (ChannelA->OriginalNid < ChannelB->OriginalNid) {
-	    return -1;
-	}
-	if (ChannelA->OriginalNid == ChannelB->OriginalNid) {
-	    if (ChannelA->OriginalTid > ChannelB->OriginalTid) {
-		return 1;
-	    }
-	    if (ChannelA->OriginalTid < ChannelB->OriginalTid) {
-		return -1;
-	    }
-	    if (ChannelA->OriginalTid == ChannelB->OriginalTid) {
-		if (ChannelA->OriginalSid > ChannelB->OriginalSid) {
-		    return 1;
-		}
-		if (ChannelA->OriginalSid < ChannelB->OriginalSid) {
-		    return -1;
-		}
-	    }
-	}
-    }
-    return 0;
-}
-#endif
 
 static int qsortChannels(const void *A, const void *B)
 {
@@ -707,7 +441,7 @@ void cTaskLoadepg::Action(void)
 #endif
     {
 	log_message(TRACE, "start task");
-	switch ((lProviders + CurrentProvider)->DataFormat) {
+	switch (format) {
 	    case DATA_FORMAT_SKYBOX:
 	    case DATA_FORMAT_MHW_1:
 	    case DATA_FORMAT_MHW_2:
@@ -905,7 +639,18 @@ bool cTaskLoadepg::ReadFileDictionary(void)
     FILE *FileDict;
     char *Line;
     char Buffer[256];
-    asprintf(&FileName, "%s/%s", Config->Directory, (lProviders + CurrentProvider)->Parm2);
+
+    switch (sky_country) {
+    case SKY_AU:
+        asprintf(&FileName, "%s/%s", Config->Directory, SKY_AU_DICT);
+	break;
+    case SKY_IT:
+        asprintf(&FileName, "%s/%s", Config->Directory, SKY_IT_DICT);
+	break;
+    case SKY_UK:
+        asprintf(&FileName, "%s/%s", Config->Directory, SKY_UK_DICT);
+	break;
+    }
     FileDict = fopen(FileName, "r");
     if (FileDict == NULL) {
 	log_message(ERROR, "opening file '%s'. %s", FileName, strerror(errno));
@@ -1046,7 +791,18 @@ bool cTaskLoadepg::ReadFileThemes(void)
     FILE *FileThemes;
     char *Line;
     char Buffer[256];
-    asprintf(&FileName, "%s/%s", Config->Directory, (lProviders + CurrentProvider)->Parm3);
+
+    switch (sky_country) {
+    case SKY_AU:
+        asprintf(&FileName, "%s/%s", Config->Directory, SKY_AU_THEMES);
+	break;
+    case SKY_IT:
+        asprintf(&FileName, "%s/%s", Config->Directory, SKY_IT_THEMES);
+	break;
+    case SKY_UK:
+        asprintf(&FileName, "%s/%s", Config->Directory, SKY_UK_THEMES);
+	break;
+    }
     FileThemes = fopen(FileName, "r");
     if (FileThemes == NULL) {
 	log_message(ERROR, "opening file '%s'. %s", FileName, strerror(errno));
@@ -1083,7 +839,7 @@ void cTaskLoadepg::LoadFromSatellite(void)
     nFilters = 0;
     GetLocalTimeOffset();
     AddFilter(0x14, 0x70, 0xfc);	// TOT && TDT
-    switch ((lProviders + CurrentProvider)->DataFormat) {
+    switch (format) {
 	case DATA_FORMAT_SKYBOX:
 	    AddFilter(0x11, 0x4a);
 	    AddFilter(0x11, 0x46);
@@ -1154,8 +910,6 @@ void cTaskLoadepg::CreateXmlChannels()
     for (int i = 0; i < nChannels; i++) {
 	sChannel *C = (lChannels + i);
 	if (C->Nid > 0 && C->Tid > 0 && C->Sid > 0) {
-	    //tChannelID ChVID = tChannelID((lProviders + CurrentProvider)->SourceId,
-	    //	C->Nid, C->Tid, C->Sid);
 	    if (C->providername == NULL)
 		continue;
 	    if (strcmp(C->providername, "(null)") == 0)
@@ -1372,7 +1126,7 @@ void cTaskLoadepg::ReadBuffer(int FilterId, int Fd)
 	}
     } else {
 	if (Bytes > 3) {
-	    switch ((lProviders + CurrentProvider)->DataFormat) {
+	    switch (format) {
 		case DATA_FORMAT_SKYBOX:
 		    if (!SI::CRC32::isValid((const char *) Buffer, Bytes)) {
 			return;
@@ -1599,14 +1353,12 @@ void cTaskLoadepg::SupplementChannelsSKYBOX(int FilterId, unsigned char *Data, i
 					    sd->getServiceType(), Key.Nid, lChannels[10].Nid, Key.Tid, lChannels[10].Tid, Key.Sid, lChannels[10].Sid);
 				    sd->serviceName.getText(NameBuf, ShortNameBuf, sizeof(NameBuf), sizeof(ShortNameBuf));
 				    char *pn = compactspace(NameBuf);
-				    //char *ps = compactspace(ShortNameBuf);
 				    sd->providerName.getText(ProviderNameBuf, sizeof(ProviderNameBuf));
 				    char *provname = compactspace(ProviderNameBuf);
 				    if (C) {
 					if (C->name == NULL) {
 					    asprintf(&C->name, "%s", pn);
 					    asprintf(&C->providername, "%s", provname);
-					    //asprintf( &C->shortname, "%s", ps);
 					}
 				    }
 				}
@@ -1638,12 +1390,10 @@ void cTaskLoadepg::SupplementChannelsSKYBOX(int FilterId, unsigned char *Data, i
 					free(C->name);
 					C->name = NULL;
 				    }
-				    //C->name = n.name.getText();
 				    char b[100];
 				    n.name.getText(b, sizeof(b));
 				    C->name = strdup(b);
 				    C->IsNameUpdated = true;
-				    //nChannelUpdates++;
 				}
 			    }
 			}
@@ -2423,12 +2173,10 @@ void cTaskLoadepg::GetSummariesMHW2(int FilterId, unsigned char *Data, int Lengt
 // cTaskLoadepg::CreateEpgXml {{{
 void cTaskLoadepg::CreateEpgXml(void)
 {
-    log_message(INFO, "found %i equivalents channels", nEquivChannels);
     log_message(INFO, "found %i themes", nThemes);
     log_message(INFO, "found %i channels", nChannels);
     log_message(INFO, "found %i titles", nTitles);
     log_message(INFO, "found %i summaries", nSummaries);
-    qsort(lEquivChannels, nEquivChannels, sizeof(sEquivChannel), &qsortEquivChannels);
     qsort(lChannels, nChannels, sizeof(sChannel), &qsortChannels);
     qsort(lTitles, nTitles, sizeof(sTitle), &qsortTitles);
     qsort(lSummaries, nSummaries, sizeof(sSummary), &qsortSummaries);
@@ -2437,7 +2185,7 @@ void cTaskLoadepg::CreateEpgXml(void)
 	printf("<!-- channels.count=\"%d\" -->\n", get_stat("channels.count"));
     }
 
-    if ((lProviders + CurrentProvider)->DataFormat == DATA_FORMAT_SKYBOX) {
+    if (format == DATA_FORMAT_SKYBOX) {
 	// SKYBOX
 	if (ReadFileDictionary()) {
 	    ReadFileThemes();
@@ -2449,14 +2197,12 @@ void cTaskLoadepg::CreateEpgXml(void)
 			int EventId;
 			unsigned short int ChannelId;
 			bool IsChannel;
-			bool IsEquivChannel;
 			sChannel KeyC, *C;
 			i = 0;
 			prev_i = 0;
 			EventId = 1;
 			ChannelId = 0;
 			IsChannel = false;
-			IsEquivChannel = false;
 
 			while (i < nTitles) {
 			    char date_strbuf[256];
@@ -2524,11 +2270,6 @@ void cTaskLoadepg::CreateEpgXml(void)
 			    i++;
 			    EventId++;
 			}
-
-
-			if (IsChannel || IsEquivChannel) {
-			    //fprintf( File, "c\n" );
-			}
 		    }
 		}
 	    }
@@ -2540,70 +2281,19 @@ void cTaskLoadepg::CreateEpgXml(void)
 	unsigned char ChannelId;
 	sChannel KeyC, *C;
 	bool IsChannel;
-	bool IsEquivChannel;
 	i = 0;
 	prev_i = 0;
 	ChannelId = 0xff;
 	IsChannel = false;
-	IsEquivChannel = false;
 	while (i < nTitles) {
 	    sTitle *T = (lTitles + i);
 	    if (ChannelId != T->ChannelId) {
-		if (IsChannel) {
-		    if (ChannelId < 0xff) {
-			//fprintf( File, "c\n" );
-		    }
-		}
-		if (IsEquivChannel) {
-		    if (ChannelId > 0) {
-			//fprintf( File, "c\n" );
-		    }
-		    i = prev_i;
-		    T = (lTitles + i);
-		}
 		IsChannel = false;
-		IsEquivChannel = false;
 		KeyC.ChannelId = T->ChannelId;
 		C = (sChannel *) bsearch(&KeyC, lChannels, nChannels, sizeof(sChannel), &bsearchChannelByChannelId);
-		if (C) {
-#if 0
-		    tChannelID ChVID = tChannelID((lProviders + CurrentProvider)->SourceId, C->Nid,
-			    C->Tid, C->Sid);
-		    cChannel *VC = NULL;
-		    if (VC) {
-			KeyEC.OriginalSourceId = VC->Source();
-			KeyEC.OriginalNid = VC->Nid();
-			KeyEC.OriginalTid = VC->Tid();
-			KeyEC.OriginalSid = VC->Sid();
-			EC = (sEquivChannel *) bsearch(&KeyEC, lEquivChannels, nEquivChannels, sizeof(sEquivChannel), &bsearchEquivChannel);
-			if (EC && Config->UseFileEquivalents) {
-			    tChannelID ChEID = tChannelID(EC->EquivSourceId, EC->EquivNid,
-				    EC->EquivTid, EC->EquivSid,
-				    EC->EquivRid);
-			    cChannel *VEC = NULL;
-			    if (VEC) {
-				//fprintf( File, "<mhw>C %s-%i-%i-%i-%i %s\n", *cSource::ToString( VEC->Source() ), VEC->Nid(), VEC->Tid(), VEC->Sid(), VEC->Rid(), VEC->Name() );
-				asprintf(&ChannelName, "%s", VEC->Name());
-				IsEquivChannel = true;
-				prev_i = i;
-			    }
-			    EC->OriginalSourceId = 0;
-			    EC->OriginalNid = 0;
-			    EC->OriginalTid = 0;
-			    EC->OriginalSid = 0;
-			    qsort(lEquivChannels, nEquivChannels, sizeof(sEquivChannel), &qsortEquivChannels);
-			} else {
-			    //fprintf( File, "<mhw>C %s-%i-%i-%i-%i %s\n", *cSource::ToString( VC->Source() ), VC->Nid(), VC->Tid(), VC->Sid(), VC->Rid(), VC->Name() );
-			    asprintf(&ChannelName, "%s", VC->Name());
-			    IsChannel = true;
-			    C->IsFound = true;
-			}
-		    }
-#endif
-		}
 		ChannelId = T->ChannelId;
 	    }
-	    if (IsChannel || IsEquivChannel) {
+	    if (IsChannel) {
 		log_message(TRACE, "E %u %u %u 01 FF", T->EventId, (T->StartTime + EpgTimeOffset), T->Duration);
 		log_message(TRACE, "T %s", &bTitles[T->pData]);
 		if ((lThemes + T->ThemeId)->Name[0] != '\0') {
@@ -2627,7 +2317,7 @@ void cTaskLoadepg::CreateEpgXml(void)
 	    }
 	    i++;
 	}
-	if (IsChannel || IsEquivChannel) {
+	if (IsChannel) {
 	    log_message(TRACE, "c");
 	}
     }
@@ -2641,14 +2331,7 @@ EPGGrabber::EPGGrabber()
 {
     Config = new sConfig();
     asprintf(&Config->Directory, "%s", conf);
-    Config->UseFileEquivalents = false;
     Config->EnableOsdMessages = false;
-    CurrentProvider = 0;
-    nProviders = 0;
-    nEquivChannels = 0;
-    lProviders = NULL;
-    lEquivChannels = NULL;
-    //Control = NULL;
     Task = NULL;
 }
 
@@ -2661,6 +2344,7 @@ EPGGrabber::~EPGGrabber()
 	}
 	free(Config);
     }
+#ifdef notdef
     if (lProviders) {
 	for (int i = 0; i < nProviders; i++) {
 	    if ((lProviders + i)->Title) {
@@ -2678,6 +2362,7 @@ EPGGrabber::~EPGGrabber()
     if (lEquivChannels) {
 	free(lEquivChannels);
     }
+#endif
     if (Task) {
 	delete(Task);
     }
@@ -2688,7 +2373,6 @@ EPGGrabber::~EPGGrabber()
 // GrabEPG {{{
 void EPGGrabber::Grab()
 {
-    ReadConfigLoadepg();
     Task = new cTaskLoadepg();
     if (Task) {
 #ifdef USETHREADS

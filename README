@@ -31,6 +31,10 @@ then be fed into any number of programs. I use it for MythTV.
 
 We hope you find this useful. The hard work was done by others.
 
+If you are going to modify the code then please respect the layout.
+All code has been put through gnu indent with the following options: -kr -br -l160
+Punched cards are no more. A line length of 80 is just plain outdated.
+
 Mark Spieth <mark@digivation.com.au>
 Simon Kenyon <simon@teilifis.com>
 

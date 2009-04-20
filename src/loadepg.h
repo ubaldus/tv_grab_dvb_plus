@@ -47,6 +47,13 @@
 #define FILE_EPG_ERR "epg.err"
 #define FILE_EPG_CHANNELS "epg.channels"
 
+#define SKY_AU_DICT	"sky_au.dict"
+#define SKY_AU_THEMES	"sky_au.themes"
+#define SKY_IT_DICT	"sky_it.dict"
+#define SKY_IT_THEMES	"sky_it.themes"
+#define SKY_UK_DICT	"sky_uk.dict"
+#define SKY_UK_THEMES	"sky_uk.themes"
+
 #define MAX_ACTIVE_FILTERS 6
 #define MAX_PROVIDERS 64
 
