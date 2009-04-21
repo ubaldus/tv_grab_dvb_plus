@@ -235,7 +235,6 @@ static void footer()
  */
 static void finish_up(int)
 {
-    log_message(DEBUG, "");
     footer();
     exit(0);
 }
@@ -326,7 +325,6 @@ static int openInput(int format)
 	    ufd.events = POLLIN;
 	    res = poll(&ufd, 1, 1000);
 	    if (0 == res) {
-		log_raw_message(TRACE, ".");
 		continue;
 	    }
 	    if (1 == res) {
@@ -337,7 +335,6 @@ static int openInput(int format)
 	    close(fd_epg);
 	    return -1;
 	}
-	fprintf(stdout, "\n");
 	if (!found) {
 	    log_message(ERROR, "timeout - try tuning to a multiplex");
 	    close(fd_epg);

@@ -37,8 +37,6 @@
 #include "stats.h"
 #include "log.h"
 
-extern char *ProgName;
-
 extern int timeout;
 extern int time_offset;
 extern bool ignore_bad_dates;
@@ -58,16 +56,6 @@ typedef struct chninfo {
 } chninfo_t;
 
 static struct chninfo *channels;
-
-/*
- * Print progress indicator
- */
-static void status()
-{
-    log_raw_message(DEBUG,
-		    "\rStatus: %d pkts, %d prgms, %d updates, %d invalid, %d CRC err",
-		    packet_count, programme_count, update_count, invalid_date_count, crcerr_count);
-}
 
 /* Parse 0x4D Short Event Descriptor */
 enum ER { TITLE, SUB_TITLE };
@@ -525,7 +513,9 @@ void readEventTables(int format)
 	} else {
 	    parseEIT(buf, l);
 	}
-	status();
+	log_message(TRACE,
+	    "Status: %d pkts, %d prgms, %d updates, %d invalid, %d CRC err",
+	    packet_count, programme_count, update_count, invalid_date_count, crcerr_count);
     }
     uncompressed = get_stat("freesathuffman.uncompressed");
     compressed = get_stat("freesathuffman.compressed");

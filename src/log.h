@@ -30,6 +30,5 @@
 extern void log_level(char *l);
 extern int is_logging(int l);
 extern void log_message(int l, const char *format, ...);
-extern void log_raw_message(int l, const char *format, ...);
 
 #endif

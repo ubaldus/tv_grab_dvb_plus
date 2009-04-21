@@ -30,8 +30,6 @@
 #include "freesat_huffman.h"
 #include "log.h"
 
-extern char *ProgName;
-
 #define MAX 1024
 
 static char buf[MAX * 6]; /* UTF-8 needs up to 6 bytes */

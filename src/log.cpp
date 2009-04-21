@@ -4,20 +4,22 @@
 
 #include "log.h"
 
+extern char *ProgName;
+
 static int level = ERROR;
 
 static char *log_label(int l) {
     switch (l) {
     case INFO:
-        return "   INFO";
+        return "INFO   ";
     case TRACE:
-        return "  TRACE";
+        return "TRACE  ";
     case DEBUG:
-        return "  DEBUG";
+        return "DEBUG  ";
     case WARNING:
         return "WARNING";
     case ERROR:
-        return "  ERROR";
+        return "ERROR  ";
     default:
     	/* should not get here! */
         return "";
@@ -55,19 +57,9 @@ void log_message(int l, const char *format, ...) {
 
     va_start(args, format);
     if (l >= level) {
-        fprintf(stderr, "%s: ", log_label(l));
+        fprintf(stderr, "%s %s: ", ProgName, log_label(l));
         vfprintf(stderr, format, args);
         fprintf(stderr, "\n");
-    }
-    va_end(args);
-}
-
-void log_raw_message(int l, const char *format, ...) {
-    va_list args;
-
-    va_start(args, format);
-    if (l >= level) {
-        vfprintf(stderr, format, args);
     }
     va_end(args);
 }

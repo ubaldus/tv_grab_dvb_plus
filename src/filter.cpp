@@ -34,8 +34,6 @@ struct filter_t filters[MAX_FILTERS];
 
 int no_filters = 0;
 
-extern char *ProgName;
-
 void add_filter(unsigned short int pid, unsigned char tid, unsigned char mask)
 {
     if (no_filters >= MAX_FILTERS) {
@@ -55,7 +53,7 @@ int start_filters(int fd)
     struct dmx_sct_filter_params sctFilterParams;
     int id;
 
-    log_message(DEBUG, "starting %d filter(s)\n", no_filters);
+    log_message(DEBUG, "starting %d filter(s)", no_filters);
     memset(&sctFilterParams, 0, sizeof(sctFilterParams));
     sctFilterParams.timeout = 0;
     sctFilterParams.flags = DMX_IMMEDIATE_START;
@@ -65,7 +63,7 @@ int start_filters(int fd)
 	sctFilterParams.filter.mask[0] = filters[id].mask;
 	if (ioctl(fd, DMX_SET_FILTER, &sctFilterParams) < 0) {
 	    log_message(ERROR,
-		    "can't start filter pid=0x%04x tid=0x%02x mask=0x%02x\n",
+		    "can't start filter pid=0x%04x tid=0x%02x mask=0x%02x",
 		    filters[id].pid, filters[id].tid, filters[id].mask);
             return FAILURE;
 	}

@@ -1313,7 +1313,7 @@ void cTaskLoadepg::GetSatelliteTimeOffset(int FilterId, unsigned char *Data, int
 		    }
 		    break;
 		default:
-		    //fprintf( stderr, "0x%02x\n", DescriptorTag );
+		    //log_message(DEBUG, "0x%02x", DescriptorTag );
 		    break;
 	    }
 	    p1 += (DescriptorLength + 2);
@@ -1537,7 +1537,7 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data, int Leng
 			}
 			break;
 		    default:
-			log_message(ERROR, "unprocessed descriptor 0x%02x\n", DescriptorTag);
+			log_message(ERROR, "unprocessed descriptor 0x%02x", DescriptorTag);
 			break;
 		}
 	    }
