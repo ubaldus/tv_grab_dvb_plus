@@ -23,7 +23,7 @@
 #define CHANIDENTS    "chanidents"
 
 extern int load_channel_table(char *chanidfile);
-extern char *dvbxmltvid(int chanid);
-extern char *skyxmltvid(char *chanid, char *provider);
+extern const char *dvbxmltvid(int chanid);
+extern const char *skyxmltvid(const char *chanid, const char *provider);
 
 #endif

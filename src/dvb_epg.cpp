@@ -82,7 +82,7 @@ static void parseEventDescription(void *data, enum ER round)
 	dsc[dsclen] = '\0';
 
 	if (*dsc) {
-	    char *d = convert_text(dsc);
+	    const char *d = convert_text(dsc);
 	    if (d && *d)
 		printf("\t<sub-title lang=\"%s\">%s</sub-title>\n", lookup_language(&evtdesc->lang_code1), d);
 	}
@@ -219,7 +219,7 @@ static void parseContentDescription(u_char *data)
 #endif
 	if (c1 > 0 && !get_bit(once, c1)) {
 	    set_bit(once, c1);
-	    char *c = lookup_description(c1);
+	    const char *c = lookup_description(c1);
 	    if (c)
 		if (c[0])
 		    printf("\t<category>%s</category>\n", c);

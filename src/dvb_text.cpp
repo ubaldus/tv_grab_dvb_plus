@@ -36,7 +36,7 @@ static char buf[MAX * 6]; /* UTF-8 needs up to 6 bytes */
 static char result[MAX * 6]; /* xml-ification needs up to 6 bytes */
 
 /* The spec says ISO-6937, but many stations get it wrong and use ISO-8859-1. */
-char *iso6937_encoding = "ISO6937";
+const char *iso6937_encoding = "ISO6937";
 
 static int encoding_default(char *t, const char **s, const char *d) {
 	strncpy(t, iso6937_encoding, 16);
@@ -108,7 +108,7 @@ static iconv_t cd;
  * If the buffer is Freesat huffman encoded, then decode that.
  * Text is converted to UTF-8 and XML entities are encoded.
  */
-char *convert_text(const char *s) {
+const char *convert_text(const char *s) {
 	char cs_new[16];
 	size_t ret;
 

@@ -19,9 +19,9 @@
  */
 
 /*
- * to get asprinf definition
+ * to get asprintf definition
  */
-#define _GNU_SOURCE
+//#define _GNU_SOURCE
 
 #include <stdlib.h>
 #include <string.h>
@@ -48,19 +48,19 @@ int load_channel_table(char *chanidfile)
  * For DVB and Freesat, chanid is the ServiceID
  * If the key is not found then return a manufactured channel id
  */
-char *dvbxmltvid(int chanid)
+const char *dvbxmltvid(int chanid)
 {
-    char *returnstring = (char *) malloc(256);
     char *id;
 
     if (use_chanidents && channelid_table) {
 	asprintf(&id, "%d", chanid);
-	char *c = slookup(channelid_table, id);
+	const char *c = slookup(channelid_table, id);
+	free(id);
 	if (c)
 	    return c;
     }
-    sprintf(returnstring, "%d.dvb.guide", chanid);
-    return returnstring;
+    asprintf(&id, "%d.dvb.guide", chanid);
+    return id;
 }
 
 /*
@@ -68,15 +68,15 @@ char *dvbxmltvid(int chanid)
  * For Sky, the string is "sid,skynumber" which is unique
  * If the key is not found then return a manufactured channel id
  */
-char *skyxmltvid(char *chanid, char *provider)
+const char *skyxmltvid(const char *chanid, const char *provider)
 {
-    char *returnstring = (char *) malloc(256);
+    char *returnstring;
 
     if (use_chanidents && channelid_table) {
-	char *c = slookup(channelid_table, chanid);
+	const char *c = slookup(channelid_table, chanid);
 	if (c)
 	    return c;
     }
-    sprintf(returnstring, "%s.%s.dvb.guide", chanid, provider);
+    asprintf(&returnstring, "%s.%s.dvb.guide", chanid, provider);
     return returnstring;
 }

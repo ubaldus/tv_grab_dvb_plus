@@ -21,8 +21,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-extern char *convert_text(const char *s);
+extern const char *convert_text(const char *s);
 extern char *xmlify(const char *s);
-extern char *iso6937_encoding;
+extern const char *iso6937_encoding;
 
 #endif

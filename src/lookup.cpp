@@ -25,14 +25,14 @@
 #include "lookup.h"
 
 
-char *lookup(const struct int_lookup_table *l, int id) {
+const char *lookup(const struct int_lookup_table *l, int id) {
 	while ((l->i != -1) && (l->i != id)) {
 		l++;
 	}
 	return l->desc;
 }
 
-char *slookup(const struct str_lookup_table *l, char *id) {
+const char *slookup(const struct str_lookup_table *l, const char *id) {
 	while ((l->c != NULL) && strcmp(l->c, id)) {
 		l++;
 	}

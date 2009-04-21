@@ -20,9 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-extern char *lookup_description(int id);
-extern char *lookup_language(u_char * l);
-extern char *lookup_aspect(int id);
-extern char *lookup_audio(int id);
+extern const char *lookup_description(int id);
+extern const char *lookup_language(const u_char * l);
+extern const char *lookup_aspect(int id);
+extern const char *lookup_audio(int id);
 
 #endif

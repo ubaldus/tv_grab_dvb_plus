@@ -8,7 +8,7 @@ extern char *ProgName;
 
 static int level = ERROR;
 
-static char *log_label(int l) {
+static const char *log_label(int l) {
     switch (l) {
     case INFO:
         return "INFO   ";

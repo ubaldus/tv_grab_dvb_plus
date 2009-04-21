@@ -23,16 +23,16 @@
 
 struct int_lookup_table {
 	int i;
-	char *desc;
+	const char *desc;
 };
 
 struct str_lookup_table {
-	char *c;
-	char *desc;
+	const char *c;
+	const char *desc;
 };
 
-extern char *lookup(const struct int_lookup_table *l, int id);
-extern char *slookup(const struct str_lookup_table *l, char *id);
+extern const char *lookup(const struct int_lookup_table *l, int id);
+extern const char *slookup(const struct str_lookup_table *l, const char *id);
 extern int load_lookup(struct str_lookup_table **l, const char *file);
 
 #endif

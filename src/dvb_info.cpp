@@ -541,7 +541,7 @@ const struct str_lookup_table languageid_table[] = {
  * Lookup description
  * If the key is not found then return a manufactured channel id
  */
-char *lookup_description(int id)
+const char *lookup_description(int id)
 {
     return lookup(description_table, id);
 }
@@ -549,7 +549,7 @@ char *lookup_description(int id)
 /*
  * Lookup language
  */
-char *lookup_language(u_char * l)
+const char *lookup_language(const u_char * l)
 {
     char lang[4];
     lang[0] = (char) l[0];
@@ -557,14 +557,14 @@ char *lookup_language(u_char * l)
     lang[2] = (char) l[2];
     lang[3] = '\0';
 
-    char *c = slookup(languageid_table, lang);
+    const char *c = slookup(languageid_table, lang);
     return c ? c : lang;
 }
 
 /*
  * Lookup aspect
  */
-char *lookup_aspect(int id)
+const char *lookup_aspect(int id)
 {
     return lookup(aspect_table, id);
 }
@@ -572,7 +572,7 @@ char *lookup_aspect(int id)
 /*
  * Lookup audio
  */
-char *lookup_audio(int id)
+const char *lookup_audio(int id)
 {
     return lookup(audio_table, id);
 }
