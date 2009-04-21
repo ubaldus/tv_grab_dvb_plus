@@ -25,8 +25,8 @@
 #include <malloc.h>
 #include <sys/types.h>
 
-#include "freesathuffman.h"
-#include "freesattables.h"
+#include "freesat_huffman.h"
+#include "freesat_tables.h"
 #include "stats.h"
 #include "log.h"
 

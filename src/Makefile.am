@@ -5,13 +5,13 @@ bin_PROGRAMS = tv_grab_dvb_plus
 tv_grab_dvb_plus_LDADD = ../libsi/libsi.a
 tv_grab_dvb_plus_SOURCES = \
 	chanid.cpp \
-	dvbepg.cpp \
-	dvbinfo.cpp \
-	dvbtext.cpp \
+	dvb_epg.cpp \
+	dvb_info.cpp \
+	dvb_text.cpp \
 	filter.cpp \
-	freesathuffman.cpp \
-	freesattables.cpp \
-	loadepg.cpp \
+	freesat_huffman.cpp \
+	freesat_tables.cpp \
+	sky_epg.cpp \
 	log.cpp \
 	lookup.cpp \
 	main.cpp \
@@ -19,15 +19,15 @@ tv_grab_dvb_plus_SOURCES = \
 	\
 	chanid.h \
 	constants.h \
-	dvbepg.h \
-	dvbinfo.h \
-	dvbtext.h \
+	dvb_epg.h \
+	dvb_info.h \
+	dvb_text.h \
 	filter.h \
 	formats.h \
-	freesatepg.h \
-	freesathuffman.h \
-	freesattables.h \
-	loadepg.h \
+	freesat_epg.h \
+	freesat_huffman.h \
+	freesat_tables.h \
+	sky_epg.h \
 	log.h \
 	lookup.h \
 	sitables.h \

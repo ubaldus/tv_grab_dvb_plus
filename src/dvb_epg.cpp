@@ -29,9 +29,9 @@
 
 #include "libsi/util.h"
 #include "sitables.h"
-#include "dvbepg.h"
-#include "dvbinfo.h"
-#include "dvbtext.h"
+#include "dvb_epg.h"
+#include "dvb_info.h"
+#include "dvb_text.h"
 #include "lookup.h"
 #include "chanid.h"
 #include "stats.h"

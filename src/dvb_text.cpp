@@ -26,8 +26,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#include "dvbtext.h"
-#include "freesathuffman.h"
+#include "dvb_text.h"
+#include "freesat_huffman.h"
 #include "log.h"
 
 extern char *ProgName;

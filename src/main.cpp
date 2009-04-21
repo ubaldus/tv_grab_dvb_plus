@@ -36,9 +36,9 @@
 
 #include "constants.h"
 #include "filter.h"
-#include "dvbepg.h"
-#include "freesatepg.h"
-#include "loadepg.h"
+#include "dvb_epg.h"
+#include "freesat_epg.h"
+#include "sky_epg.h"
 #include "lookup.h"
 #include "chanid.h"
 #include "stats.h"

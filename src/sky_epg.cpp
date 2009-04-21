@@ -20,8 +20,8 @@
 #include "ctype.h"
 
 #include "constants.h"
-#include "loadepg.h"
-#include "dvbtext.h"
+#include "sky_epg.h"
+#include "dvb_text.h"
 #include "chanid.h"
 #include "stats.h"
 #include "log.h"

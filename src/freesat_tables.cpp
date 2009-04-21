@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "freesattables.h"
+#include "freesat_tables.h"
 
 struct fsattab fsat_table[] = {
     { 0x00000000,  2, 'T'},
