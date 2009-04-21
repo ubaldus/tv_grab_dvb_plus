@@ -1,5 +1,5 @@
 /*
- * loadepg.cpp
+ * sky_epg.cpp
  *
  * Parse Sky AU/IT/UK and MediaHighway EPG data and generate an xmltv file.
  *
@@ -1265,7 +1265,7 @@ void cTaskLoadepg::GetLocalTimeOffset(void)
     tmCurrent->tm_sec = 0;
     tmCurrent->tm_isdst = -1;
     YesterdayEpoch = mktime(tmCurrent);
-    log_message(INFO, "local time offset=[UTC]%+i", LocalTimeOffset / 3600);
+    log_message(DEBUG, "local time offset=[UTC]%+i", LocalTimeOffset / 3600);
 }
 
 void cTaskLoadepg::GetSatelliteTimeOffset(int FilterId, unsigned char *Data, int Length)
@@ -1302,8 +1302,8 @@ void cTaskLoadepg::GetSatelliteTimeOffset(int FilterId, unsigned char *Data, int
 			SatelliteTimeOffset = SatelliteTimeOffsetH * 3600;
 		    }
 		    EpgTimeOffset = (LocalTimeOffset - SatelliteTimeOffset);
-		    log_message(INFO, "satellite time offset=[UTC]%+i", SatelliteTimeOffset / 3600);
-		    log_message(INFO, "EPG time offset=%+i seconds", EpgTimeOffset);
+		    log_message(DEBUG, "satellite time offset=[UTC]%+i", SatelliteTimeOffset / 3600);
+		    log_message(DEBUG, "EPG time offset=%+i seconds", EpgTimeOffset);
 		    if (is_logging(DEBUG)) {
 			log_message(DEBUG, "satellite time UTC: %s %02i:%02i:%02i", GetStringMJD(satMJD), satH, satM, satS);
 			log_message(DEBUG, "satellite country code=%s", SatelliteCountryCode);
@@ -2200,10 +2200,10 @@ void cTaskLoadepg::GetSummariesMHW2(int FilterId, unsigned char *Data, int Lengt
 // cTaskLoadepg::CreateEpgXml {{{
 void cTaskLoadepg::CreateEpgXml(void)
 {
-    log_message(INFO, "found %i themes", nThemes);
-    log_message(INFO, "found %i channels", nChannels);
-    log_message(INFO, "found %i titles", nTitles);
-    log_message(INFO, "found %i summaries", nSummaries);
+    log_message(DEBUG, "found %i themes", nThemes);
+    log_message(DEBUG, "found %i channels", nChannels);
+    log_message(DEBUG, "found %i titles", nTitles);
+    log_message(DEBUG, "found %i summaries", nSummaries);
     qsort(lChannels, nChannels, sizeof(sChannel), &qsortChannels);
     qsort(lTitles, nTitles, sizeof(sTitle), &qsortTitles);
     qsort(lSummaries, nSummaries, sizeof(sSummary), &qsortSummaries);
