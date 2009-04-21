@@ -18,11 +18,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+#include <stdlib.h> 
+#include <stdio.h>
+#include <time.h>
+#include <unistd.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <malloc.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 
 #include "freesat_huffman.h"
@@ -30,7 +34,30 @@
 #include "stats.h"
 #include "log.h"
 
-unsigned char *freesat_huffman_to_string(u_char *src, uint size)
+#define TABLE_1 "freesat.t1"
+#define TABLE_2 "freesat.t2"
+
+extern char conf[1024];
+
+struct hufftab { 
+    unsigned int value; 
+    short bits; 
+    char next; 
+}; 
+ 
+#define START   '\0' 
+#define STOP    '\0' 
+#define ESCAPE  '\1' 
+
+int freesat_decode_error = 0;  /* If set an error has occurred during decoding */
+
+static struct hufftab *tables[2][256];
+static int             table_size[2][256];
+static int loaded = 0;
+
+static void load_file(int tableid, char *filename);
+
+unsigned char *old_freesat_huffman_to_string(u_char *src, uint size)
 {
     uint i;
     unsigned char *uncompressed;
@@ -177,12 +204,12 @@ unsigned char *freesat_huffman_to_string(u_char *src, uint size)
 			(unsigned char *) realloc(uncompressed,
 						  alloc_size);
 		}
-		uncompressed[p++] = '.';
-		uncompressed[p++] = '.';
-		uncompressed[p++] = '.';
+		uncompressed[p++] = '?';
+		uncompressed[p++] = '?';
+		uncompressed[p++] = '?';
 		uncompressed[p++] = '\0';
 		log_message(ERROR,
-			    "entry missing in huffman table for Freesat");
+			    "entry missing in huffman table for Freesat value=%x0 uncompressed=\"%s\"", value, uncompressed);
 		return uncompressed;
 	    }
 	} while (lastch != STOP && byte < size + 4);
@@ -213,3 +240,247 @@ unsigned char *freesat_huffman_to_string(u_char *src, uint size)
 	return uncompressed;
     }
 }
+
+static void freesat_table_load()
+{
+    char *f1;
+    char *f2;
+    int i;
+
+
+    if ( loaded == 0 ) {
+        loaded = 1;
+
+        /* Reset all the tables */
+        for ( i = 0 ; i < 256; i++ ) {
+            if ( tables[0][i] != NULL ) {
+                free(tables[0][i]);
+            }
+            if ( tables[1][i] ) {
+                free(tables[1][i]);
+            }
+            tables[0][i] = NULL;
+            tables[1][i] = NULL;
+            table_size[0][i] = 0;
+            table_size[1][i] = 0;
+        }
+
+
+        /* And load the files up */
+        asprintf(&f1, "%s/%s", conf, TABLE_1);
+	log_message(TRACE, "f1=\"%s\"", f1);
+        load_file(1, f1);
+        free(f1);
+
+        asprintf(&f2, "%s/%s", conf, TABLE_2);
+	log_message(TRACE, "f2=\"%s\"", f2);
+        load_file(2, f2);
+        free(f2);
+    }
+}
+
+/** \brief Convert a textual character description into a value
+ *
+ *  \param str - Encoded (in someway) string
+ *
+ *  \return Raw character
+ */
+static unsigned char resolve_char(char *str)
+{
+    int val;
+    if ( strcmp(str,"ESCAPE") == 0 ) {
+        return ESCAPE;
+    } else if ( strcmp(str,"STOP") == 0 ) {
+        return STOP;
+    } else if ( strcmp(str,"START") == 0 ) {
+        return START;
+    } else if ( sscanf(str,"0x%02x", &val) == 1 ) {
+        return val;
+    }
+    return str[0];
+}
+
+/** \brief Decode a binary string into a value
+ *
+ *  \param binary - Binary string to decode
+ *
+ *  \return Decoded value
+ */
+static unsigned long decode_binary(char *binary)
+{
+    unsigned long mask = 0x80000000;
+    unsigned long maskval = 0;
+    unsigned long val = 0;
+    size_t i;
+
+    for ( i = 0; i < strlen(binary); i++ ) {
+        if ( binary[i] == '1' ) {
+            val |= mask;
+        }
+        maskval |= mask;
+        mask >>= 1;
+    }
+    return val;
+}
+
+/** \brief Load an individual freesat data file
+ *
+ *  \param tableid   - Table id that should be loaded
+ *  \param filename  - Filename to load
+ */
+static void load_file(int tableid, char *filename)
+{
+    char     buf[1024];
+    char    *from, *to, *binary; 
+    FILE    *fp;
+
+    tableid--;
+
+    if ( ( fp = fopen(filename,"r") ) != NULL ) {
+        log_message(TRACE, "loading table %d filename \"%s\"",tableid + 1, filename);
+
+        while ( fgets(buf,sizeof(buf),fp) != NULL ) {
+            from = binary = to = NULL;
+            int elems = sscanf(buf,"%a[^:]:%a[^:]:%a[^:]:", &from, &binary, &to);
+            if ( elems == 3 ) {
+                int bin_len = strlen(binary);
+                int from_char = resolve_char(from);
+                char to_char = resolve_char(to);
+                unsigned long bin = decode_binary(binary);
+                int i = table_size[tableid][from_char]++;
+
+                tables[tableid][from_char] = (struct hufftab *)realloc(tables[tableid][from_char], (i+1) * sizeof(tables[tableid][from_char][0]));
+                tables[tableid][from_char][i].value = bin;
+                tables[tableid][from_char][i].next = to_char;
+                tables[tableid][from_char][i].bits = bin_len;
+                free(from);
+                free(to);
+                free(binary);
+            }
+        }
+    } else {
+        log_message(ERROR, "cannot load \"%s\" for table %d", filename, tableid + 1);
+    }
+}
+
+/** \brief Decode an EPG string as necessary
+ *
+ *  \param src - Possibly encoded string
+ *  \param size - Size of the buffer
+ *
+ *  \retval NULL - Can't decode
+ *  \return A decoded string
+ */
+unsigned char *freesat_huffman_to_string(u_char *src, uint size)
+{ 
+    int tableid;
+
+    freesat_decode_error = 0;
+
+    if (src[0] == 0x1f && (src[1] == 1 || src[1] == 2)) {
+        int    uncompressed_len = 30;
+        u_char * uncompressed = (u_char *)calloc(1,uncompressed_len + 1);
+        unsigned value = 0, byte = 2, bit = 0; 
+        int p = 0; 
+        int lastch = START; 
+
+        tableid = src[1] - 1;
+        while (byte < 6 && byte < size) {
+            value |= src[byte] << ((5-byte) * 8); 
+            byte++; 
+        } 
+  
+        freesat_table_load();   /* Load the tables as necessary */
+
+        do {
+            int found = 0; 
+            unsigned bitShift = 0; 
+            if (lastch == ESCAPE) {
+                char nextCh = (value >> 24) & 0xff; 
+                found = 1; 
+                // Encoded in the next 8 bits. 
+                // Terminated by the first ASCII character. 
+                bitShift = 8; 
+                if ((nextCh & 0x80) == 0) 
+                    lastch = nextCh; 
+                if (p >= uncompressed_len) {
+                    uncompressed_len += 10;
+                    uncompressed = (u_char *)realloc(uncompressed, uncompressed_len + 1);
+                }
+                uncompressed[p++] = nextCh; 
+                uncompressed[p] = 0;
+            } else {
+                int j;
+                for ( j = 0; j < table_size[tableid][lastch]; j++) {
+                    unsigned mask = 0, maskbit = 0x80000000; 
+                    short kk;
+                    for ( kk = 0; kk < tables[tableid][lastch][j].bits; kk++) {
+                        mask |= maskbit; 
+                        maskbit >>= 1; 
+                    } 
+                    if ((value & mask) == tables[tableid][lastch][j].value) {
+                        char nextCh = tables[tableid][lastch][j].next; 
+                        bitShift = tables[tableid][lastch][j].bits; 
+                        if (nextCh != STOP && nextCh != ESCAPE) {
+                            if (p >= uncompressed_len) {
+                                uncompressed_len += 10;
+                                uncompressed = (u_char *)realloc(uncompressed, uncompressed_len + 1);
+                            }
+                            uncompressed[p++] = nextCh; 
+                            uncompressed[p] = 0;
+                        } 
+                        found = 1;
+                        lastch = nextCh; 
+                        break; 
+                    } 
+                } 
+            } 
+            if (found) {
+                // Shift up by the number of bits. 
+                unsigned b;
+                for ( b = 0; b < bitShift; b++) 
+                { 
+                    value = (value << 1) & 0xfffffffe; 
+                    if (byte < size) 
+                        value |= (src[byte] >> (7-bit)) & 1; 
+                    if (bit == 7) 
+                    { 
+                        bit = 0; 
+                        byte++; 
+                    } 
+                    else bit++; 
+                } 
+            } else {
+                char  temp[1020];
+                size_t   tlen = 0;
+
+                tlen = snprintf(temp, sizeof(temp), "[%02x][%02x][%02x][%02x]",(value >> 24 ) & 0xff, (value >> 16 ) & 0xff, (value >> 8) & 0xff, value &0xff);
+                do {
+                    // Shift up by the number of bits. 
+                    unsigned b;
+                    for ( b = 0; b < 8; b++) {
+                        value = (value << 1) & 0xfffffffe; 
+                        if (byte < size) 
+                            value |= (src[byte] >> (7-bit)) & 1; 
+                        if (bit == 7) {
+                            bit = 0; 
+                            byte++; 
+                        } 
+                        else bit++; 
+                    } 
+                    tlen += snprintf(temp+tlen, sizeof(temp) - tlen,"[%02x]", value & 0xff);
+                } while ( tlen < sizeof(temp) - 6 && byte <  size);
+                
+                uncompressed_len += tlen;
+                uncompressed = (u_char *)realloc(uncompressed, uncompressed_len + 1);
+                freesat_decode_error = 1;
+                strcpy((char *)uncompressed + p, temp);
+                log_message(ERROR, "missing table %d entry \"%s\"",tableid + 1, uncompressed);
+                // Entry missing in table. 
+                return uncompressed; 
+            } 
+        } while (lastch != STOP && value != 0); 
+        return uncompressed;
+    } 
+    return NULL; 
+} 
