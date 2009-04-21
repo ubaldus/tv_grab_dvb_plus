@@ -27,12 +27,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+#include "libsi/util.h"
 #include "sitables.h"
 #include "dvbepg.h"
 #include "dvbinfo.h"
 #include "dvbtext.h"
 #include "lookup.h"
-#include "crc32.h"
 #include "chanid.h"
 #include "stats.h"
 #include "log.h"
@@ -519,7 +519,7 @@ void readEventTables(int format)
 	    continue;
 	}
 	l = sizeof(struct si_tab) + GetSectionLength(tab);
-	if (dvb_crc32((uint8_t *) buf, l) != 0) {
+	if (!SI::CRC32::isValid((const char *) buf, r)) {
 	    log_message(ERROR, "data or length is wrong. skipping packet.");
 	    crcerr_count++;
 	} else {

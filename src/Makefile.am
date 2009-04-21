@@ -5,7 +5,6 @@ bin_PROGRAMS = tv_grab_dvb_plus
 tv_grab_dvb_plus_LDADD = ../libsi/libsi.a
 tv_grab_dvb_plus_SOURCES = \
 	chanid.cpp \
-	crc32.cpp \
 	dvbepg.cpp \
 	dvbinfo.cpp \
 	dvbtext.cpp \
@@ -20,7 +19,6 @@ tv_grab_dvb_plus_SOURCES = \
 	\
 	chanid.h \
 	constants.h \
-	crc32.h \
 	dvbepg.h \
 	dvbinfo.h \
 	dvbtext.h \

@@ -83,7 +83,7 @@ unsigned char *freesat_huffman_to_string(u_char *src, uint size)
      * The values if freesathuffman.h reflect doing this.
      */
     alloc_size = (size * ALLOC_MULT) + 1;
-    if (is_logging(DEBUG)) {
+    if (is_logging(TRACE)) {
 	allocated = alloc_size;
 	num_incr = 0;
     }
@@ -143,7 +143,7 @@ unsigned char *freesat_huffman_to_string(u_char *src, uint size)
 			log_message(TRACE,
 				    "had to realloc string in freesat huffman decoding");
 			alloc_size += ALLOC_INCR;
-			if (is_logging(DEBUG)) {
+			if (is_logging(TRACE)) {
 			    allocated += ALLOC_INCR;
 			    num_incr++;
 			}
@@ -189,7 +189,7 @@ unsigned char *freesat_huffman_to_string(u_char *src, uint size)
 
 	uncompressed[p++] = '\0';
 	log_message(TRACE, "freesat text=\"%s\"", uncompressed);
-	if (is_logging(DEBUG)) {
+	if (is_logging(TRACE)) {
 	    length = strlen((char *) uncompressed);
 	    length_ratio = (float) length / (float) size;
 	    uc = get_stat("freesathuffman.uncompressed");
@@ -200,7 +200,7 @@ unsigned char *freesat_huffman_to_string(u_char *src, uint size)
 	    percentage_incrementing =
 		((float) incr / (float) alloc) * 100.0;
 	    average_length = (float) uc / (float) alloc;
-	    log_message(DEBUG,
+	    log_message(TRACE,
 			"freesat huffman size=%d len=%d allocated=%d lr=%f num_incr=%d co=%d uc=%d ratio=%f avglen=%f alloc=%d incr=%d percincr=%f",
 			size, length, allocated, length_ratio, num_incr,
 			co, uc, ratio, average_length, alloc, incr,
