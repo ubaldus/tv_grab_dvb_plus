@@ -111,6 +111,7 @@ static iconv_t cd;
 const char *convert_text(const char *s) {
 	char cs_new[16];
 	size_t ret;
+	char c;
 
 	int i = (int)(unsigned char)s[0];
 	if (i < 0x1F) {
@@ -178,10 +179,30 @@ const char *convert_text(const char *s) {
 				*r++ = 't';
 				*r++ = ';';
 				break;
+			//case 0x0000 ... 0x0008:
+			//case 0x000B ... 0x001F:
+			//case 0x007F:
+				//log_message(ERROR, "forbidden char: %02x", *b);
 			case 0x0000 ... 0x0008:
+			case 0x0009 ... 0x000A:	// added to aid debugging
 			case 0x000B ... 0x001F:
 			case 0x007F:
-				log_message(ERROR, "forbidden char: %02x", *b);
+				//log_message(ERROR, "forbidden char: %02x", *b);
+			case 0x0080 ... 0x009F:
+			case 0x00A0 ... 0x00FF:
+				/*
+				 * print these as XML escape sequences so we can see what is going on
+				 * and in particular, what encoding is being used
+				 */
+				*r++ = '&';
+				*r++ = '#';
+				*r++ = 'x';
+				c = (*b >> 4) & 0x0F;
+				*r++ = (char)(c > 9 ? c + 0x37 : c  + 0x30);
+				c = *b & 0x0F;
+				*r++ = (char)(c > 9 ? c + 0x37 : c  + 0x30);
+				*r++ = ';';
+				break;
 			default:
 				*r++ = *b;
 				break;

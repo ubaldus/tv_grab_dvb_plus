@@ -43,6 +43,7 @@
 #include "chanid.h"
 #include "stats.h"
 #include "log.h"
+#include "freesat_test.h" // only required during test mode
 
 char *ProgName;
 
@@ -119,7 +120,7 @@ static int do_options(int arg_count, char **arg_strings)
 
     while (1) {
 	int c =
-	    getopt_long(arg_count, arg_strings, "a:Cc:d:f:hIi:O:o:Sst:u",
+	    getopt_long(arg_count, arg_strings, "a:Cc:d:f:hIi:O:o:Sst:ux",
 			Long_Options, &Option_Index);
 	if (c == EOF)
 	    break;
@@ -201,6 +202,10 @@ static int do_options(int arg_count, char **arg_strings)
 	    break;
 	case 'u':
 	    ignore_updates = false;
+	    break;
+	case 'x':
+	    freesat_test();
+	    _exit(1);
 	    break;
 	case 0:
 	default:

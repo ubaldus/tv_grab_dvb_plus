@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -Wall -I@top_srcdir@/include
+AM_CPPFLAGS = -Wall -I@top_srcdir@/include -g
 
 bin_PROGRAMS = tv_grab_dvb_plus
 
@@ -11,6 +11,7 @@ tv_grab_dvb_plus_SOURCES = \
 	filter.cpp \
 	freesat_huffman.cpp \
 	freesat_tables.cpp \
+	freesat_test.cpp \
 	sky_epg.cpp \
 	log.cpp \
 	lookup.cpp \
@@ -27,6 +28,7 @@ tv_grab_dvb_plus_SOURCES = \
 	freesat_epg.h \
 	freesat_huffman.h \
 	freesat_tables.h \
+	freesat_test.h \
 	sky_epg.h \
 	log.h \
 	lookup.h \

@@ -2,7 +2,7 @@
 #define __FREESAT_TABLES_H__
 
 /*
- * freesattables.h
+ * freesat_tables.h
  *
  * Huffman tables structures for Freesat.
  *
@@ -30,7 +30,9 @@ struct fsattab {
 #define STOP    '\0'
 #define ESCAPE  '\1'
 
-extern struct fsattab fsat_table[];
-extern unsigned fsat_index[];
+extern struct fsattab fsat_table_1[];
+extern struct fsattab fsat_table_2[];
+extern unsigned fsat_index_1[];
+extern unsigned fsat_index_2[];
 
 #endif

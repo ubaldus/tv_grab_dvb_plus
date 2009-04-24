@@ -1,10 +1,10 @@
-#ifndef __FREESATHUFFMAN_H__
-#define __FREESATHUFFMAN_H__
+#ifndef __FREESAT_TEST_H__
+#define __FREESAT_TEST_H__
 
 /*
- * freesathuffman.h
+ * freesat_test.h
  *
- * Routine to decode a Freesat huffman encoded buffer.
+ * Test the huffman tables with some test data
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,14 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * if the multiplier is set to 2, then we get about 40% reallocations.
- * if the multiplier is set to 3, then we get about 0.3% reallocations.
- */
-#define ALLOC_MULT 3
-#define ALLOC_INCR 10
-
-void dump_compressed(u_char *src, uint size);
-extern unsigned char *freesat_huffman_to_string(unsigned char *compressed, uint size);
+extern void freesat_test();
 
 #endif
