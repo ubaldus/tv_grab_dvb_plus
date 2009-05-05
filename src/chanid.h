@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define CHANIDENTS    "chanidents"
+#define CHANIDENTS    "channel_ids"
 
 extern int load_channel_table(char *chanidfile);
 extern const char *dvbxmltvid(int chanid);

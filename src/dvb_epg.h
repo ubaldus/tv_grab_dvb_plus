@@ -23,5 +23,6 @@
 #define DVB_EIT_PID 18
 
 extern void readEventTables(int format);
+extern void writeChannels(int format);
 
 #endif

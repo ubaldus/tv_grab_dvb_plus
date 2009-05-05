@@ -55,15 +55,23 @@ int format = DATA_FORMAT_DVB;
 int sky_country;
 
 int timeout = 10;
+int days = 0;		// 0=as much as possible, 1=1 day, 2=2 days,...
+int day_offset = 0;	// 0=today, 1=tomorrow,...
 int time_offset = 0;
+
+time_t start_of_period;	// only print programmes that fall between this...
+time_t end_of_period;	// ...and this
+
 bool ignore_bad_dates = true;
 bool ignore_updates = true;
 bool use_chanidents = false;
 bool print_stats = false;
 
 char demux[32] = "/dev/dvb/adapter0/demux0";
-char conf[1024] = "./conf";
+char conf[1024] = "/usr/share/xmltv/tv_grab_dvb_plus";
 
+#define SECONDS_PER_DAY 86400
+#define DAYS_PER_YEAR 365
 
 /*
  * Print usage information
@@ -71,26 +79,62 @@ char conf[1024] = "./conf";
 static void usage()
 {
     fprintf(stderr,
-	    "usage: %s [-h] [-C] [-d] [-I] [-S] [-s] [-u] [-a adapter] [-c dir] [-f format] [-i file] [-O offset] [-o file] [-t timeout]\n\n"
-	    "\t-h (--help)             output this help text\n"
-	    "\t-C (--chanids)          use channel identifiers from file 'chanidents'\n"
-	    "\t                        (default sidnumber.dvb.guide)\n"
-	    "\t-I (--invalid-dates)    output invalid dates (default is to ignore them)\n"
-	    "\t-S (--stats)            output runtime statistics (default false)\n"
-	    "\t-s (--short-xml)        output short xml ids (default false)\n"
-	    "\t-u (--updated-info)     output updated info (will result in repeated information) (default false)\n"
-	    "\t-a (--adapter) adapter# change the adapter number (default 0)\n"
-	    "\t-c (--conf)    dir      change the config directory (default ./conf)\n"
-	    "\t-d (--debug)   level    output debug infoi (none|trace|debug|warning|error) (default error)\n"
-	    "\t-d (--demux)   demux#   change the demux number (default 0)\n"
-	    "\t-f (--format)  format   format of incoming data (dvb|freesat|skyXX|mhw1|mhw2) (default dvb)\n"
-	    "\t                        (XX can be AU, IT or UK - case insensitive)\n"
-	    "\t-i (--input)   file     read from file/device instead of %s\n"
-	    "\t-O (--offset)  offset   time offset in hours from -12 to 12 (default 0)\n"
-	    "\t-o (--output)  file     write output to file (default stdout)\n"
-	    "\t-t (--timeout) timeout  stop after timeout seconds of no new data (default 10)\n"
-	    "\n", ProgName, demux);
+	    "usage: %s [-h] [-c] [-D] [-d] [-I] [-k] [-p] [-q] [-S] [-u] [-x] [-a adapter] [-f format] [-h hours] [-i file] [-n days] [-O days] [-o file] [-s sharedir] [-t timeout]\n\n"
+	    "\t-h (--help)               output this help text\n"
+	    "\t-c (--chanids)            use channel identifiers from file 'chanidents'\n"
+	    "\t                          (default sidnumber.dvb.guide)\n"
+	    "\t-D (--description)        output a description which identified the grabber\n"
+	    "\t-I (--invalid-dates)      output invalid dates (default is to ignore them)\n"
+	    "\t-k (--capabilities)       output a list of all the capabilities that this grabber supports\n"
+	    "\t-p (--preferredmethod)    output how the grabber prefers to be called\n"
+	    "\t-q (--quiet)              supress all progress information. only output error messages\n"
+	    "\t                          (same as -d error)\n"
+	    "\t-S (--stats)              output runtime statistics (default false)\n"
+	    "\t-x (--short-xml)          output short xml ids (default false)\n"
+	    "\t-u (--updated-info)       output updated info (will result in repeated information) (default false)\n"
+	    "\t-a (--adapter) adapter#   change the adapter number (default 0)\n"
+	    "\t-d (--debug)   level      output debug infoi (none|trace|debug|warning|error) (default error)\n"
+	    "\t-f (--format)  format     format of incoming data (dvb|freesat|skyXX|mhw1|mhw2) (default dvb)\n"
+	    "\t                          (XX can be AU, IT or UK - case insensitive)\n"
+	    "\t-H (--hours)   hours      offset time offset in hours from -12 to 12 (default 0)\n"
+	    "\t-i (--input)   file       read from file/device instead of %s\n"
+	    "\t-n (--days)    days       supply data for this number of days (defaults 0 means as much as possible)\n"
+	    "\t-O (--offset)  days       supply data for today plus this number of days (default 0 means today)\n"
+	    "\t-o (--output)  file       write output to file (default stdout)\n"
+	    "\t-s (--share)   sharedir   specify the location of the metatdata for the grabber\n"
+	    "\t                          (default %s)\n"
+	    "\t-t (--timeout) timeout    stop after timeout seconds of no new data (default 10)\n"
+	    "\n", ProgName, demux, conf);
     _exit(1);
+}
+
+/*
+ * Print description
+ */
+static void description()
+{
+    fprintf(stderr, "DVB/Freesat/Sky/MediaHighway\n");
+    _exit(1);
+}
+
+/*
+ * Print capabilities
+ */
+static void capabilities()
+{
+    fprintf(stderr, "baseline\n");
+    fprintf(stderr, "share\n");
+    fprintf(stderr, "preferredmethod\n");
+    _exit(0);
+}
+
+/*
+ * Print preferred calling method
+ */
+static void preferredmethod()
+{
+    fprintf(stderr, "allatonce\n");
+    _exit(0);
 }
 
 /* 
@@ -100,19 +144,25 @@ static int do_options(int arg_count, char **arg_strings)
 {
     static const struct option Long_Options[] = {
 	{"adapter", 1, 0, 'a'},
-	{"chanids", 0, 0, 'C'},
-	{"conf", 1, 0, 'c'},
+	{"chanids", 0, 0, 'c'},
+	{"description", 0, 0, 'D'},
 	{"debug", 1, 0, 'd'},
 	{"format", 1, 0, 'f'},
+	{"hours", 1, 0, 'H'},
 	{"help", 0, 0, 'h'},
 	{"invalid-dates", 0, 0, 'I'},
 	{"input", 1, 0, 'i'},
+	{"capabilities", 0, 0, 'k'},
+	{"days", 1, 0, 'n'},
 	{"offset", 1, 0, 'O'},
 	{"output", 1, 0, 'o'},
-	{"short-xml", 0, 0, 's'},
+	{"preferredmethod", 0, 0, 'p'},
+	{"quiet", 0, 0, 'q'},
 	{"stats", 0, 0, 'S'},
+	{"sharedir", 1, 0, 's'},
 	{"timeout", 1, 0, 't'},
 	{"updated-info", 0, 0, 'u'},
+	{"short-xml", 0, 0, 'x'},
 	{0, 0, 0, 0}
     };
     int Option_Index = 0;
@@ -120,7 +170,7 @@ static int do_options(int arg_count, char **arg_strings)
 
     while (1) {
 	int c =
-	    getopt_long(arg_count, arg_strings, "a:Cc:d:f:hIi:O:o:Sst:ux",
+	    getopt_long(arg_count, arg_strings, "a:cDd:f:H:hIi:kn:O:o:pqSs:Tt:ux",
 			Long_Options, &Option_Index);
 	if (c == EOF)
 	    break;
@@ -132,11 +182,8 @@ static int do_options(int arg_count, char **arg_strings)
 	case 'C':
 	    use_chanidents = true;
 	    break;
-	case 'c':
-	    strcpy(conf, optarg);
-	    break;
 	case 'D':
-	    ignore_bad_dates = false;
+	    description();
 	    break;
 	case 'd':
 	    log_level(optarg);
@@ -164,17 +211,37 @@ static int do_options(int arg_count, char **arg_strings)
 		usage();
 	    }
 	    break;
+	case 'H':
+	    time_offset = atoi(optarg);
+	    if ((time_offset < -12) || (time_offset > 12)) {
+		log_message(ERROR, "invalid time offset");
+		usage();
+	    }
+	    break;
 	case 'h':
 	case '?':
 	    usage();
 	    break;
+	case 'I':
+	    ignore_bad_dates = false;
+	    break;
 	case 'i':
 	    sprintf(demux, "%s", optarg);
 	    break;
+	case 'k':
+	    capabilities();
+	    break;
+	case 'n':
+	    days = atoi(optarg);
+	    if (days < 0) {
+		log_message(ERROR, "invalid number of days");
+		usage();
+	    }
+	    break;
 	case 'O':
-	    time_offset = atoi(optarg);
-	    if ((time_offset < -12) || (time_offset > 12)) {
-		log_message(ERROR, "invalid time offset");
+	    day_offset = atoi(optarg);
+	    if (day_offset < 0) {
+		log_message(ERROR, "invalid day offset");
 		usage();
 	    }
 	    break;
@@ -187,11 +254,21 @@ static int do_options(int arg_count, char **arg_strings)
 	    dup2(fd, STDOUT_FILENO);
 	    close(fd);
 	    break;
+	case 'p':
+	    preferredmethod();
+	    break;
+	case 'q':
+	    log_level("ERROR");
+	    break;
 	case 'S':
 	    print_stats = true;
 	    break;
 	case 's':
-	    useshortxmlids = true;
+	    strcpy(conf, optarg);
+	    break;
+	case 'T':	// undocumented
+	    freesat_test();
+	    _exit(1);
 	    break;
 	case 't':
 	    timeout = atoi(optarg);
@@ -204,8 +281,7 @@ static int do_options(int arg_count, char **arg_strings)
 	    ignore_updates = false;
 	    break;
 	case 'x':
-	    freesat_test();
-	    _exit(1);
+	    useshortxmlids = true;
 	    break;
 	case 0:
 	default:
@@ -215,6 +291,33 @@ static int do_options(int arg_count, char **arg_strings)
 	}
     }
     return 0;
+}
+
+void set_start_and_end_times(void)
+{
+    char date_buffer[256];
+    time_t now;
+    struct tm *tmCurrent;
+    time_t midnight_today;
+
+    now = time(NULL);
+    tmCurrent = gmtime(&now);
+    tmCurrent->tm_hour = 0;
+    tmCurrent->tm_min = 0;
+    tmCurrent->tm_sec = 0;
+    midnight_today = mktime(tmCurrent);
+    start_of_period = midnight_today + (day_offset * SECONDS_PER_DAY);
+    if (days != 0) {
+        end_of_period = start_of_period + (days * SECONDS_PER_DAY);
+    } else {
+        end_of_period = start_of_period + (DAYS_PER_YEAR * SECONDS_PER_DAY);	// should be long enough!
+    }
+    strftime(date_buffer, sizeof(date_buffer), "\"%Y%m%d%H%M%S %z\"", localtime(&midnight_today));
+    log_message(INFO, " midnight today=%s", date_buffer);
+    strftime(date_buffer, sizeof(date_buffer), "\"%Y%m%d%H%M%S %z\"", localtime(&start_of_period));
+    log_message(INFO, "start of period=%s", date_buffer);
+    strftime(date_buffer, sizeof(date_buffer), "\"%Y%m%d%H%M%S %z\"", localtime(&end_of_period));
+    log_message(INFO, "  end of period=%s", date_buffer);
 }
 
 /* 
@@ -271,11 +374,13 @@ static int openInput(int format)
 	case DATA_FORMAT_DVB:
 	    log_message(TRACE, "set up DVB filter");
 	    add_filter(0x14, 0x70, 0xfc);	// TOT && TDT
+	    add_filter(0x11, 0x42, 0xff);	// SDT
 	    add_filter(DVB_EIT_PID, 0x00, 0x00);
 	    break;
 	case DATA_FORMAT_FREESAT:
 	    log_message(TRACE, "set up Freesat filter");
 	    add_filter(0x14, 0x70, 0xfc);	// TOT && TDT
+	    add_filter(0x11, 0x42, 0xff);	// SDT
 	    add_filter(FREESAT_EIT_PID, 0x00, 0x00);
 	    break;
 	case DATA_FORMAT_SKYBOX:
@@ -374,6 +479,7 @@ int main(int argc, char **argv)
 	ProgName++;
     /* Process command line arguments */
     do_options(argc, argv);
+    set_start_and_end_times();
 
     /* Load lookup tables. */
     if (use_chanidents) {
@@ -412,6 +518,7 @@ int main(int argc, char **argv)
 	    exit(1);
 	}
 	readEventTables(format);
+	writeChannels(format);
 	break;
     case DATA_FORMAT_FREESAT:
 	if (openInput(format) != 0) {
@@ -419,6 +526,7 @@ int main(int argc, char **argv)
 	    exit(1);
 	}
 	readEventTables(format);
+	writeChannels(format);
 	break;
     case DATA_FORMAT_SKYBOX:
 	EPGGrabber epgGrabber;

@@ -37,6 +37,9 @@ extern char conf[1024];
 extern int adapter;
 extern bool useshortxmlids;
 
+extern time_t start_of_period;	// only print programmes that fall between this...
+extern time_t end_of_period;	// ...and this
+
 int nThemes;
 sTheme *lThemes;
 
@@ -926,7 +929,7 @@ char *get_channelident(sChannel * C)
     else if (C->shortname != NULL && useshortxmlids)
 	asprintf(&s, "%d.%s.%s.dvb.guide", C->Sid, C->shortname, C->providername);
     else {
-	asprintf(&t, "%d.%d", C->Sid, C->SkyNumber);
+	asprintf(&t, "%d.%d", C->SkyNumber, C->Sid);
 	asprintf(&s, "%s", skyxmltvid(t, C->providername));
     }
     return s;
@@ -2234,6 +2237,7 @@ void cTaskLoadepg::CreateEpgXml(void)
 			while (i < nTitles) {
 			    char date_strbuf[256];
 			    time_t StartTime;
+			    time_t StopTime;
 
 			    sTitle *T = (lTitles + i);
 
@@ -2244,56 +2248,63 @@ void cTaskLoadepg::CreateEpgXml(void)
 				C->IsFound = true;
 			    }
 
-			    char *channelIdent = get_channelident(C);
-			    printf("<programme channel=\"%s\" ", channelIdent);
 			    StartTime = (T->StartTime + EpgTimeOffset);
-			    strftime(date_strbuf, sizeof(date_strbuf), "start=\"%Y%m%d%H%M%S %z\"", localtime(&StartTime));
-			    printf("%s ", date_strbuf);
-			    StartTime = (T->StartTime + T->Duration + EpgTimeOffset);
-			    strftime(date_strbuf, sizeof(date_strbuf), "stop=\"%Y%m%d%H%M%S %z\"", localtime(&StartTime));
-			    printf("%s>\n ", date_strbuf);
+			    StopTime = (T->StartTime + T->Duration + EpgTimeOffset);
 
-			    //printf("\t<EventID>%i</EventID>\n", HILO(evt->event_id));
-			    //printf("\t<RunningStatus>%i</RunningStatus>\n", evt->running_status);
-			    //1 Airing, 2 Starts in a few seconds, 3 Pausing, 4 About to air
+			    /*
+			     * only output programmes where the start time is between start_of_period and end_of period
+			     * the end time of a programme is not taken into consideration
+			     */
+			    if ((StartTime >= start_of_period) && (StartTime < end_of_period)) {
+				    char *channelIdent = get_channelident(C);
+				    printf("<programme channel=\"%s\" ", channelIdent);
+				    strftime(date_strbuf, sizeof(date_strbuf), "start=\"%Y%m%d%H%M%S %z\"", localtime(&StartTime));
+				    printf("%s ", date_strbuf);
+				    strftime(date_strbuf, sizeof(date_strbuf), "stop=\"%Y%m%d%H%M%S %z\"", localtime(&StopTime));
+				    printf("%s>\n ", date_strbuf);
 
-			    if (DecodeHuffmanCode(&bTitles[T->pData], T->lenData)) {
-				CleanString(DecodeText);
-				//printf("\t<title lang=\"%s\">%s</title>\n", xmllang(&evtdesc->lang_code1), xmlify(evt));
-				printf("\t<title lang=\"%s\">%s</title>\n",
-					/* xmllang(&evtdesc->lang_code1) */
-					"en", xmlify((const char *) DecodeText));
-			    }
-			    sSummary KeyS, *S;
-			    KeyS.ChannelId = T->ChannelId;
-			    KeyS.MjdTime = T->MjdTime;
-			    KeyS.EventId = T->EventId;
-			    S = (sSummary *) bsearch(&KeyS, lSummaries, nSummaries, sizeof(sSummary), &bsearchSummarie);
-			    if (S) {
-				if (DecodeHuffmanCode(&bSummaries[S->pData], S->lenData)) {
-				    CleanString(DecodeText);
-				    char *d = xmlify((const char *) DecodeText);
-				    if (d && *d) {
-					//printf("\t<sub-title lang=\"%s\">%s</sub-title>\n", 
-					//   /*xmllang(&evtdesc->lang_code1)*/ "en", d);
-					char *colon = strrchr(d, ':');
-					if (colon != NULL) {
-					    *colon = 0;
-					    printf("\t<subtitle lang=\"%s\">%s</subtitle>\n",
-						    /*xmllang(&levt->lang_code1) */
-						    "en", d);
-					    d = colon + 2;
-					}
-					printf("\t<desc lang=\"%s\">",
-						/*xmllang(&levt->lang_code1) */
-						"en");
-					printf("%s", d);
-					printf("</desc>\n");
+				    //printf("\t<EventID>%i</EventID>\n", HILO(evt->event_id));
+				    //printf("\t<RunningStatus>%i</RunningStatus>\n", evt->running_status);
+				    //1 Airing, 2 Starts in a few seconds, 3 Pausing, 4 About to air
+
+				    if (DecodeHuffmanCode(&bTitles[T->pData], T->lenData)) {
+					CleanString(DecodeText);
+					//printf("\t<title lang=\"%s\">%s</title>\n", xmllang(&evtdesc->lang_code1), xmlify(evt));
+					printf("\t<title lang=\"%s\">%s</title>\n",
+						/* xmllang(&evtdesc->lang_code1) */
+						"en", xmlify((const char *) DecodeText));
 				    }
-				}
+				    sSummary KeyS, *S;
+				    KeyS.ChannelId = T->ChannelId;
+				    KeyS.MjdTime = T->MjdTime;
+				    KeyS.EventId = T->EventId;
+				    S = (sSummary *) bsearch(&KeyS, lSummaries, nSummaries, sizeof(sSummary), &bsearchSummarie);
+				    if (S) {
+					if (DecodeHuffmanCode(&bSummaries[S->pData], S->lenData)) {
+					    CleanString(DecodeText);
+					    char *d = xmlify((const char *) DecodeText);
+					    if (d && *d) {
+						//printf("\t<sub-title lang=\"%s\">%s</sub-title>\n", 
+						//   /*xmllang(&evtdesc->lang_code1)*/ "en", d);
+						char *colon = strrchr(d, ':');
+						if (colon != NULL) {
+						    *colon = 0;
+						    printf("\t<subtitle lang=\"%s\">%s</subtitle>\n",
+							    /*xmllang(&levt->lang_code1) */
+							    "en", d);
+						    d = colon + 2;
+						}
+						printf("\t<desc lang=\"%s\">",
+							/*xmllang(&levt->lang_code1) */
+							"en");
+						printf("%s", d);
+						printf("</desc>\n");
+					    }
+					}
+				    }
+				    delete channelIdent;
+				    printf("</programme>\n");
 			    }
-			    delete channelIdent;
-			    printf("</programme>\n");
 			    i++;
 			    EventId++;
 			}

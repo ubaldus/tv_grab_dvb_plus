@@ -443,7 +443,6 @@ unsigned char *freesat_huffman_to_string(u_char *src, uint size)
 {
     struct fsattab *fsat_table;
     unsigned int *fsat_index;
-    uint i;
     unsigned char *uncompressed;
     uint p;
     unsigned int value;
@@ -467,25 +466,26 @@ unsigned char *freesat_huffman_to_string(u_char *src, uint size)
     /*
      * variable for debugging
      */
-    int alloc;
-    int incr;
-    float percentage_incrementing;
-    int uc;
-    int co;
-    float ratio;
-    float average_length;
-    float length_ratio;
-    int length;
+    //uint i;
+    //int alloc;
+    //int incr;
+    //float percentage_incrementing;
+    //int uc;
+    //int co;
+    //float ratio;
+    //float average_length;
+    //float length_ratio;
+    //int length;
     int allocated = 0;
     int num_incr;
 
     //dump_compressed(src, size);
-    if (is_logging(TRACE)) {
-	log_message(TRACE, "freesat text length=%d", size);
-	for (i = 0; i < size; i++) {
-	    log_message(TRACE, "freesat text string=\"%2.2X\"", src[i]);
-	}
-    }
+    //if (is_logging(TRACE)) {
+	//log_message(TRACE, "freesat text length=%d", size);
+	//for (i = 0; i < size; i++) {
+	    //log_message(TRACE, "freesat text string=\"%2.2X\"", src[i]);
+	//}
+    //}
     p = 0;
     /*
      * The routine allocates a buffer that is ALLOC_MULT times the size of
@@ -618,24 +618,24 @@ unsigned char *freesat_huffman_to_string(u_char *src, uint size)
 	} while (lastch != STOP && byte < size + 4);
 
 	uncompressed[p++] = '\0';
-	log_message(TRACE, "freesat text=\"%s\"", uncompressed);
-	if (is_logging(TRACE)) {
-	    length = strlen((char *) uncompressed);
-	    length_ratio = (float) length / (float) size;
-	    uc = get_stat("freesathuffman.uncompressed");
-	    co = get_stat("freesathuffman.compressed");
-	    ratio = (float) uc / (float) co;
-	    alloc = get_stat("freesathuffman.alloc");
-	    incr = get_stat("freesathuffman.increment");
-	    percentage_incrementing =
-		((float) incr / (float) alloc) * 100.0;
-	    average_length = (float) uc / (float) alloc;
-	    log_message(TRACE,
-			"freesat huffman size=%d len=%d allocated=%d lr=%f num_incr=%d co=%d uc=%d ratio=%f avglen=%f alloc=%d incr=%d percincr=%f",
-			size, length, allocated, length_ratio, num_incr,
-			co, uc, ratio, average_length, alloc, incr,
-			percentage_incrementing);
-	}
+	//log_message(TRACE, "freesat text=\"%s\"", uncompressed);
+	//if (is_logging(TRACE)) {
+	    //length = strlen((char *) uncompressed);
+	    //length_ratio = (float) length / (float) size;
+	    //uc = get_stat("freesathuffman.uncompressed");
+	    //co = get_stat("freesathuffman.compressed");
+	    //ratio = (float) uc / (float) co;
+	    //alloc = get_stat("freesathuffman.alloc");
+	    //incr = get_stat("freesathuffman.increment");
+	    //percentage_incrementing =
+		//((float) incr / (float) alloc) * 100.0;
+	    //average_length = (float) uc / (float) alloc;
+	    ////log_message(TRACE,
+			//"freesat huffman size=%d len=%d allocated=%d lr=%f num_incr=%d co=%d uc=%d ratio=%f avglen=%f alloc=%d incr=%d percincr=%f",
+			//size, length, allocated, length_ratio, num_incr,
+			//co, uc, ratio, average_length, alloc, incr,
+			//percentage_incrementing);
+	//}
 	return uncompressed;
     } else {
 	uncompressed[0] = '\0';
