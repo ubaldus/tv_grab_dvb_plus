@@ -105,7 +105,7 @@ static void usage()
 	    "\t                          (default %s)\n"
 	    "\t-t (--timeout) timeout    stop after timeout seconds of no new data (default 10)\n"
 	    "\n", ProgName, demux, conf);
-    _exit(1);
+    exit(1);
 }
 
 /*
@@ -113,8 +113,8 @@ static void usage()
  */
 static void description()
 {
-    fprintf(stderr, "DVB/Freesat/Sky/MediaHighway\n");
-    _exit(1);
+    fprintf(stdout, "EIT data from DVB, Freesat, Sky or MediaHighway stream\n");
+    exit(0);
 }
 
 /*
@@ -122,10 +122,10 @@ static void description()
  */
 static void capabilities()
 {
-    fprintf(stderr, "baseline\n");
-    fprintf(stderr, "share\n");
-    fprintf(stderr, "preferredmethod\n");
-    _exit(0);
+    fprintf(stdout, "baseline\n");
+    fprintf(stdout, "share\n");
+    fprintf(stdout, "preferredmethod\n");
+    exit(0);
 }
 
 /*
@@ -133,8 +133,8 @@ static void capabilities()
  */
 static void preferredmethod()
 {
-    fprintf(stderr, "allatonce\n");
-    _exit(0);
+    fprintf(stdout, "allatonce\n");
+    exit(0);
 }
 
 /* 
