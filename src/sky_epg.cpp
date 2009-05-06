@@ -2302,6 +2302,7 @@ void cTaskLoadepg::CreateEpgXml(void)
 					    }
 					}
 				    }
+				    printf("\t<!-- category>%02x</category -->\n",T->ThemeId);
 				    delete channelIdent;
 				    printf("</programme>\n");
 			    }
