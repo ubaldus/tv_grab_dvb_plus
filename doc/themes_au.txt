@@ -1,150 +1,113 @@
-DRAM:402AB961 aEntertainment_4:db "Entertainment",0
-DRAM:402AB96F aChannels9710AbcSbs_2:db "Channels 9,7,10,ABC,SBS",0
-DRAM:402AB987 aMovies_3:      db "Movies",0
-DRAM:402AB98E aSport_5:       db "Sport",0
-DRAM:402AB994 aNewsDocumentaries_3:db "News & Documentaries",0
-DRAM:402AB9A9 aKidsAndFamily_0:db "Kids and Family",0
-DRAM:402AB9B9 aMusicRadio_6:  db "Music & Radio",0
-DRAM:402AB9C7 aSpecialInterest_3:db "Special interest",0
-DRAM:402AB9D8 aGames_1:       db "Games",0
-DRAM:402AB9DE aAdult_3:       db "Adult",0
-DRAM:402AB9E4 aActive_0:      db "Active",0
-DRAM:402AB9EB aActionAdv_1:   db "Action/Adv",0
-DRAM:402AB9F6 aDrama_3:       db "Drama",0
-DRAM:402AB9FC aComedy_2:      db "Comedy",0
-DRAM:402ABA03 aReality_0:     db "Reality",0
-DRAM:402ABA0B aTalkShows_0:   db "Talk Shows",0
-DRAM:402ABA16 aSciFi_0:       db "Sci-Fi",0
-DRAM:402ABA1D aLifeDocos_0:   db "Life/Docos",0
-DRAM:402ABA28 aLightArts_0:   db "Light/Arts",0
-DRAM:402ABA33 aOther_8:       db "Other",0
-DRAM:402ABA39 aActionAdv_2:   db "Action/Adv",0
-DRAM:402ABA44 aHistoryWar_0:  db "History/War",0
-DRAM:402ABA50                 db    0 ;
-DRAM:402ABA51 aDramaRom_0:    db "Drama/Rom",0
-DRAM:402ABA5B aScifiHorror_0: db "SciFi/Horror",0
-DRAM:402ABA68 aCmdyMusic_0:   db "Cmdy/Music",0
-DRAM:402ABA73                 db    0 ;
-DRAM:402ABA74                 db    0 ;
-DRAM:402ABA75 aMystThrill_0:  db "Myst/Thrill",0
-DRAM:402ABA81                 db    0 ;
-DRAM:402ABA82                 db    0 ;
-DRAM:402ABA83                 db    0 ;
-DRAM:402ABA84 aFamilyAnim_0:  db "Family/Anim",0
-DRAM:402ABA90 aDocosOther_0:  db "Docos/Other",0
-DRAM:402ABA9C aLeague_0:      db "League",0
-DRAM:402ABAA3                 db    0 ;
-DRAM:402ABAA4                 db    0 ;
-DRAM:402ABAA5                 db    0 ;
-DRAM:402ABAA6                 db    0 ;
-DRAM:402ABAA7                 db    0 ;
-DRAM:402ABAA8                 db    0 ;
-DRAM:402ABAA9 aAfl_0:         db "AFL",0
-DRAM:402ABAAD aUnion_0:       db "Union",0
-DRAM:402ABAB3                 db    0 ;
-DRAM:402ABAB4                 db    0 ;
-DRAM:402ABAB5                 db    0 ;
-DRAM:402ABAB6                 db    0 ;
-DRAM:402ABAB7                 db    0 ;
-DRAM:402ABAB8                 db    0 ;
-DRAM:402ABAB9 aSoccer_0:      db "Soccer",0
-DRAM:402ABAC0 aCricket_1:     db "Cricket",0
-DRAM:402ABAC8 aGolfBase_0:    db "Golf/Base",0
-DRAM:402ABAD2                 db    0 ;
-DRAM:402ABAD3                 db    0 ;
-DRAM:402ABAD4                 db    0 ;
-DRAM:402ABAD5                 db    0 ;
-DRAM:402ABAD6 aCourtSport_0:  db "Court Sport",0
-DRAM:402ABAE2                 db    0 ;
-DRAM:402ABAE3 aBoxWrest_0:    db "Box & Wrest",0
-DRAM:402ABAEF aTrackPool_0:   db "Track/Pool",0
-DRAM:402ABAFA                 db    0 ;
-DRAM:402ABAFB                 db    0 ;
-DRAM:402ABAFC aWntrXtrme_0:   db "Wntr/Xtrme",0
-DRAM:402ABB07                 db    0 ;
-DRAM:402ABB08                 db    0 ;
-DRAM:402ABB09 aRacing_1:      db "Racing",0
-DRAM:402ABB10 aOther_9:       db "Other",0
-DRAM:402ABB16 aBusiness_2:    db "Business",0
-DRAM:402ABB1F aLocalSport_0:  db "Local/Sport",0
-DRAM:402ABB2B aINtl_0:        db "I`ntl",0
-DRAM:402ABB31                 db    0 ;
-DRAM:402ABB32                 db    0 ;
-DRAM:402ABB33                 db    0 ;
-DRAM:402ABB34                 db    0 ;
-DRAM:402ABB35                 db    0 ;
-DRAM:402ABB36                 db    0 ;
-DRAM:402ABB37                 db    0 ;
-DRAM:402ABB38                 db    0 ;
-DRAM:402ABB39 aPeopleCult_0:  db "People/Cult",0
-DRAM:402ABB45 aHistBiog_0:    db "Hist/Biog",0
-DRAM:402ABB4F                 db    0 ;
-DRAM:402ABB50                 db    0 ;
-DRAM:402ABB51 aSciNature_0:   db "Sci/Nature",0
-DRAM:402ABB5C                 db    0 ;
-DRAM:402ABB5D                 db    0 ;
-DRAM:402ABB5E aTravelAdv_0:   db "Travel/Adv",0
-DRAM:402ABB69                 db    0 ;
-DRAM:402ABB6A                 db    0 ;
-DRAM:402ABB6B aOther_10:      db "Other",0
-DRAM:402ABB71 aPreSchool_0:   db "Pre-school",0
-DRAM:402ABB7C aAdventure_1:   db "Adventure",0
-DRAM:402ABB86 aDramaCom_0:    db "Drama/Com",0
-DRAM:402ABB90                 db    0 ;
-DRAM:402ABB91                 db    0 ;
-DRAM:402ABB92                 db    0 ;
-DRAM:402ABB93 aAnimation_0:   db "Animation",0
-DRAM:402ABB9D aScience_0:     db "Science",0
-DRAM:402ABBA5 aMovieMus_0:    db "Movie/Mus",0
-DRAM:402ABBAF                 db    0 ;
-DRAM:402ABBB0                 db    0 ;
-DRAM:402ABBB1                 db    0 ;
-DRAM:402ABBB2 aGameReal_0:    db "Game/Real",0
-DRAM:402ABBBC                 db    0 ;
-DRAM:402ABBBD                 db    0 ;
-DRAM:402ABBBE                 db    0 ;
-DRAM:402ABBBF aOther_11:      db "Other",0
-DRAM:402ABBC5 aPop_1:         db "Pop",0
-DRAM:402ABBC9 aDance_0:       db "Dance",0
-DRAM:402ABBCF aJazzBlues_0:   db "Jazz/Blues",0
-DRAM:402ABBDA                 db    0 ;
-DRAM:402ABBDB                 db    0 ;
-DRAM:402ABBDC aSoulRB_0:      db "Soul/R&B",0
-DRAM:402ABBE5 aRock_1:        db "Rock",0
-DRAM:402ABBEA aRapHipHop_0:   db "Rap/Hip hop",0
-DRAM:402ABBF6 aLiveReqst_0:   db "Live/Reqst",0
-DRAM:402ABC01                 db    0 ;
-DRAM:402ABC02                 db    0 ;
-DRAM:402ABC03 aRealityFact_0: db "Reality/Fact",0
-DRAM:402ABC10 aClassOpera_0:  db "Class/Opera",0
-DRAM:402ABC1C                 db    0 ;
-DRAM:402ABC1D                 db    0 ;
-DRAM:402ABC1E aCountry_1:     db "Country",0
-DRAM:402ABC26 aRadio_0:       db "Radio",0
-DRAM:402ABC2C aOther_12:      db "Other",0
-DRAM:402ABC32 aReligion_0:    db "Religion",0
-DRAM:402ABC3B aForeign_0:     db "Foreign",0
-DRAM:402ABC43 aAdult_4:       db "Adult",0
-DRAM:402ABC49 aShopping_1:    db "Shopping",0
-DRAM:402ABC52 aHelp_0:        db "Help",0
-DRAM:402ABC57 aOther_13:      db "Other",0
-DRAM:402ABC5D aArcade_0:      db "Arcade",0
-DRAM:402ABC64 aPuzzle_0:      db "Puzzle",0
-DRAM:402ABC6B aMultiplayer_0: db "Multiplayer",0
-DRAM:402ABC77 aPlayAlong_0:   db "Play-along",0
-DRAM:402ABC82 aSports_1:      db "Sports",0
-DRAM:402ABC89 aRacing_2:      db "Racing",0
-DRAM:402ABC90 aKids_0:        db "Kids",0
-DRAM:402ABC95 aOther_14:      db "Other",0
-DRAM:402ABC9B aErotica_0:     db "Erotica",0
-DRAM:402ABCA3 aOnDemand_0:    db "On Demand",0
-DRAM:402ABCAD aOther_15:      db "Other",0
-DRAM:402ABCB3 aEntertainment_5:db "Entertainment",0
-DRAM:402ABCC1 aGamesMail_0:   db "Games/Mail",0
-DRAM:402ABCCC aVoteWager_0:   db "Vote/Wager",0
-DRAM:402ABCD7 aMusicRadio_7:  db "Music/Radio",0
-DRAM:402ABCE3 aSport_6:       db "Sport",0
-DRAM:402ABCE9 aNewsDoco_0:    db "News & Doco",0
-DRAM:402ABCF5 aServices_1:    db "Services",0
-DRAM:402ABCFE aOther_16:      db "Other",0
+Entertainment
+Channels 9,7,10,ABC,SBS
 
+Movies
+Sport
+News & Documentaries
+Kids and Family
+Music & Radio
+Special interest
+Games
+Adult
+Active
+
+Action/Adv
+Drama
+Comedy
+Reality
+Talk Shows
+Sci-Fi
+Life/Docos
+Light/Arts
+Other
+
+-- Movies --
+Action/Adv
+History/War
+Drama/Rom
+SciFi/Horror
+Cmdy/Music
+Myst/Thrill
+Family/Anim
+Docos/Other
+
+-- Sport --
+League
+AFL
+Union
+Soccer
+Cricket
+Golf/Base
+Court Sport
+Box & Wrest
+Track/Pool
+Wntr/Xtrme
+Racing
+Other
+
+-- News & Documentaries --
+Business
+Local/Sport
+I`ntl
+People/Cult
+Hist/Biog
+Sci/Nature
+Travel/Adv
+Other
+
+-- Kids and Family --
+Pre-school
+Adventure
+Drama/Com
+Animation
+Science
+Movie/Mus
+Game/Real
+Other
+
+-- Music & Radio --
+Pop
+Dance
+Jazz/Blues
+Soul/R&B
+Rock
+Rap/Hip hop
+Live/Reqst
+Reality/Fact
+Class/Opera
+Country
+Radio
+Other
+
+-- Special interest --
+Religion
+Foreign
+Adult
+Shopping
+Help
+Other
+
+-- Games --
+Arcade
+Puzzle
+Multiplayer
+Play-along
+Sports
+Racing
+Kids
+Other
+
+-- Adult --
+Erotica
+On Demand
+Other
+
+-- Active --
+Entertainment
+Games/Mail
+Vote/Wager
+Music/Radio
+Sport
+News & Doco
+Services
+Other
