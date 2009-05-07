@@ -478,7 +478,9 @@ void cTaskLoadepg::Action(void)
     EpgTimeOffset = 0;
     log_message(TRACE, "start task");
     switch (format) {
-        case DATA_FORMAT_SKYBOX:
+        case DATA_FORMAT_SKY_AU:
+        case DATA_FORMAT_SKY_IT:
+        case DATA_FORMAT_SKY_UK:
         case DATA_FORMAT_MHW_1:
         case DATA_FORMAT_MHW_2:
     	lThemes = (sTheme *) calloc(MAX_THEMES, sizeof(sTheme));
@@ -672,14 +674,14 @@ bool cTaskLoadepg::ReadFileDictionary(void)
     char *Line;
     char Buffer[256];
 
-    switch (sky_country) {
-    case SKY_AU:
+    switch (format) {
+    case DATA_FORMAT_SKY_AU:
         asprintf(&FileName, "%s/%s", Config->Directory, SKY_AU_DICT);
 	break;
-    case SKY_IT:
+    case DATA_FORMAT_SKY_IT:
         asprintf(&FileName, "%s/%s", Config->Directory, SKY_IT_DICT);
 	break;
-    case SKY_UK:
+    case DATA_FORMAT_SKY_UK:
         asprintf(&FileName, "%s/%s", Config->Directory, SKY_UK_DICT);
 	break;
     }
@@ -824,14 +826,14 @@ bool cTaskLoadepg::ReadFileThemes(void)
     char *Line;
     char Buffer[256];
 
-    switch (sky_country) {
-    case SKY_AU:
+    switch (format) {
+    case DATA_FORMAT_SKY_AU:
         asprintf(&FileName, "%s/%s", Config->Directory, SKY_AU_THEMES);
 	break;
-    case SKY_IT:
+    case DATA_FORMAT_SKY_IT:
         asprintf(&FileName, "%s/%s", Config->Directory, SKY_IT_THEMES);
 	break;
-    case SKY_UK:
+    case DATA_FORMAT_SKY_UK:
         asprintf(&FileName, "%s/%s", Config->Directory, SKY_UK_THEMES);
 	break;
     }
@@ -872,7 +874,9 @@ void cTaskLoadepg::LoadFromSatellite(void)
     GetLocalTimeOffset();
     AddFilter(0x14, 0x70, 0xfc);	// TOT && TDT
     switch (format) {
-	case DATA_FORMAT_SKYBOX:
+	case DATA_FORMAT_SKY_AU:
+	case DATA_FORMAT_SKY_IT:
+	case DATA_FORMAT_SKY_UK:
 	    AddFilter(0x11, 0x4a);
 	    AddFilter(0x11, 0x46);
 	    AddFilter(0x30, 0xa0, 0xfc);
@@ -1148,7 +1152,9 @@ void cTaskLoadepg::ReadBuffer(int FilterId, int Fd)
     } else {
 	if (Bytes > 3) {
 	    switch (format) {
-		case DATA_FORMAT_SKYBOX:
+		case DATA_FORMAT_SKY_AU:
+		case DATA_FORMAT_SKY_IT:
+		case DATA_FORMAT_SKY_UK:
 		    if (!SI::CRC32::isValid((const char *) Buffer, Bytes)) {
 			return;
 		    }
@@ -2208,7 +2214,9 @@ void cTaskLoadepg::CreateEpgXml(void)
 	printf("<!-- channels.count=\"%d\" -->\n", get_stat("channels.count"));
     }
 
-    if (format == DATA_FORMAT_SKYBOX) {
+    if ((format == DATA_FORMAT_SKY_AU) ||
+        (format == DATA_FORMAT_SKY_IT) ||
+	(format == DATA_FORMAT_SKY_UK)) {
 	// SKYBOX
 	if (ReadFileDictionary()) {
 	    ReadFileThemes();

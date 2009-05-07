@@ -194,14 +194,11 @@ static int do_options(int arg_count, char **arg_strings)
 	    } else if (strcasecmp(optarg, "freesat") == 0) {
 		format = DATA_FORMAT_FREESAT;
 	    } else if (strcasecmp(optarg, "skyau") == 0) {
-		format = DATA_FORMAT_SKYBOX;
-		sky_country = SKY_AU;
+		format = DATA_FORMAT_SKY_AU;
 	    } else if (strcasecmp(optarg, "skyit") == 0) {
-		format = DATA_FORMAT_SKYBOX;
-		sky_country = SKY_IT;
+		format = DATA_FORMAT_SKY_IT;
 	    } else if (strcasecmp(optarg, "skyuk") == 0) {
-		format = DATA_FORMAT_SKYBOX;
-		sky_country = SKY_UK;
+		format = DATA_FORMAT_SKY_UK;
 	    } else if (strcasecmp(optarg, "mhw1") == 0) {
 		format = DATA_FORMAT_MHW_1;
 	    } else if (strcasecmp(optarg, "mhw2") == 0) {
@@ -383,7 +380,9 @@ static int openInput(int format)
 	    add_filter(0x11, 0x42, 0xff);	// SDT
 	    add_filter(FREESAT_EIT_PID, 0x00, 0x00);
 	    break;
-	case DATA_FORMAT_SKYBOX:
+	case DATA_FORMAT_SKY_AU:
+	case DATA_FORMAT_SKY_IT:
+	case DATA_FORMAT_SKY_UK:
 	    log_message(TRACE, "set up Sky filter");
 	    add_filter(0x14, 0x70, 0xfc);	// TOT && TDT
 	    add_filter(0x11, 0x4a, 0xff);
@@ -490,8 +489,14 @@ int main(int argc, char **argv)
 	case DATA_FORMAT_FREESAT:
 	    asprintf(&chanidfile, "%s/%s.freesat", conf, CHANIDENTS);
 	    break;
-	case DATA_FORMAT_SKYBOX:
-	    asprintf(&chanidfile, "%s/%s.sky", conf, CHANIDENTS);
+	case DATA_FORMAT_SKY_AU:
+	    asprintf(&chanidfile, "%s/%s.skyau", conf, CHANIDENTS);
+	    break;
+	case DATA_FORMAT_SKY_IT:
+	    asprintf(&chanidfile, "%s/%s.skyit", conf, CHANIDENTS);
+	    break;
+	case DATA_FORMAT_SKY_UK:
+	    asprintf(&chanidfile, "%s/%s.skyuk", conf, CHANIDENTS);
 	    break;
 	case DATA_FORMAT_MHW_1:
 	    asprintf(&chanidfile, "%s/%s.mhw1", conf, CHANIDENTS);
@@ -528,7 +533,9 @@ int main(int argc, char **argv)
 	readEventTables(format);
 	writeChannels(format);
 	break;
-    case DATA_FORMAT_SKYBOX:
+    case DATA_FORMAT_SKY_AU:
+    case DATA_FORMAT_SKY_IT:
+    case DATA_FORMAT_SKY_UK:
 	EPGGrabber epgGrabber;
 	epgGrabber.Grab();
 	break;
