@@ -49,7 +49,6 @@ char *ProgName;
 
 int adapter = 0;
 int demuxno = 0;
-bool useshortxmlids = false;
 
 int format = DATA_FORMAT_DVB;
 int sky_country;
@@ -64,6 +63,7 @@ time_t end_of_period;	// ...and this
 
 bool ignore_bad_dates = true;
 bool ignore_updates = true;
+bool use_shortxmlids = false;
 bool use_chanidents = false;
 bool print_stats = false;
 
@@ -179,7 +179,7 @@ static int do_options(int arg_count, char **arg_strings)
 	    adapter = atoi(optarg);
 	    sprintf(demux, "/dev/dvb/adapter%d/demux%d", adapter, demuxno);
 	    break;
-	case 'C':
+	case 'c':
 	    use_chanidents = true;
 	    break;
 	case 'D':
@@ -281,7 +281,7 @@ static int do_options(int arg_count, char **arg_strings)
 	    ignore_updates = false;
 	    break;
 	case 'x':
-	    useshortxmlids = true;
+	    use_shortxmlids = true;
 	    break;
 	case 0:
 	default:

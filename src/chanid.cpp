@@ -30,8 +30,10 @@
 
 #include "constants.h"
 #include "lookup.h"
+#include "log.h"
 
 extern bool use_chanidents;
+extern bool use_shortxmlids;
 
 struct str_lookup_table *channelid_table;
 
@@ -51,13 +53,17 @@ int load_channel_table(char *chanidfile)
 const char *dvbxmltvid(int chanid)
 {
     char *id;
+    const char *c;
 
     if (use_chanidents && channelid_table) {
 	asprintf(&id, "%d", chanid);
-	const char *c = slookup(channelid_table, id);
+	c = slookup(channelid_table, id);
 	free(id);
-	if (c)
+	if (c) {
 	    return c;
+	} else {
+	    return NULL;
+	}
     }
     asprintf(&id, "%d.dvb.guide", chanid);
     return id;
@@ -68,15 +74,25 @@ const char *dvbxmltvid(int chanid)
  * For Sky, the string is "sid,skynumber" which is unique
  * If the key is not found then return a manufactured channel id
  */
-const char *skyxmltvid(const char *chanid, const char *provider)
+const char *skyxmltvid(int skynumber, int sid, char *shortname, char *providername)
 {
+    char *chanid;
     char *returnstring;
+    const char *c;
 
-    if (use_chanidents && channelid_table) {
-	const char *c = slookup(channelid_table, chanid);
-	if (c)
+    if (shortname != NULL && use_shortxmlids) {
+	asprintf(&returnstring, "%d.%s.%s.dvb.guide", sid, shortname, providername);
+    } else if (use_chanidents && channelid_table) {
+	asprintf(&chanid, "%d.%d", skynumber, sid);
+	c = slookup(channelid_table, chanid);
+	if (c) {
+	    log_message(TRACE, "found match (%s) for skynumber=%d sid=%d shortname=\"%s\" providername=\"%s\"", c, skynumber, sid, shortname, providername);
 	    return c;
+	} else {
+	    log_message(TRACE, "did not find match for skynumber=%d sid=%d shortname=\"%s\" providername=\"%s\"", skynumber, sid, shortname, providername);
+	    return NULL;
+	}
     }
-    asprintf(&returnstring, "%s.%s.dvb.guide", chanid, provider);
+    asprintf(&returnstring, "%s.%s.dvb.guide", chanid, providername);
     return returnstring;
 }

@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "lookup.h"
+#include "log.h"
 
 
 const char *lookup(const struct int_lookup_table *l, int id) {
@@ -73,14 +74,22 @@ int load_lookup(struct str_lookup_table **l, const char *file) {
 	// 2nd: read data
 	rewind(fd);
 	char *c = (char *) (p + n);
-	char d[255];
-	while (fscanf(fd, "%255s %255s", d, c) == 2) {
-		p->desc = c;
-		c += strlen(c) + 1;
-		strcpy(c, d);
-		p->c = c;
-		c += strlen(d) + 1;
-		p++;
+	char d[256];
+	char e[256];
+	while (fscanf(fd, "%255s %255s", d, e) == 2) {
+		if (d[0] != '#') {
+		    strcpy(c, e);
+		    p->desc = c;
+		    c += strlen(e) + 1;
+    
+		    strcpy(c, d);
+		    p->c = c;
+		    c += strlen(d) + 1;
+    
+		    p++;
+		} else {
+                    log_message(DEBUG, "comment in chanidents file");
+		}
 	}
 	p->c = NULL;
 	p->desc = NULL;

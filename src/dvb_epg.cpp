@@ -279,48 +279,12 @@ static void parseUnknown(u_char *data)
     //printf("\t<!-- unknown id=\"%x\" len=\"%d\" value=\"%s\" -->\n", GetDescriptorTag(data), len, buf);
 }
 
-#ifdef notdef
-static void parseServiceDescription(u_char *data)
+static void parseServiceDescription(void *data)
 {
-    assert(GetDescriptorTag(data) == 0x5F);
-    struct service_descriptor *pr = CastServiceDescriptor(data);
-
-    u_char *p;
-    for (p = (u_char *)(&pr->data); p < (u_char *)(data + pr->descriptor_length); p += SERVICE_DESCRIPTOR_ITEM_LEN) {
-        struct parental_rating_item *pr = (struct parental_rating_item *)p;
-        switch (pr->rating) {
-        case 0x00:                /*undefined */
-            break;
-        case 0x01 ... 0x0F:
-            printf("\t<rating system=\"dvb\">\n");
-            printf("\t\t<value>%d</value>\n", pr->rating + 3);
-            printf("\t</rating>\n");
-            break;
-        case 0x10 ... 0xFF:        /*broadcaster defined */
-            break;
-        }
-    }
-    service_type=buf[i++];
-    printf("<description tag=\"0x48\" type=\"%d\"",service_type);
-    descriptor_length--;
-    j=buf[i++];
-    descriptor_length-=(j+1);
-    printf(" provider_name=\"");;
-    while(j > 0) {
-        printf("%s",xmlify(buf[i++]));
-        j--;
-    }
-    printf("\" service_name=\"");
-    j=buf[i++]; 
-    descriptor_length-=(j+1);
-    while(j > 0) {
-        printf("%s",xmlify(buf[i]));
-        i++;
-        j--;
-    }
-    printf("\" />\n");
+    assert(GetDescriptorTag(data) == 0x48);
+    //struct descr_service *pr = CastServiceDescriptor(data);
+    log_message(DEBUG, "got a service descriptor");
 }
-#endif
 
 /* Parse Descriptor
  * Tags should be output in this order:
@@ -342,11 +306,9 @@ static void parseDescription(u_char *data, size_t len)
             switch (GetDescriptorTag(desc)) {
             case 0:
                 break;
-#ifdef notdef
             case 0x48:                //service_description
-            parseServiceDescription(desc);
+                parseServiceDescription(desc);
                 break;
-#endif
             case 0x4D:                //short evt desc, [title] [sub-title]
                 // there can be multiple language versions of these
                 if (round == 0) {
@@ -449,6 +411,7 @@ static void parseEIT(u_char *data, size_t len)
     struct eit *e = (struct eit *)data;
     u_char *p;
     struct tm dvb_time;
+    const char *xmltvid;
     char date_strbuf[256];
 
     len -= 4;                        //remove CRC
@@ -522,18 +485,21 @@ static void parseEIT(u_char *data, size_t len)
         programme_count++;
 
         if ((start_time >= start_of_period) && (start_time < end_of_period)) {
-            printf("<programme channel=\"%s\" ", dvbxmltvid(GetServiceId(e)));
-            strftime(date_strbuf, sizeof(date_strbuf), "start=\"%Y%m%d%H%M%S %z\"", localtime(&start_time));
-            printf("%s ", date_strbuf);
-            strftime(date_strbuf, sizeof(date_strbuf), "stop=\"%Y%m%d%H%M%S %z\"", localtime(&stop_time));
-            printf("%s>\n ", date_strbuf);
-    
-            //printf("\t<EventID>%i</EventID>\n", HILO(evt->event_id));
-            //printf("\t<RunningStatus>%i</RunningStatus>\n", evt->running_status);
-            //1 Airing, 2 Starts in a few seconds, 3 Pausing, 4 About to air
-    
-            parseDescription((u_char *)(&evt->data), GetEITDescriptorsLoopLength(evt));
-            printf("</programme>\n");
+            xmltvid = dvbxmltvid(GetServiceId(e));
+	    if (xmltvid != NULL) {
+                printf("<programme channel=\"%s\" ", xmltvid);
+                strftime(date_strbuf, sizeof(date_strbuf), "start=\"%Y%m%d%H%M%S %z\"", localtime(&start_time));
+                printf("%s ", date_strbuf);
+                strftime(date_strbuf, sizeof(date_strbuf), "stop=\"%Y%m%d%H%M%S %z\"", localtime(&stop_time));
+                printf("%s>\n ", date_strbuf);
+        
+                //printf("\t<EventID>%i</EventID>\n", HILO(evt->event_id));
+                //printf("\t<RunningStatus>%i</RunningStatus>\n", evt->running_status);
+                //1 Airing, 2 Starts in a few seconds, 3 Pausing, 4 About to air
+        
+                parseDescription((u_char *)(&evt->data), GetEITDescriptorsLoopLength(evt));
+                printf("</programme>\n");
+	    }
         }
     }
 }
@@ -584,11 +550,15 @@ void readEventTables(int format)
 void writeChannels(int format)
 {
     struct chninfo *c;
+    const char *xmltvid;
 
     for (c = channels; c != NULL; c = c->next) {
-        printf("<channel id=\"%s\">\n", dvbxmltvid(c->sid));
-        printf("\t<display-name>%s</display-name>\n", c->sname);
-        printf("</channel>\n");
+        xmltvid = dvbxmltvid(c->sid);
+        if (xmltvid != NULL) {
+            printf("<channel id=\"%s\">\n", xmltvid);
+            printf("\t<display-name>%s</display-name>\n", c->sname);
+            printf("</channel>\n");
+	}
     }
 }
 // vim: foldmethod=marker ts=4 sw=4
