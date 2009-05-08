@@ -1144,7 +1144,7 @@ void cTaskLoadepg::ReadBuffer(int FilterId, int Fd)
     Bytes = read(Fd, Buffer, sizeof(Buffer));
     if (Bytes < 0) {
 	if (errno != EOVERFLOW) {
-	    log_message(ERROR, "failed to read filter for pid=0x%04x tid=0x%02x", Filters[FilterId].Pid, Filters[FilterId].Tid);
+	    log_message(ERROR, "failed to read filter for pid=0x%04x tid=0x%02x errno=%d", Filters[FilterId].Pid, Filters[FilterId].Tid, errno);
 	    Filters[FilterId].Step = 2;
 	} else {
 	    log_message(ERROR, "buffer overflow to read filter for pid=0x%04x tid=0x%02x", Filters[FilterId].Pid, Filters[FilterId].Tid);

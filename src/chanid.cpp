@@ -92,7 +92,9 @@ const char *skyxmltvid(int skynumber, int sid, char *shortname, char *providerna
 	    log_message(TRACE, "did not find match for skynumber=%d sid=%d shortname=\"%s\" providername=\"%s\"", skynumber, sid, shortname, providername);
 	    return NULL;
 	}
+	asprintf(&returnstring, "%s.%s.dvb.guide", chanid, providername);
+    } else {
+	asprintf(&returnstring, "%s.%s.dvb.guide", chanid, providername);
     }
-    asprintf(&returnstring, "%s.%s.dvb.guide", chanid, providername);
     return returnstring;
 }
