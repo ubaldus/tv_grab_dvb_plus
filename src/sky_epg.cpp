@@ -1143,11 +1143,18 @@ void cTaskLoadepg::ReadBuffer(int FilterId, int Fd)
     int Bytes;
     Bytes = read(Fd, Buffer, sizeof(Buffer));
     if (Bytes < 0) {
-	if (errno != EOVERFLOW) {
-	    log_message(ERROR, "failed to read filter for pid=0x%04x tid=0x%02x errno=%d", Filters[FilterId].Pid, Filters[FilterId].Tid, errno);
-	    Filters[FilterId].Step = 2;
-	} else {
-	    log_message(ERROR, "buffer overflow to read filter for pid=0x%04x tid=0x%02x", Filters[FilterId].Pid, Filters[FilterId].Tid);
+	switch (errno)
+	{
+	    case EOVERFLOW:
+		log_message(ERROR, "buffer overflow to read filter for pid=0x%04x tid=0x%02x", Filters[FilterId].Pid, Filters[FilterId].Tid);
+		break;
+	    case ETIMEDOUT:
+		log_message(ERROR, "read filter timedout for pid=0x%04x tid=0x%02x", Filters[FilterId].Pid, Filters[FilterId].Tid);
+		break;
+	    default:
+		log_message(ERROR, "failed to read filter for pid=0x%04x tid=0x%02x errno=%d", Filters[FilterId].Pid, Filters[FilterId].Tid, errno);
+		Filters[FilterId].Step = 2;
+		break;
 	}
     } else {
 	if (Bytes > 3) {
