@@ -27,7 +27,7 @@
 #define TRACE   1
 #define NONE    0
 
-extern void log_level(char *l);
+extern void log_level(const char *l);
 extern int is_logging(int l);
 extern void log_message(int l, const char *format, ...);
 

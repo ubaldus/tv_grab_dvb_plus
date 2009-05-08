@@ -26,7 +26,7 @@ static const char *log_label(int l) {
     }
 }
 
-void log_level(char *l) {
+void log_level(const char *l) {
     if (!strcasecmp(l, "INFO")) {
         level = INFO;
     } else if (!strcasecmp(l, "TRACE")) {
