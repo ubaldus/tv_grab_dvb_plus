@@ -956,6 +956,7 @@ void cTaskLoadepg::CreateXmlChannels()
 	    if (channelid != NULL) {
 		printf("<channel id=\"%s\">\n", channelid);
 		printf("\t<display-name>%s</display-name>\n", ServiceName);
+		//printf("\t<!-- type 0x%x, flags 0x%x -->\n",C->ChannelType,C->Flags);
 		printf("</channel>\n");
 	    }
 	    if (ServiceName) {
@@ -1497,10 +1498,10 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data, int Leng
 			    //full decoding from firmware left for ref
 			    //
 			    unsigned short Sid = (Data[p3] << 8) | Data[p3 + 1];
-			    //unsigned char unk1 = Data[p3 + 2];
+			    unsigned char ChannelType = Data[p3 + 2];
 			    unsigned short ChannelId = (Data[p3 + 3] << 8) | Data[p3 + 4];
 			    unsigned short SkyNumber = (Data[p3 + 5] << 8) | Data[p3 + 6];
-			    //unsigned short Flags = (Data[p3 + 7] << 8) | Data[p3 + 8];
+			    unsigned short Flags = (Data[p3 + 7] << 8) | Data[p3 + 8];
 			    //unsigned short unkval = Flags >> 4;
 			    //int unkflag1 = (Flags & 8) >> 3;
 			    //int unkflag2 = (Flags & 4) >> 2;
@@ -1524,6 +1525,8 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data, int Leng
 					C->Tid = Tid;
 					C->Sid = Sid;
 					C->SkyNumber = SkyNumber;
+					C->ChannelType = ChannelType;
+					C->Flags = Flags;
 					C->pData = 0;
 					C->lenData = 0;
 					C->IsFound = false;

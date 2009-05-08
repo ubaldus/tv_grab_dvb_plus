@@ -118,6 +118,8 @@ public:
   unsigned short int Tid;
   unsigned short int Sid;
   unsigned short int SkyNumber;
+  unsigned char ChannelType;
+  unsigned short Flags;
   char * name;
   char * shortname;
   char * providername;
