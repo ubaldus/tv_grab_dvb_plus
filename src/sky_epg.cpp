@@ -1150,6 +1150,7 @@ void cTaskLoadepg::ReadBuffer(int FilterId, int Fd)
 		break;
 	    case ETIMEDOUT:
 		log_message(ERROR, "read filter timedout for pid=0x%04x tid=0x%02x", Filters[FilterId].Pid, Filters[FilterId].Tid);
+		Filters[FilterId].Step = 2;
 		break;
 	    default:
 		log_message(ERROR, "failed to read filter for pid=0x%04x tid=0x%02x errno=%d", Filters[FilterId].Pid, Filters[FilterId].Tid, errno);
