@@ -310,11 +310,11 @@ void set_start_and_end_times(void)
         end_of_period = start_of_period + (DAYS_PER_YEAR * SECONDS_PER_DAY);	// should be long enough!
     }
     strftime(date_buffer, sizeof(date_buffer), "\"%Y%m%d%H%M%S %z\"", localtime(&midnight_today));
-    log_message(INFO, " midnight today=%s", date_buffer);
+    log_message(DEBUG, " midnight today=%s", date_buffer);
     strftime(date_buffer, sizeof(date_buffer), "\"%Y%m%d%H%M%S %z\"", localtime(&start_of_period));
-    log_message(INFO, "start of period=%s", date_buffer);
+    log_message(DEBUG, "start of period=%s", date_buffer);
     strftime(date_buffer, sizeof(date_buffer), "\"%Y%m%d%H%M%S %z\"", localtime(&end_of_period));
-    log_message(INFO, "  end of period=%s", date_buffer);
+    log_message(DEBUG, "  end of period=%s", date_buffer);
 }
 
 /* 

@@ -138,35 +138,30 @@ static int qsortChannels(const void *A, const void *B)
 {
     sChannel *ChannelA = (sChannel *) A;
     sChannel *ChannelB = (sChannel *) B;
+
     if (ChannelA->ChannelId > ChannelB->ChannelId) {
 	return 1;
     }
     if (ChannelA->ChannelId < ChannelB->ChannelId) {
 	return -1;
     }
-    if (ChannelA->ChannelId == ChannelB->ChannelId) {
-	if (ChannelA->Nid > ChannelB->Nid) {
-	    return 1;
-	}
-	if (ChannelA->Nid < ChannelB->Nid) {
-	    return -1;
-	}
-	if (ChannelA->Nid == ChannelB->Nid) {
-	    if (ChannelA->Tid > ChannelB->Tid) {
-		return 1;
-	    }
-	    if (ChannelA->Tid < ChannelB->Tid) {
-		return -1;
-	    }
-	    if (ChannelA->Tid == ChannelB->Tid) {
-		if (ChannelA->Sid > ChannelB->Sid) {
-		    return 1;
-		}
-		if (ChannelA->Sid < ChannelB->Sid) {
-		    return -1;
-		}
-	    }
-	}
+    if (ChannelA->Nid > ChannelB->Nid) {
+        return 1;
+    }
+    if (ChannelA->Nid < ChannelB->Nid) {
+        return -1;
+    }
+    if (ChannelA->Tid > ChannelB->Tid) {
+        return 1;
+    }
+    if (ChannelA->Tid < ChannelB->Tid) {
+        return -1;
+    }
+    if (ChannelA->Sid > ChannelB->Sid) {
+        return 1;
+    }
+    if (ChannelA->Sid < ChannelB->Sid) {
+        return -1;
     }
     return 0;
 }
@@ -175,40 +170,36 @@ static int qsortChannelsBySkyNumber(const void *A, const void *B)
 {
     sChannel *ChannelA = (sChannel *) A;
     sChannel *ChannelB = (sChannel *) B;
-    if (ChannelA->SkyNumber > ChannelB->SkyNumber)
+
+    if (ChannelA->SkyNumber > ChannelB->SkyNumber) {
 	return 1;
-    if (ChannelA->SkyNumber < ChannelB->SkyNumber)
+    }
+    if (ChannelA->SkyNumber < ChannelB->SkyNumber) {
 	return -1;
-    // must be == so no test needed
+    }
     if (ChannelA->ChannelId > ChannelB->ChannelId) {
 	return 1;
     }
     if (ChannelA->ChannelId < ChannelB->ChannelId) {
 	return -1;
     }
-    if (ChannelA->ChannelId == ChannelB->ChannelId) {
-	if (ChannelA->Nid > ChannelB->Nid) {
-	    return 1;
-	}
-	if (ChannelA->Nid < ChannelB->Nid) {
-	    return -1;
-	}
-	if (ChannelA->Nid == ChannelB->Nid) {
-	    if (ChannelA->Tid > ChannelB->Tid) {
-		return 1;
-	    }
-	    if (ChannelA->Tid < ChannelB->Tid) {
-		return -1;
-	    }
-	    if (ChannelA->Tid == ChannelB->Tid) {
-		if (ChannelA->Sid > ChannelB->Sid) {
-		    return 1;
-		}
-		if (ChannelA->Sid < ChannelB->Sid) {
-		    return -1;
-		}
-	    }
-	}
+    if (ChannelA->Nid > ChannelB->Nid) {
+        return 1;
+    }
+    if (ChannelA->Nid < ChannelB->Nid) {
+        return -1;
+    }
+    if (ChannelA->Tid > ChannelB->Tid) {
+        return 1;
+    }
+    if (ChannelA->Tid < ChannelB->Tid) {
+        return -1;
+    }
+    if (ChannelA->Sid > ChannelB->Sid) {
+        return 1;
+    }
+    if (ChannelA->Sid < ChannelB->Sid) {
+        return -1;
     }
     return 0;
 }
@@ -217,43 +208,25 @@ static int qsortChannelsByChID(const void *A, const void *B)
 {
     sChannel *ChannelA = (sChannel *) A;
     sChannel *ChannelB = (sChannel *) B;
+
     if (ChannelA->Nid > ChannelB->Nid) {
-	return 1;
+        return 1;
     }
     if (ChannelA->Nid < ChannelB->Nid) {
-	return -1;
+        return -1;
     }
-    if (ChannelA->Nid == ChannelB->Nid) {
-	if (ChannelA->Tid > ChannelB->Tid) {
-	    return 1;
-	}
-	if (ChannelA->Tid < ChannelB->Tid) {
-	    return -1;
-	}
-	if (ChannelA->Tid == ChannelB->Tid) {
-	    if (ChannelA->Sid > ChannelB->Sid) {
-		return 1;
-	    }
-	    if (ChannelA->Sid < ChannelB->Sid) {
-		return -1;
-	    }
-	    if (ChannelA->Sid == ChannelB->Sid) {
-		if (ChannelA->ChannelId > ChannelB->ChannelId) {
-		    return 1;
-		}
-		if (ChannelA->ChannelId < ChannelB->ChannelId) {
-		    return -1;
-		}
-	    }
-	}
+    if (ChannelA->Tid > ChannelB->Tid) {
+        return 1;
     }
-    return 0;
-}
-
-static int bsearchChannelByChannelId(const void *A, const void *B)
-{
-    sChannel *ChannelA = (sChannel *) A;
-    sChannel *ChannelB = (sChannel *) B;
+    if (ChannelA->Tid < ChannelB->Tid) {
+        return -1;
+    }
+    if (ChannelA->Sid > ChannelB->Sid) {
+        return 1;
+    }
+    if (ChannelA->Sid < ChannelB->Sid) {
+        return -1;
+    }
     if (ChannelA->ChannelId > ChannelB->ChannelId) {
 	return 1;
     }
@@ -263,68 +236,83 @@ static int bsearchChannelByChannelId(const void *A, const void *B)
     return 0;
 }
 
-static int bsearchChannelByChID(const void *A, const void *B)
+/*
+ * search by ChannelId
+ */
+static int bsearchChannelByChannelId(const void *A, const void *B)
 {
     sChannel *ChannelA = (sChannel *) A;
     sChannel *ChannelB = (sChannel *) B;
-    if (ChannelA->Nid > ChannelB->Nid) {
+
+    if (ChannelA->ChannelId > ChannelB->ChannelId) {
 	return 1;
     }
-    if (ChannelA->Nid < ChannelB->Nid) {
+    if (ChannelA->ChannelId < ChannelB->ChannelId) {
 	return -1;
-    }
-    if (ChannelA->Nid == ChannelB->Nid) {
-	if (ChannelA->Tid > ChannelB->Tid) {
-	    return 1;
-	}
-	if (ChannelA->Tid < ChannelB->Tid) {
-	    return -1;
-	}
-	if (ChannelA->Tid == ChannelB->Tid) {
-	    if (ChannelA->Sid > ChannelB->Sid) {
-		return 1;
-	    }
-	    if (ChannelA->Sid < ChannelB->Sid) {
-		return -1;
-	    }
-	    if (ChannelA->Sid == ChannelB->Sid) {
-		if (ChannelA->ChannelId > ChannelB->ChannelId) {
-		    return 1;
-		}
-		if (ChannelA->ChannelId < ChannelB->ChannelId) {
-		    return -1;
-		}
-	    }
-	}
     }
     return 0;
 }
 
-static int bsearchChannelBySid(const void *A, const void *B)
+/*
+ * search by Nid, Tid, Sid, ChannelId
+ */
+static int bsearchChannelByChID(const void *A, const void *B)
 {
     sChannel *ChannelA = (sChannel *) A;
     sChannel *ChannelB = (sChannel *) B;
+
     if (ChannelA->Nid > ChannelB->Nid) {
 	return 1;
     }
     if (ChannelA->Nid < ChannelB->Nid) {
 	return -1;
     }
-    if (ChannelA->Nid == ChannelB->Nid) {
-	if (ChannelA->Tid > ChannelB->Tid) {
-	    return 1;
-	}
-	if (ChannelA->Tid < ChannelB->Tid) {
-	    return -1;
-	}
-	if (ChannelA->Tid == ChannelB->Tid) {
-	    if (ChannelA->Sid > ChannelB->Sid) {
-		return 1;
-	    }
-	    if (ChannelA->Sid < ChannelB->Sid) {
-		return -1;
-	    }
-	}
+    if (ChannelA->Tid > ChannelB->Tid) {
+        return 1;
+    }
+    if (ChannelA->Tid < ChannelB->Tid) {
+        return -1;
+    }
+    if (ChannelA->Sid > ChannelB->Sid) {
+        return 1;
+    }
+    if (ChannelA->Sid < ChannelB->Sid) {
+        return -1;
+    }
+    if (ChannelA->ChannelId > ChannelB->ChannelId) {
+        return 1;
+    }
+    if (ChannelA->ChannelId < ChannelB->ChannelId) {
+        return -1;
+    }
+    return 0;
+}
+
+/*
+ * search by Nid, Tid, Sid
+ */
+static int bsearchChannelBySid(const void *A, const void *B)
+{
+    sChannel *ChannelA = (sChannel *) A;
+    sChannel *ChannelB = (sChannel *) B;
+
+    if (ChannelA->Nid > ChannelB->Nid) {
+	return 1;
+    }
+    if (ChannelA->Nid < ChannelB->Nid) {
+	return -1;
+    }
+    if (ChannelA->Tid > ChannelB->Tid) {
+        return 1;
+    }
+    if (ChannelA->Tid < ChannelB->Tid) {
+        return -1;
+    }
+    if (ChannelA->Sid > ChannelB->Sid) {
+        return 1;
+    }
+    if (ChannelA->Sid < ChannelB->Sid) {
+        return -1;
     }
     return 0;
 }
@@ -333,19 +321,18 @@ static int qsortTitles(const void *A, const void *B)
 {
     sTitle *TitleA = (sTitle *) A;
     sTitle *TitleB = (sTitle *) B;
+
     if (TitleA->ChannelId > TitleB->ChannelId) {
 	return 1;
     }
     if (TitleA->ChannelId < TitleB->ChannelId) {
 	return -1;
     }
-    if (TitleA->ChannelId == TitleB->ChannelId) {
-	if (TitleA->StartTime > TitleB->StartTime) {
-	    return 1;
-	}
-	if (TitleA->StartTime < TitleB->StartTime) {
-	    return -1;
-	}
+    if (TitleA->StartTime > TitleB->StartTime) {
+        return 1;
+    }
+    if (TitleA->StartTime < TitleB->StartTime) {
+        return -1;
     }
     return 0;
 }
@@ -354,27 +341,24 @@ static int qsortSummaries(const void *A, const void *B)
 {
     sSummary *SummarieA = (sSummary *) A;
     sSummary *SummarieB = (sSummary *) B;
+
     if (SummarieA->ChannelId > SummarieB->ChannelId) {
 	return 1;
     }
     if (SummarieA->ChannelId < SummarieB->ChannelId) {
 	return -1;
     }
-    if (SummarieA->ChannelId == SummarieB->ChannelId) {
-	if (SummarieA->MjdTime > SummarieB->MjdTime) {
-	    return 1;
-	}
-	if (SummarieA->MjdTime < SummarieB->MjdTime) {
-	    return -1;
-	}
-	if (SummarieA->MjdTime == SummarieB->MjdTime) {
-	    if (SummarieA->EventId > SummarieB->EventId) {
-		return 1;
-	    }
-	    if (SummarieA->EventId < SummarieB->EventId) {
-		return -1;
-	    }
-	}
+    if (SummarieA->MjdTime > SummarieB->MjdTime) {
+        return 1;
+    }
+    if (SummarieA->MjdTime < SummarieB->MjdTime) {
+        return -1;
+    }
+    if (SummarieA->EventId > SummarieB->EventId) {
+        return 1;
+    }
+    if (SummarieA->EventId < SummarieB->EventId) {
+        return -1;
     }
     return 0;
 }
@@ -383,27 +367,24 @@ static int bsearchSummarie(const void *A, const void *B)
 {
     sSummary *SummarieA = (sSummary *) A;
     sSummary *SummarieB = (sSummary *) B;
+
     if (SummarieA->ChannelId > SummarieB->ChannelId) {
 	return 1;
     }
     if (SummarieA->ChannelId < SummarieB->ChannelId) {
 	return -1;
     }
-    if (SummarieA->ChannelId == SummarieB->ChannelId) {
-	if (SummarieA->MjdTime > SummarieB->MjdTime) {
-	    return 1;
-	}
-	if (SummarieA->MjdTime < SummarieB->MjdTime) {
-	    return -1;
-	}
-	if (SummarieA->MjdTime == SummarieB->MjdTime) {
-	    if (SummarieA->EventId > SummarieB->EventId) {
-		return 1;
-	    }
-	    if (SummarieA->EventId < SummarieB->EventId) {
-		return -1;
-	    }
-	}
+    if (SummarieA->MjdTime > SummarieB->MjdTime) {
+        return 1;
+    }
+    if (SummarieA->MjdTime < SummarieB->MjdTime) {
+        return -1;
+    }
+    if (SummarieA->EventId > SummarieB->EventId) {
+        return 1;
+    }
+    if (SummarieA->EventId < SummarieB->EventId) {
+        return -1;
     }
     return 0;
 }
@@ -1539,8 +1520,16 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data, int Leng
 					    return;
 					}
 					qsort(lChannels, nChannels, sizeof(sChannel), &qsortChannelsByChID);
+				    } else {
+					if ((ChannelId != C->ChannelId) || (Nid != C->Nid) || ( Tid != C->Tid) || (Sid != C->Sid) || (SkyNumber != C->SkyNumber)) {
+                                            log_message(DEBUG, "channel found ChannelId=%d(%d) Nid=%d(%d) Tid=%d(%d) Sid=%5d(%5d) SkyNumber=%5d(%5d) Flags=%5d(%5d)", ChannelId, C->ChannelId, Nid, C->Nid, Tid, C->Tid, Sid, C->Sid, SkyNumber, C->SkyNumber, Flags, C->Flags);
+					}
 				    }
+				} else {
+                                    log_message(DEBUG, "invalid channelId ChannelId=%d Nid=%d Tid=%d Sid=%d SkyNumber=%d", ChannelId, Nid, Tid, Sid, SkyNumber);
 				}
+			    } else {
+                                log_message(DEBUG, "invalid SkyNumber ChannelId=%d Nid=%d Tid=%d Sid=%d SkyNumber=%d", ChannelId, Nid, Tid, Sid, SkyNumber);
 			    }
 			    //}
 			    p3 += 9;
