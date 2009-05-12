@@ -876,7 +876,8 @@ void cTaskLoadepg::LoadFromSatellite(void)
 	    AddFilter(0x45, 0xa8, 0xfc);
 	    AddFilter(0x46, 0xa8, 0xfc);
 	    AddFilter(0x47, 0xa8, 0xfc);
-	    PollingFilters(10500);	// needs to be this due to TOT and TDT 10sec repeat
+	    //PollingFilters(10500);	// needs to be this due to TOT and TDT 10sec repeat
+	    PollingFilters(60000);	// needs to be this due to TOT and TDT 10sec repeat
 	    break;
 	case DATA_FORMAT_MHW_1:
 	    AddFilter(0xd2, 0x90);
@@ -901,10 +902,10 @@ void cTaskLoadepg::LoadFromSatellite(void)
 }
 // }}}
 
-const char *get_channelident(sChannel * C)
+const char *get_channelident(sChannel * C, char *message)
 {
     if (C == NULL) {
-       log_message(WARNING, "C is NULL in get_channelident()");
+       log_message(WARNING, "C is NULL in get_channelident() %s", message);
        return NULL;
     }
     return skyxmltvid(C->SkyNumber, C->Sid, C->shortname, C->providername);
@@ -933,11 +934,10 @@ void cTaskLoadepg::CreateXmlChannels()
 	    } else {
 		continue;
 	    }
-	    channelid = get_channelident(C);
+	    channelid = get_channelident(C, "in CreateXmlChannels");
 	    if (channelid != NULL) {
-		printf("<channel id=\"%s\">\n", channelid);
-		printf("\t<display-name>%s</display-name>\n", ServiceName);
-		//printf("\t<!-- type 0x%x, flags 0x%x -->\n",C->ChannelType,C->Flags);
+		printf("<channel id=\"%s\" type=\"0x%x\" flags=\"0x%x\" bouquet=\"%d\" region=\"%d\">", channelid, C->ChannelType, C->Flags, C->BouquetID, C->RegionID);
+		printf("<display-name>%s</display-name>", ServiceName);
 		printf("</channel>\n");
 	    }
 	    if (ServiceName) {
@@ -1075,6 +1075,7 @@ void cTaskLoadepg::PollingFilters(int Timeout)
 
 		// exit from polling
 		if (!IsRunning) {
+		    log_message(DEBUG, "leaving polling loop");
 		    break;
 		}
 		// running poll filters
@@ -1431,6 +1432,8 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data, int Leng
 {
     unsigned char SectionNumber = Data[6];
     unsigned char LastSectionNumber = Data[7];
+    unsigned short int BouquetID;
+    unsigned short int RegionID;
 
     if (SectionNumber == 0x00 && nBouquets == 0) {
 	return;
@@ -1438,11 +1441,11 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data, int Leng
     // Table BAT
     if (Data[0] == 0x4a) {
 	if (EndBAT) {
-	    Filters[FilterId].Step = 2;
+            Filters[FilterId].Step = 2;
 	    log_message(TRACE, "endbat");
 	    return;
 	}
-	unsigned short int BouquetId = (Data[3] << 8) | Data[4];
+	BouquetID = (Data[3] << 8) | Data[4];
 	int BouquetDescriptorsLength = ((Data[8] & 0x0f) << 8) | Data[9];
 	int TransportStreamLoopLength = ((Data[BouquetDescriptorsLength + 10] & 0x0f) << 8) | Data[BouquetDescriptorsLength + 11];
 	int p1 = (BouquetDescriptorsLength + 12);
@@ -1469,6 +1472,7 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data, int Leng
 		    case 0xb1:
 			p3 += 2;
 			DescriptorLength -= 2;
+			RegionID = Data[p2 + 3];
 			while (DescriptorLength > 0) {
 			    // 0x01 = Video Channel
 			    // 0x02 = Audio Channel
@@ -1491,7 +1495,7 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data, int Leng
 			    /*
 			     * 
 			     */
-			    if (SkyNumber > 100 && SkyNumber < 1000) {
+			    if (1/*SkyNumber > 100 && SkyNumber < 1000*/) {
 				if (ChannelId > 0) {
 				    sChannel Key, *C;
 				    Key.ChannelId = ChannelId;
@@ -1506,6 +1510,8 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data, int Leng
 					C->Tid = Tid;
 					C->Sid = Sid;
 					C->SkyNumber = SkyNumber;
+					C->BouquetID = BouquetID;
+					C->RegionID = RegionID;
 					C->ChannelType = ChannelType;
 					C->Flags = Flags;
 					C->pData = 0;
@@ -1522,7 +1528,7 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data, int Leng
 					qsort(lChannels, nChannels, sizeof(sChannel), &qsortChannelsByChID);
 				    } else {
 					if ((ChannelId != C->ChannelId) || (Nid != C->Nid) || ( Tid != C->Tid) || (Sid != C->Sid) || (SkyNumber != C->SkyNumber)) {
-                                            log_message(DEBUG, "channel found ChannelId=%d(%d) Nid=%d(%d) Tid=%d(%d) Sid=%5d(%5d) SkyNumber=%5d(%5d) Flags=%5d(%5d)", ChannelId, C->ChannelId, Nid, C->Nid, Tid, C->Tid, Sid, C->Sid, SkyNumber, C->SkyNumber, Flags, C->Flags);
+                                            log_message(DEBUG, "channel found ChannelId=%d(%d) Nid=%d(%d) Tid=%d(%d) Sid=%5d(%5d) SkyNumber=%5d(%5d) Flags=%04x(%04x)", ChannelId, C->ChannelId, Nid, C->Nid, Tid, C->Tid, Sid, C->Sid, SkyNumber, C->SkyNumber, Flags, C->Flags);
 					}
 				    }
 				} else {
@@ -1545,12 +1551,12 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data, int Leng
 	sBouquet *B;
 	for (int i = 0; i < nBouquets; i++) {
 	    B = (lBouquets + i);
-	    if (B->BouquetId == BouquetId) {
+	    if (B->BouquetId == BouquetID) {
 		goto CheckBouquetSections;
 	    }
 	}
 	B = (lBouquets + nBouquets);
-	B->BouquetId = BouquetId;
+	B->BouquetId = BouquetID;
 	for (int i = 0; i <= LastSectionNumber; i++) {
 	    B->SectionNumber[i] = -1;
 	}
@@ -2242,7 +2248,8 @@ void cTaskLoadepg::CreateEpgXml(void)
 
 			    sTitle *T = (lTitles + i);
 
-			    KeyC.ChannelId = T->ChannelId;
+			    ChannelId = T->ChannelId;
+			    KeyC.ChannelId = ChannelId;
 			    C = (sChannel *) bsearch(&KeyC, lChannels, nChannels, sizeof(sChannel), &bsearchChannelByChannelId);
 			    if (C) {
 				C->IsEpg = true;
@@ -2257,7 +2264,7 @@ void cTaskLoadepg::CreateEpgXml(void)
 			     * the end time of a programme is not taken into consideration
 			     */
 			    if ((StartTime >= start_of_period) && (StartTime < end_of_period)) {
-				    channelIdent = get_channelident(C);
+				    channelIdent = get_channelident(C, "in createEpgXml");
                                     if (channelIdent != NULL) {
 				        printf("<programme channel=\"%s\" ", channelIdent);
 				        strftime(date_strbuf, sizeof(date_strbuf), "start=\"%Y%m%d%H%M%S %z\"", localtime(&StartTime));
@@ -2277,7 +2284,7 @@ void cTaskLoadepg::CreateEpgXml(void)
 						    "en", xmlify((const char *) DecodeText));
 				        }
 				        sSummary KeyS, *S;
-				        KeyS.ChannelId = T->ChannelId;
+				        KeyS.ChannelId = ChannelId;
 				        KeyS.MjdTime = T->MjdTime;
 				        KeyS.EventId = T->EventId;
 				        S = (sSummary *) bsearch(&KeyS, lSummaries, nSummaries, sizeof(sSummary), &bsearchSummarie);
@@ -2306,6 +2313,8 @@ void cTaskLoadepg::CreateEpgXml(void)
 				        }
 				        printf("\t<!-- category>%02x</category -->\n",T->ThemeId);
 				        printf("</programme>\n");
+				    } else {
+				        log_message(DEBUG, "C is null channelId=%d", ChannelId);
 				    }
 			    }
 			    i++;
@@ -2405,5 +2414,3 @@ void EPGGrabber::Grab()
 }
 
 // }}}
-
-// vim: foldmethod=marker ts=8 sw=4

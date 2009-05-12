@@ -118,6 +118,8 @@ public:
   unsigned short int Tid;
   unsigned short int Sid;
   unsigned short int SkyNumber;
+  unsigned short int BouquetID;
+  unsigned short int RegionID;
   unsigned char ChannelType;
   unsigned short Flags;
   char * name;
