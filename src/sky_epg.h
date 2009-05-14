@@ -73,6 +73,8 @@
 #define TIMEOUT_FILTER 5000 // ms
 #define TIMEOUT_ROTOR 30 // seconds
 
+#define MAX_SKY 10 // number of unique sky channel numbers for a particular SID
+
 struct sNode
 {
   char *Value;
@@ -117,18 +119,28 @@ public:
   unsigned short int Nid;
   unsigned short int Tid;
   unsigned short int Sid;
+  unsigned short int SkyCount;
   unsigned short int SkyNumber;
+  unsigned short int SkyNumber1;
+  unsigned short int SkyNumber2;
   unsigned short int BouquetID;
+  unsigned short int BouquetID1;
+  unsigned short int BouquetID2;
   unsigned short int RegionID;
+  unsigned short int RegionID1;
+  unsigned short int RegionID2;
   unsigned char ChannelType;
+  unsigned char ChannelType1;
+  unsigned char ChannelType2;
   unsigned short Flags;
+  unsigned short Flags1;
+  unsigned short Flags2;
   char * name;
   char * shortname;
   char * providername;
   unsigned int pData;
   unsigned int lenData;
   bool IsFound;
-  bool IsEpg;
   bool IsNameUpdated;
 
   sChannel() {

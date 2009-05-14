@@ -902,13 +902,19 @@ void cTaskLoadepg::LoadFromSatellite(void)
 }
 // }}}
 
-const char *get_channelident(sChannel * C, char *message)
+const char *get_channelident(sChannel * C)
 {
+    char *providername;
+
     if (C == NULL) {
-       log_message(WARNING, "C is NULL in get_channelident() %s", message);
-       return NULL;
+        return NULL;
+    } else {
+        providername = C->providername;
+	if (providername == NULL) {
+	    providername = "SKY";
+	}
+        return skyxmltvid(C->SkyNumber, C->Sid, C->shortname, providername);
     }
-    return skyxmltvid(C->SkyNumber, C->Sid, C->shortname, C->providername);
 }
 
 // cTaskLoadepg::CreateXmlChannels {{{
@@ -921,29 +927,35 @@ void cTaskLoadepg::CreateXmlChannels()
     for (int i = 0; i < nChannels; i++) {
 	sChannel *C = (lChannels + i);
 	if (C->Nid > 0 && C->Tid > 0 && C->Sid > 0) {
-	    if (C->providername == NULL)
-		continue;
-	    if (strcmp(C->providername, "(null)") == 0)
-		continue;
-	    if (!C->IsEpg)
-		continue;
-	    if (!C->IsFound)
-		continue;
+	    if (C->providername == NULL) {
+		log_message(DEBUG, "CreateXmlChannels: providername is NULL Sid=%d", C->Sid);
+		//continue;
+            }
+	    //if (strcmp(C->providername, "(null)") == 0) {
+		//log_message(DEBUG, "CreateXmlChannels: providername is (null) Sid=%d", C->Sid);
+		//continue;
+            //}
+	    if (!C->IsFound) {
+		log_message(DEBUG, "CreateXmlChannels: !IsFound Sid=%d", C->Sid);
+		//continue;
+            }
 	    if (C->name) {
 		asprintf(&ServiceName, "%s", C->name);
 	    } else {
-		continue;
+		log_message(DEBUG, "CreateXmlChannels: name is NULL Sid=%d", C->Sid);
+                asprintf(&ServiceName, "[%d.%d.%s]", C->SkyNumber, C->Sid, C->providername);
+		//continue;
 	    }
-	    channelid = get_channelident(C, "in CreateXmlChannels");
-	    if (channelid != NULL) {
+	    channelid = get_channelident(C);
+	    if (channelid == NULL) {
+                log_message(WARNING, "CreateXmlChannels: channel not found Sid=%d", C->Sid);
+	    } else {
 		printf("<channel id=\"%s\" type=\"0x%x\" flags=\"0x%x\" bouquet=\"%d\" region=\"%d\">", channelid, C->ChannelType, C->Flags, C->BouquetID, C->RegionID);
 		printf("<display-name>%s</display-name>", ServiceName);
 		printf("</channel>\n");
-	    }
-	    if (ServiceName) {
-		free(ServiceName);
-		ServiceName = NULL;
-	    }
+            }
+            free(ServiceName);
+            ServiceName = NULL;
 	}
     }
 }
@@ -1377,7 +1389,11 @@ void cTaskLoadepg::SupplementChannelsSKYBOX(int FilterId, unsigned char *Data, i
 					if (C->name == NULL) {
 					    asprintf(&C->name, "%s", pn);
 					    asprintf(&C->providername, "%s", provname);
+					} else {
+					    log_message(DEBUG, "C->name != NULL Sid=%d providername=\"%s\"", Key.Sid, provname);
 					}
+				    } else {
+					log_message(DEBUG, "C is NULL Sid=%d providername=\"%s\"", Key.Sid, provname);
 				    }
 				}
 				break;
@@ -1517,7 +1533,6 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data, int Leng
 					C->pData = 0;
 					C->lenData = 0;
 					C->IsFound = false;
-					C->IsEpg = false;
 					nChannels++;
 					incr_stat("channels.count");
 					if (nChannels >= MAX_CHANNELS) {
@@ -1610,7 +1625,7 @@ loop1:;
       T->EventId = (Data[p] << 8) | Data[p + 1];
       Len1 = ((Data[p + 2] & 0x0f) << 8) | Data[p + 3];
       if (Data[p + 4] != 0xb5) {
-	  log_message(WARNING, "data error signature for title");
+	  log_message(WARNING, "data error signature for title (0x%d)", Data[p + 4]);
 	  goto endloop1;
       }
       if (Len1 > Length) {
@@ -1680,8 +1695,8 @@ loop1:;
       S->EventId = (Data[p] << 8) | Data[p + 1];
       Len1 = ((Data[p + 2] & 0x0f) << 8) | Data[p + 3];
       if (Data[p + 4] != 0xb9) {
-	  log_message(WARNING, "data error signature for summary");
-	  goto endloop1;
+	  log_message(WARNING, "data error signature for summary (0x%x)", Data[p + 4]);
+	  //goto endloop1;
       }
       if (Len1 > Length) {
 	  log_message(WARNING, "data error length for summary");
@@ -1821,7 +1836,6 @@ void cTaskLoadepg::GetChannelsMHW1(int FilterId, unsigned char *Data, int Length
 	    C->pData = pC;
 	    C->lenData = 16;
 	    C->IsFound = false;
-	    C->IsEpg = true;
 	    if ((pC + 18) > MAX_BUFFER_SIZE_CHANNELS) {
 		log_message(ERROR, "buffer overflow, channels size more than %i bytes", MAX_BUFFER_SIZE_CHANNELS);
 		IsError = true;
@@ -2055,7 +2069,6 @@ void cTaskLoadepg::GetChannelsMHW2(int FilterId, unsigned char *Data, int Length
 		    C->pData = pC;
 		    C->lenData = lenName;
 		    C->IsFound = false;
-		    C->IsEpg = true;
 		    pC += (lenName + 1);
 		    Channel++;
 		}
@@ -2252,7 +2265,6 @@ void cTaskLoadepg::CreateEpgXml(void)
 			    KeyC.ChannelId = ChannelId;
 			    C = (sChannel *) bsearch(&KeyC, lChannels, nChannels, sizeof(sChannel), &bsearchChannelByChannelId);
 			    if (C) {
-				C->IsEpg = true;
 				C->IsFound = true;
 			    }
 
@@ -2264,8 +2276,10 @@ void cTaskLoadepg::CreateEpgXml(void)
 			     * the end time of a programme is not taken into consideration
 			     */
 			    if ((StartTime >= start_of_period) && (StartTime < end_of_period)) {
-				    channelIdent = get_channelident(C, "in createEpgXml");
-                                    if (channelIdent != NULL) {
+				    channelIdent = get_channelident(C);
+                                    if (channelIdent == NULL) {
+				        log_message(DEBUG, "CreateEpgXml: C is null ChannelId=%d", ChannelId);
+				    } else {
 				        printf("<programme channel=\"%s\" ", channelIdent);
 				        strftime(date_strbuf, sizeof(date_strbuf), "start=\"%Y%m%d%H%M%S %z\"", localtime(&StartTime));
 				        printf("%s ", date_strbuf);
@@ -2313,8 +2327,6 @@ void cTaskLoadepg::CreateEpgXml(void)
 				        }
 				        printf("\t<!-- category>%02x</category -->\n",T->ThemeId);
 				        printf("</programme>\n");
-				    } else {
-				        log_message(DEBUG, "C is null channelId=%d", ChannelId);
 				    }
 			    }
 			    i++;
