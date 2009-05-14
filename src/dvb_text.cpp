@@ -52,7 +52,7 @@ static int encoding_freesat(char *t, const char **s, const char *d) {
 	return 0;
 }
 static int encoding_variable(char *t, const char **s, const char *d) {
-	int i = ((unsigned char)*s[1] << 8) +  (unsigned char)*s[2];
+	int i = ((unsigned char) *s[1] << 8) + (unsigned char) *s[2];
 	snprintf(t, 16, d, i);
 	*s += 3;
 	return 0;
@@ -83,7 +83,7 @@ static const struct encoding {
 	/*[0x0F] =*/ {encoding_reserved, NULL},
 	/*[0x10] =*/ {encoding_variable, "ISO-8859-%d"},
 	/*[0x11] =*/ {encoding_fixed, "ISO-10646/UCS2"}, // FIXME: UCS-2 LE/BE ???
-	/*[0x12] =*/ {encoding_fixed, "KSC_5601"}, // TODO needs newer iconv
+	/*[0x12] =*/ {encoding_fixed, "KSC_5601"},       // TODO needs newer iconv
 	/*[0x13] =*/ {encoding_fixed, "GB_2312-80"},
 	/*[0x14] =*/ {encoding_fixed, "BIG5"},
 	/*[0x15] =*/ {encoding_fixed, "ISO-10646/UTF8"},
@@ -113,7 +113,7 @@ const char *convert_text(const char *s) {
 	size_t ret;
 	char c;
 
-	int i = (int)(unsigned char)s[0];
+	int i = (int) (unsigned char) s[0];
 	if (i < 0x1F) {
 		if (encoding[i].handler(cs_new, &s, encoding[i].data))
 			return "";
@@ -122,7 +122,7 @@ const char *convert_text(const char *s) {
 			return "";
 	}
 	if (i == 0x1F) {
-		s = (char *)freesat_huffman_to_string((unsigned char *)s, strlen(s));
+		s = (char *) freesat_huffman_to_string((unsigned char *) s, strlen(s));
 	}
 	if (strncmp(cs_old, cs_new, 16)) {
 		if (cd) {
@@ -130,16 +130,16 @@ const char *convert_text(const char *s) {
 			cd = NULL;
 		} // if
 		cd = iconv_open("UTF-8", cs_new);
-		if (cd == (iconv_t)-1) {
+		if (cd == (iconv_t) - 1) {
 			log_message(ERROR, "iconv_open() failed: %s", strerror(errno));
 			exit(1);
 		} // if
 		strncpy(cs_old, cs_new, 16);
 	} // if
 
-	char *inbuf = (char *)s;
+	char *inbuf = (char *) s;
 	size_t inbytesleft = strlen(s);
-	char *outbuf = (char *)buf;
+	char *outbuf = (char *) buf;
 	size_t outbytesleft = sizeof(buf);
 	ret = iconv(cd, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
 	// FIXME: handle errors
@@ -150,62 +150,62 @@ const char *convert_text(const char *s) {
 	// simply scan for '&<> and don't have to parse UTF-8 sequences.
 
 	char *b = buf, *r = result;
-	for ( ; b < outbuf; b++)
-		switch ((unsigned char)*b) {
-			case '"':
-				*r++ = '&';
-				*r++ = 'q';
-				*r++ = 'u';
-				*r++ = 'o';
-				*r++ = 't';
-				*r++ = ';';
-				break;
-			case '&':
-				*r++ = '&';
-				*r++ = 'a';
-				*r++ = 'm';
-				*r++ = 'p';
-				*r++ = ';';
-				break;
-			case '<':
-				*r++ = '&';
-				*r++ = 'l';
-				*r++ = 't';
-				*r++ = ';';
-				break;
-			case '>':
-				*r++ = '&';
-				*r++ = 'g';
-				*r++ = 't';
-				*r++ = ';';
-				break;
+	for (; b < outbuf; b++)
+		switch ((unsigned char) *b) {
+		case '"':
+			*r++ = '&';
+			*r++ = 'q';
+			*r++ = 'u';
+			*r++ = 'o';
+			*r++ = 't';
+			*r++ = ';';
+			break;
+		case '&':
+			*r++ = '&';
+			*r++ = 'a';
+			*r++ = 'm';
+			*r++ = 'p';
+			*r++ = ';';
+			break;
+		case '<':
+			*r++ = '&';
+			*r++ = 'l';
+			*r++ = 't';
+			*r++ = ';';
+			break;
+		case '>':
+			*r++ = '&';
+			*r++ = 'g';
+			*r++ = 't';
+			*r++ = ';';
+			break;
 			//case 0x0000 ... 0x0008:
 			//case 0x000B ... 0x001F:
 			//case 0x007F:
-				//log_message(ERROR, "forbidden char: %02x", *b);
-			case 0x0000 ... 0x0008:
-			case 0x0009 ... 0x000A:	// added to aid debugging
-			case 0x000B ... 0x001F:
-			case 0x007F:
-				//log_message(ERROR, "forbidden char: %02x", *b);
-			case 0x0080 ... 0x009F:
-			case 0x00A0 ... 0x00FF:
-				/*
-				 * print these as XML escape sequences so we can see what is going on
-				 * and in particular, what encoding is being used
-				 */
-				*r++ = '&';
-				*r++ = '#';
-				*r++ = 'x';
-				c = (*b >> 4) & 0x0F;
-				*r++ = (char)(c > 9 ? c + 0x37 : c  + 0x30);
-				c = *b & 0x0F;
-				*r++ = (char)(c > 9 ? c + 0x37 : c  + 0x30);
-				*r++ = ';';
-				break;
-			default:
-				*r++ = *b;
-				break;
+			//log_message(ERROR, "forbidden char: %02x", *b);
+		case 0x0000 ... 0x0008:
+		case 0x0009 ... 0x000A: // added to aid debugging
+		case 0x000B ... 0x001F:
+		case 0x007F:
+			//log_message(ERROR, "forbidden char: %02x", *b);
+		case 0x0080 ... 0x009F:
+		case 0x00A0 ... 0x00FF:
+			/*
+			 * print these as XML escape sequences so we can see what is going on
+			 * and in particular, what encoding is being used
+			 */
+			*r++ = '&';
+			*r++ = '#';
+			*r++ = 'x';
+			c = (*b >> 4) & 0x0F;
+			*r++ = (char) (c > 9 ? c + 0x37 : c + 0x30);
+			c = *b & 0x0F;
+			*r++ = (char) (c > 9 ? c + 0x37 : c + 0x30);
+			*r++ = ';';
+			break;
+		default:
+			*r++ = *b;
+			break;
 		}
 
 	*r = '\0';
@@ -222,60 +222,60 @@ const char *convert_text(const char *s) {
 char *xmlify(const char *s) {
 	char c;
 
-	char *outbuf = (char *)(s + strlen(s));
-	char *b = (char *)s, *r = result;
-	for ( ; b < outbuf; b++)
-		switch ((unsigned char)*b) {
-			case '"':
-				*r++ = '&';
-				*r++ = 'q';
-				*r++ = 'u';
-				*r++ = 'o';
-				*r++ = 't';
-				*r++ = ';';
-				break;
-			case '&':
-				*r++ = '&';
-				*r++ = 'a';
-				*r++ = 'm';
-				*r++ = 'p';
-				*r++ = ';';
-				break;
-			case '<':
-				*r++ = '&';
-				*r++ = 'l';
-				*r++ = 't';
-				*r++ = ';';
-				break;
-			case '>':
-				*r++ = '&';
-				*r++ = 'g';
-				*r++ = 't';
-				*r++ = ';';
-				break;
-			case 0x0000 ... 0x0008:
-			case 0x0009 ... 0x000A:	// added to aid debugging
-			case 0x000B ... 0x001F:
-			case 0x007F:
-				//log_message(ERROR, "forbidden char: %02x", *b);
-			case 0x0080 ... 0x009F:
-			case 0x00A0 ... 0x00FF:
-				/*
-				 * print these as XML escape sequences so we can see what is going on
-				 * and in particular, what encoding is being used
-				 */
-				*r++ = '&';
-				*r++ = '#';
-				*r++ = 'x';
-				c = (*b >> 4) & 0x0F;
-				*r++ = (char)(c > 9 ? c + 0x37 : c  + 0x30);
-				c = *b & 0x0F;
-				*r++ = (char)(c > 9 ? c + 0x37 : c  + 0x30);
-				*r++ = ';';
-				break;
-			default:
-				*r++ = *b;
-				break;
+	char *outbuf = (char *) (s + strlen(s));
+	char *b = (char *) s, *r = result;
+	for (; b < outbuf; b++)
+		switch ((unsigned char) *b) {
+		case '"':
+			*r++ = '&';
+			*r++ = 'q';
+			*r++ = 'u';
+			*r++ = 'o';
+			*r++ = 't';
+			*r++ = ';';
+			break;
+		case '&':
+			*r++ = '&';
+			*r++ = 'a';
+			*r++ = 'm';
+			*r++ = 'p';
+			*r++ = ';';
+			break;
+		case '<':
+			*r++ = '&';
+			*r++ = 'l';
+			*r++ = 't';
+			*r++ = ';';
+			break;
+		case '>':
+			*r++ = '&';
+			*r++ = 'g';
+			*r++ = 't';
+			*r++ = ';';
+			break;
+		case 0x0000 ... 0x0008:
+		case 0x0009 ... 0x000A: // added to aid debugging
+		case 0x000B ... 0x001F:
+		case 0x007F:
+			//log_message(ERROR, "forbidden char: %02x", *b);
+		case 0x0080 ... 0x009F:
+		case 0x00A0 ... 0x00FF:
+			/*
+			 * print these as XML escape sequences so we can see what is going on
+			 * and in particular, what encoding is being used
+			 */
+			*r++ = '&';
+			*r++ = '#';
+			*r++ = 'x';
+			c = (*b >> 4) & 0x0F;
+			*r++ = (char) (c > 9 ? c + 0x37 : c + 0x30);
+			c = *b & 0x0F;
+			*r++ = (char) (c > 9 ? c + 0x37 : c + 0x30);
+			*r++ = ';';
+			break;
+		default:
+			*r++ = *b;
+			break;
 		}
 
 	*r = '\0';

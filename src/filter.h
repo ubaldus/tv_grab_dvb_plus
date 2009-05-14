@@ -24,12 +24,13 @@
  */
 
 struct filter_t {
-    unsigned short int pid;
-    unsigned char tid;
-    unsigned char mask;
+	unsigned short int pid;
+	unsigned char tid;
+	unsigned char mask;
 };
 
-extern void add_filter(unsigned short int pid, unsigned char tid, unsigned char mask);
+extern void add_filter(unsigned short int pid, unsigned char tid,
+		unsigned char mask);
 extern int start_filters(int fd);
 
 #endif

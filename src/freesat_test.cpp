@@ -339,19 +339,19 @@ static u_char compressed_data[][332] = {
 };
 
 void freesat_test() {
-    int table;
-    uint size;
-    u_char *src;
-    u_char *dest;
-    int i;
+	int table;
+	uint size;
+	u_char *src;
+	u_char *dest;
+	int i;
 
-    log_message(ERROR, "test the freesat huffman tables");
-    for (i = 0; i < 332; i++) {
-        table = (int)compressed_data[i][0];
-        size = (uint)compressed_data[i][1];
-        src = &compressed_data[i][2];
-        dump_compressed(src, size);
-        dest = freesat_huffman_to_string(src, size);
-        log_message(ERROR, "uncompressed=\"%s\"", dest);
-    }
+	log_message(ERROR, "test the freesat huffman tables");
+	for (i = 0; i < 332; i++) {
+		table = (int) compressed_data[i][0];
+		size = (uint) compressed_data[i][1];
+		src = &compressed_data[i][2];
+		dump_compressed(src, size);
+		dest = freesat_huffman_to_string(src, size);
+		log_message(ERROR, "uncompressed=\"%s\"", dest);
+	}
 }

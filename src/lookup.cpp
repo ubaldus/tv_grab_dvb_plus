@@ -25,7 +25,6 @@
 #include "lookup.h"
 #include "log.h"
 
-
 const char *lookup(const struct int_lookup_table *l, int id) {
 	while ((l->i != -1) && (l->i != id)) {
 		l++;
@@ -66,7 +65,7 @@ int load_lookup(struct str_lookup_table **l, const char *file) {
 		size += strlen(name) + 1;
 		size += strlen(value) + 1;
 	}
-	struct str_lookup_table *p = *l = (struct str_lookup_table *)malloc(size);
+	struct str_lookup_table *p = *l = (struct str_lookup_table *) malloc(size);
 	if (p == NULL) {
 		return -1;
 	}
@@ -78,17 +77,17 @@ int load_lookup(struct str_lookup_table **l, const char *file) {
 	char e[256];
 	while (fscanf(fd, "%255s %255s", d, e) == 2) {
 		if (d[0] != '#') {
-		    strcpy(c, e);
-		    p->desc = c;
-		    c += strlen(e) + 1;
-    
-		    strcpy(c, d);
-		    p->c = c;
-		    c += strlen(d) + 1;
-    
-		    p++;
+			strcpy(c, e);
+			p->desc = c;
+			c += strlen(e) + 1;
+
+			strcpy(c, d);
+			p->c = c;
+			c += strlen(d) + 1;
+
+			p++;
 		} else {
-                    log_message(DEBUG, "comment in chanidents file");
+			log_message(DEBUG, "comment in chanidents file");
 		}
 	}
 	p->c = NULL;

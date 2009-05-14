@@ -48,7 +48,7 @@ struct stats_table *stats_entry(const char *n) {
 	 * add to the start of the list
 	 * it is easier than adding it at the end
 	 */
-	t = (struct stats_table *)malloc(sizeof(struct stats_table));
+	t = (struct stats_table *) malloc(sizeof(struct stats_table));
 	t->name = strdup(n);
 	t->value = 0;
 	t->next = stats;

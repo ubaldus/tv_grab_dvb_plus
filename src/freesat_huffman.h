@@ -28,6 +28,7 @@
 #define ALLOC_INCR 10
 
 void dump_compressed(u_char *src, uint size);
-extern unsigned char *freesat_huffman_to_string(unsigned char *compressed, uint size);
+extern unsigned char *freesat_huffman_to_string(unsigned char *compressed,
+		uint size);
 
 #endif

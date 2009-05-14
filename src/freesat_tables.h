@@ -21,9 +21,9 @@
  */
 
 struct fsattab {
-    unsigned int value;
-    short bits;
-    char next;
+	unsigned int value;
+	short bits;
+	char next;
 };
 
 #define START   '\0'

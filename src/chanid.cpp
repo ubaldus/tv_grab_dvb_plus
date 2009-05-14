@@ -37,12 +37,11 @@ extern bool use_shortxmlids;
 
 struct str_lookup_table *channelid_table;
 
-int load_channel_table(char *chanidfile)
-{
-    if (load_lookup(&channelid_table, chanidfile)) {
-	return FAILURE;
-    }
-    return SUCCESS;
+int load_channel_table(char *chanidfile) {
+	if (load_lookup(&channelid_table, chanidfile)) {
+		return FAILURE;
+	}
+	return SUCCESS;
 }
 
 /*
@@ -50,23 +49,22 @@ int load_channel_table(char *chanidfile)
  * For DVB and Freesat, chanid is the ServiceID
  * If the key is not found then return a manufactured channel id
  */
-const char *dvbxmltvid(int chanid)
-{
-    char *id;
-    const char *c;
+const char *dvbxmltvid(int chanid) {
+	char *id;
+	const char *c;
 
-    if (use_chanidents && channelid_table) {
-	asprintf(&id, "%d", chanid);
-	c = slookup(channelid_table, id);
-	free(id);
-	if (c) {
-	    return c;
-	} else {
-	    return NULL;
+	if (use_chanidents && channelid_table) {
+		asprintf(&id, "%d", chanid);
+		c = slookup(channelid_table, id);
+		free(id);
+		if (c) {
+			return c;
+		} else {
+			return NULL;
+		}
 	}
-    }
-    asprintf(&id, "%d.dvb.guide", chanid);
-    return id;
+	asprintf(&id, "%d.dvb.guide", chanid);
+	return id;
 }
 
 /*
@@ -74,30 +72,37 @@ const char *dvbxmltvid(int chanid)
  * For Sky, the string is "sid,skynumber" which is unique
  * If the key is not found then return a manufactured channel id
  */
-const char *skyxmltvid(int skynumber, int sid, char *shortname, char *providername)
-{
-    char *chanid;
-    char *returnstring;
-    const char *c;
+const char *skyxmltvid(int skynumber, int sid, char *shortname,
+		char *providername) {
+	char *chanid;
+	char *returnstring;
+	const char *c;
 
-    if (shortname != NULL && use_shortxmlids) {
-	asprintf(&returnstring, "%d.%s.%s.dvb.guide", sid, shortname, providername);
-    } else {
-	asprintf(&chanid, "%d.%d", skynumber, sid);
-	if (use_chanidents && channelid_table) {
-	    c = slookup(channelid_table, chanid);
-	    if (c) {
-		log_message(TRACE, "found match (%s) for skynumber=%d sid=%d shortname=\"%s\" providername=\"%s\"", c, skynumber, sid, shortname, providername);
+	if (shortname != NULL && use_shortxmlids) {
+		asprintf(&returnstring, "%d.%s.%s.dvb.guide", sid, shortname,
+				providername);
+	} else {
+		asprintf(&chanid, "%d.%d", skynumber, sid);
+		if (use_chanidents && channelid_table) {
+			c = slookup(channelid_table, chanid);
+			if (c) {
+				log_message(
+						TRACE,
+						"found match (%s) for skynumber=%d sid=%d shortname=\"%s\" providername=\"%s\"",
+						c, skynumber, sid, shortname, providername);
+				free(chanid);
+				return c;
+			} else {
+				log_message(
+						TRACE,
+						"did not find match for skynumber=%d sid=%d shortname=\"%s\" providername=\"%s\"",
+						skynumber, sid, shortname, providername);
+				free(chanid);
+				return NULL;
+			}
+		}
+		asprintf(&returnstring, "%s.%s.dvb.guide", chanid, providername);
 		free(chanid);
-		return c;
-	    } else {
-		log_message(TRACE, "did not find match for skynumber=%d sid=%d shortname=\"%s\" providername=\"%s\"", skynumber, sid, shortname, providername);
-		free(chanid);
-		return NULL;
-	    }
 	}
-	asprintf(&returnstring, "%s.%s.dvb.guide", chanid, providername);
-	free(chanid);
-    }
-    return returnstring;
+	return returnstring;
 }
