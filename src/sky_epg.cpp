@@ -949,7 +949,7 @@ void cTaskLoadepg::CreateXmlChannels() {
 						"<channel id=\"%s\" type=\"0x%x\" flags=\"0x%x\" bouquet=\"%d\" region=\"%d\">",
 						channelid, C->ChannelType, C->Flags, C->BouquetID,
 						C->RegionID);
-				printf("<display-name>%s</display-name>", ServiceName);
+				printf("<display-name>%s</display-name>", xmlify(ServiceName));
 				printf("</channel>\n");
 			}
 			free(ServiceName);
