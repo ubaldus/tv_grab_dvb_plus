@@ -32,10 +32,12 @@
 #include "dvb_epg.h"
 #include "dvb_info.h"
 #include "dvb_text.h"
+#include "dvb_parse.h"
 #include "lookup.h"
 #include "chanid.h"
 #include "stats.h"
 #include "log.h"
+#include "filter.h"
 
 extern int timeout;
 extern int time_offset;
@@ -60,6 +62,7 @@ typedef struct chninfo {
 } chninfo_t;
 
 static struct chninfo *channels;
+static sChannel * fullChannels;
 
 enum CR {
 	LANGUAGE, VIDEO, AUDIO, SUBTITLES
@@ -244,9 +247,9 @@ static void parseContentDescription(u_char *data) {
 					printf("\t<category>%s</category>\n", c);
 #ifdef CATEGORY_UNKNOWN
 			else
-			printf("\t<!--category>%s %02X %02X</category-->\n", c + 1, c1, c2);
+				printf("\t<!--category>%s %02X %02X</category-->\n", c + 1, c1, c2);
 			else
-			printf("\t<!--category>%02X %02X</category-->\n", c1, c2);
+				printf("\t<!--category>%02X %02X</category-->\n", c1, c2);
 #endif
 		}
 		// This is weird in the uk, they use user but not content, and almost the same values
@@ -261,18 +264,18 @@ static void parseRatingDescription(u_char *data) {
 	struct descr_parental_rating *pr = CastParentalRatingDescriptor(data);
 	u_char *p;
 	for (p = (u_char *) (&pr->data); p < (u_char *) (data
-			+ pr->descriptor_length); p += PARENTAL_RATING_ITEM_LEN) {
+				+ pr->descriptor_length); p += PARENTAL_RATING_ITEM_LEN) {
 		struct parental_rating_item *pr = (struct parental_rating_item *) p;
 		switch (pr->rating) {
-		case 0x00: /*undefined */
-			break;
-		case 0x01 ... 0x0F:
-			printf("\t<rating system=\"dvb\">\n");
-			printf("\t\t<value>%d</value>\n", pr->rating + 3);
-			printf("\t</rating>\n");
-			break;
-		case 0x10 ... 0xFF: /*broadcaster defined */
-			break;
+			case 0x00: /*undefined */
+				break;
+			case 0x01 ... 0x0F:
+				printf("\t<rating system=\"dvb\">\n");
+				printf("\t\t<value>%d</value>\n", pr->rating + 3);
+				printf("\t</rating>\n");
+				break;
+			case 0x10 ... 0xFF: /*broadcaster defined */
+				break;
 		}
 	}
 }
@@ -298,8 +301,8 @@ static void parseUnknown(u_char *data) {
 
 static void parseServiceDescription(void *data) {
 	assert(GetDescriptorTag(data) == 0x48);
-	//struct descr_service *pr = CastServiceDescriptor(data);
-	log_message(DEBUG, "got a service descriptor");
+	struct descr_service *pr = CastServiceDescriptor(data);
+	log_message(DEBUG, "got a service descriptor %d", pr->provider_name_length);
 }
 
 /*
@@ -321,67 +324,67 @@ static void parseDescription(u_char *data, size_t len) {
 				+ GetDescriptorLength(p)) {
 			struct descr_gen *desc = (struct descr_gen *) p;
 			switch (GetDescriptorTag(desc)) {
-			case 0:
-				break;
-			case 0x48: //service_description
-				parseServiceDescription(desc);
-				break;
-			case 0x4D: //short evt desc, [title] [sub-title]
-				// there can be multiple language versions of these
-				if (round == 0) {
-					parseEventDescription(desc, TITLE);
-				} else if (round == 1)
-					parseEventDescription(desc, SUB_TITLE);
-				break;
-			case 0x4E: //long evt descriptor [desc]
-				if (round == 2)
-					parseLongEventDescription(desc);
-				break;
-			case 0x50: //component desc [language] [video] [audio] [subtitles]
-				if (round == 4)
-					parseComponentDescription(desc, LANGUAGE, &seen);
-				else if (round == 5)
-					parseComponentDescription(desc, VIDEO, &seen);
-				else if (round == 6)
-					parseComponentDescription(desc, AUDIO, &seen);
-				else if (round == 7)
-					parseComponentDescription(desc, SUBTITLES, &seen);
-				break;
-			case 0x53: // CA Identifier Descriptor
-				break;
-			case 0x54: // content desc [category]
-				if (round == 3)
-					parseContentDescription((u_char *) desc);
-				break;
-			case 0x55: // Parental Rating Descriptor [rating]
-				if (round == 7)
-					parseRatingDescription((u_char *) desc);
-				break;
-			case 0x5f: // Private Data Specifier
-				pds = parsePrivateDataSpecifier(desc);
-				break;
-			case 0x64: // Data broadcast desc - Text Desc for Data components
-				break;
-			case 0x69: // Programm Identification Label
-				break;
-			case 0x81: // TODO ???
-				if (pds == 5) // ARD_ZDF_ORF
+				case 0:
 					break;
-			case 0x82: // VPS (ARD, ZDF, ORF)
-				if (pds == 5) // ARD_ZDF_ORF
-					// TODO: <programme @vps-start="???">
+				case 0x48: //service_description
+					parseServiceDescription(desc);
 					break;
-			case 0x4F: // Time Shifted Event
-			case 0x52: // Stream Identifier Descriptor
-			case 0x5E: // Multi Lingual Component Descriptor
-			case 0x83: // Logical Channel Descriptor (some kind of news-ticker on ARD-MHP-Data?)
-			case 0x84: // Preferred Name List Descriptor
-			case 0x85: // Preferred Name Identifier Descriptor
-			case 0x86: // Eacem Stream Identifier Descriptor
-			default:
-				if (round == 0) {
-					parseUnknown((u_char *) desc);
-				}
+				case 0x4D: //short evt desc, [title] [sub-title]
+					// there can be multiple language versions of these
+					if (round == 0) {
+						parseEventDescription(desc, TITLE);
+					} else if (round == 1)
+						parseEventDescription(desc, SUB_TITLE);
+					break;
+				case 0x4E: //long evt descriptor [desc]
+					if (round == 2)
+						parseLongEventDescription(desc);
+					break;
+				case 0x50: //component desc [language] [video] [audio] [subtitles]
+					if (round == 4)
+						parseComponentDescription(desc, LANGUAGE, &seen);
+					else if (round == 5)
+						parseComponentDescription(desc, VIDEO, &seen);
+					else if (round == 6)
+						parseComponentDescription(desc, AUDIO, &seen);
+					else if (round == 7)
+						parseComponentDescription(desc, SUBTITLES, &seen);
+					break;
+				case 0x53: // CA Identifier Descriptor
+					break;
+				case 0x54: // content desc [category]
+					if (round == 3)
+						parseContentDescription((u_char *) desc);
+					break;
+				case 0x55: // Parental Rating Descriptor [rating]
+					if (round == 7)
+						parseRatingDescription((u_char *) desc);
+					break;
+				case 0x5f: // Private Data Specifier
+					pds = parsePrivateDataSpecifier(desc);
+					break;
+				case 0x64: // Data broadcast desc - Text Desc for Data components
+					break;
+				case 0x69: // Programm Identification Label
+					break;
+				case 0x81: // TODO ???
+					if (pds == 5) // ARD_ZDF_ORF
+						break;
+				case 0x82: // VPS (ARD, ZDF, ORF)
+					if (pds == 5) // ARD_ZDF_ORF
+						// TODO: <programme @vps-start="???">
+						break;
+				case 0x4F: // Time Shifted Event
+				case 0x52: // Stream Identifier Descriptor
+				case 0x5E: // Multi Lingual Component Descriptor
+				case 0x83: // Logical Channel Descriptor (some kind of news-ticker on ARD-MHP-Data?)
+				case 0x84: // Preferred Name List Descriptor
+				case 0x85: // Preferred Name Identifier Descriptor
+				case 0x86: // Eacem Stream Identifier Descriptor
+				default:
+					if (round == 0) {
+						parseUnknown((u_char *) desc);
+					}
 			}
 		}
 	}
@@ -465,7 +468,7 @@ static void parseEIT(u_char *data, size_t len) {
 			nc->sid = HILO(e->service_id);
 			nc->eid = HILO(evt->event_id);
 			nc->ver = e->version_number;
-			nc->sname = "not-yet-known";
+			nc->sname = strdup("not-yet-known");
 			nc->next = channels;
 			channels = nc;
 		}
@@ -494,14 +497,14 @@ static void parseEIT(u_char *data, size_t len) {
 		time(&now);
 		// basic bad date check. if the program ends before this time yesterday, or two weeks from today, forget it.
 		if ((difftime(stop_time, now) < -24 * 60 * 60) || (difftime(now,
-				stop_time) > 14 * 24 * 60 * 60)) {
+						stop_time) > 14 * 24 * 60 * 60)) {
 			invalid_date_count++;
 			if (ignore_bad_dates)
 				return;
 		}
 		// a program must have a title that isn't empty
 		if (!validateDescription((u_char *) (&evt->data),
-				GetEITDescriptorsLoopLength(evt))) {
+					GetEITDescriptorsLoopLength(evt))) {
 			return;
 		}
 
@@ -533,7 +536,8 @@ static void parseEIT(u_char *data, size_t len) {
 /*
  * Read EIT segments from DVB-demuxer
  */
-void readEventTables(int format) {
+void readEventTables(int format, cFilter* filters)
+{
 	int r = 0;
 	u_char buf[1 << 12];
 	size_t l;
@@ -542,7 +546,18 @@ void readEventTables(int format) {
 	float ratio;
 
 	while (1) {
-		r = read(STDIN_FILENO, buf, sizeof(buf));
+		int pid = DVB_EIT_PID;
+		if (filters)
+		{
+			r = 0;
+			int fd = filters->Poll(5000, &pid);
+			if (fd > 0)
+			{
+				r = read(fd, buf, sizeof(buf));
+			}
+		}
+		else
+			r = read(STDIN_FILENO, buf, sizeof(buf));
 		if (r < 0) {
 			log_message(DEBUG, "did not read any more");
 			break;
@@ -553,11 +568,22 @@ void readEventTables(int format) {
 			continue;
 		}
 		l = sizeof(struct si_tab) + GetSectionLength(tab);
+		log_message(TRACE, "tableid %d len %d totallen %d.", GetTableId(tab), l, r);
 		if (!SI::CRC32::isValid((const char *) buf, r)) {
-			log_message(ERROR, "data or length is wrong. skipping packet.");
+			log_message(ERROR, "data or length is wrong for pid %d tableid %d. skipping packet.",pid, GetTableId(tab));
 			crcerr_count++;
 		} else {
-			parseEIT(buf, l);
+			switch (pid)
+			{
+				case DVB_EIT_PID:
+					parseEIT(buf, l);
+					break;
+				case 0x11:
+					parseSDT(buf, l, &fullChannels);
+					break;
+				case 0x14:
+					break;
+			}
 		}
 		log_message(
 				TRACE,
@@ -567,7 +593,7 @@ void readEventTables(int format) {
 	}
 	uncompressed = get_stat("freesathuffman.uncompressed");
 	compressed = get_stat("freesathuffman.compressed");
-	ratio = uncompressed / compressed;
+	ratio = (compressed>0)?uncompressed / compressed:1;
 	log_message(DEBUG, "freesat huffman average expansion ratio: %f", ratio);
 }
 
@@ -575,15 +601,20 @@ void readEventTables(int format) {
  * Write Channel Info to xmltv file
  */
 void writeChannels(int format) {
-	struct chninfo *c;
+	sChannel* c;
 	const char *xmltvid;
 
-	for (c = channels; c != NULL; c = c->next) {
-		xmltvid = dvbxmltvid(c->sid);
-		if (xmltvid != NULL) {
-			printf("<channel id=\"%s\">\n", xmltvid);
-			printf("\t<display-name>%s</display-name>\n", c->sname);
-			printf("</channel>\n");
+	for (c = fullChannels; c != NULL; c = c->next) {
+		//if (c->IsEpg)
+		{
+			xmltvid = dvbxmltvid(c->Sid);
+			if (xmltvid != NULL) {
+				printf("<channel id=\"%s\">\n", xmltvid);
+				printf("\t<!-- number>%d</number -->\n", c->ChannelId);
+				printf("\t<!-- provider>%s</provider -->\n", c->providername);
+				printf("\t<display-name>%s</display-name>\n", c->name);
+				printf("</channel>\n");
+			}
 		}
 	}
 }

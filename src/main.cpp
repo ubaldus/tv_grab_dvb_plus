@@ -69,6 +69,8 @@ bool print_stats = false;
 char demux[32] = "/dev/dvb/adapter0/demux0";
 char conf[1024] = "/usr/share/xmltv/tv_grab_dvb_plus";
 
+cFilter * filters = NULL;
+
 #define SECONDS_PER_DAY 86400
 #define DAYS_PER_YEAR 365
 
@@ -248,7 +250,7 @@ static int do_options(int arg_count, char **arg_strings) {
 			preferredmethod();
 			break;
 		case 'q':
-			log_level("ERROR");
+	    log_level((char*)"ERROR");
 			break;
 		case 'S':
 			print_stats = true;
@@ -331,6 +333,8 @@ static void footer() {
  * Exit hook: close xml tags
  */
 static void finish_up(int) {
+	if (filters)
+		delete filters;
 	footer();
 	exit(0);
 }
@@ -339,9 +343,8 @@ static void finish_up(int) {
  * Setup demuxer or open file as STDIN
  */
 static int openInput(int format) {
-	int fd_epg, to;
+	int fd_epg;
 	struct stat stat_buf;
-	struct pollfd ufd;
 
 	if (!strcmp(demux, "-"))
 		return 0; // Read from STDIN, which is open al
@@ -352,92 +355,66 @@ static int openInput(int format) {
 	}
 
 	if (fstat(fd_epg, &stat_buf) < 0) {
+		close(fd_epg);
 		perror("fd_epg DEVICE: ");
 		return -1;
 	}
+	close(fd_epg);
 	if (S_ISCHR(stat_buf.st_mode)) {
-		bool found = false;
 		switch (format) {
 		case DATA_FORMAT_DVB:
 			log_message(TRACE, "set up DVB filter");
-			add_filter(0x14, 0x70, 0xfc); // TOT && TDT
-			add_filter(0x11, 0x42, 0xff); // SDT
-			add_filter(DVB_EIT_PID, 0x00, 0x00);
+			filters->AddFilter(0x14, 0x70, 0xfc); // TOT && TDT
+			filters->AddFilter(0x11, 0x42, 0xff); // SDT
+			filters->AddFilter(DVB_EIT_PID, 0x00, 0x00);
 			break;
 		case DATA_FORMAT_FREESAT:
 			log_message(TRACE, "set up Freesat filter");
-			add_filter(0x14, 0x70, 0xfc); // TOT && TDT
-			add_filter(0x11, 0x42, 0xff); // SDT
-			add_filter(FREESAT_EIT_PID, 0x00, 0x00);
+			filters->AddFilter(0x14, 0x70, 0xfc); // TOT && TDT
+			filters->AddFilter(0x11, 0x42, 0xff); // SDT
+			filters->AddFilter(FREESAT_EIT_PID, 0x00, 0x00);
 			break;
 		case DATA_FORMAT_SKY_AU:
 		case DATA_FORMAT_SKY_IT:
 		case DATA_FORMAT_SKY_UK:
 			log_message(TRACE, "set up Sky filter");
-			add_filter(0x14, 0x70, 0xfc); // TOT && TDT
-			add_filter(0x11, 0x4a, 0xff);
-			add_filter(0x30, 0xa0, 0xfc);
-			add_filter(0x31, 0xa0, 0xfc);
-			add_filter(0x32, 0xa0, 0xfc);
-			add_filter(0x33, 0xa0, 0xfc);
-			add_filter(0x34, 0xa0, 0xfc);
-			add_filter(0x35, 0xa0, 0xfc);
-			add_filter(0x36, 0xa0, 0xfc);
-			add_filter(0x37, 0xa0, 0xfc);
-			add_filter(0x40, 0xa8, 0xfc);
-			add_filter(0x41, 0xa8, 0xfc);
-			add_filter(0x42, 0xa8, 0xfc);
-			add_filter(0x43, 0xa8, 0xfc);
-			add_filter(0x44, 0xa8, 0xfc);
-			add_filter(0x45, 0xa8, 0xfc);
-			add_filter(0x46, 0xa8, 0xfc);
-			add_filter(0x47, 0xa8, 0xfc);
+			filters->AddFilter(0x14, 0x70, 0xfc); // TOT && TDT
+			filters->AddFilter(0x11, 0x4a, 0xff);
+			filters->AddFilter(0x30, 0xa0, 0xfc);
+			filters->AddFilter(0x31, 0xa0, 0xfc);
+			filters->AddFilter(0x32, 0xa0, 0xfc);
+			filters->AddFilter(0x33, 0xa0, 0xfc);
+			filters->AddFilter(0x34, 0xa0, 0xfc);
+			filters->AddFilter(0x35, 0xa0, 0xfc);
+			filters->AddFilter(0x36, 0xa0, 0xfc);
+			filters->AddFilter(0x37, 0xa0, 0xfc);
+			filters->AddFilter(0x40, 0xa8, 0xfc);
+			filters->AddFilter(0x41, 0xa8, 0xfc);
+			filters->AddFilter(0x42, 0xa8, 0xfc);
+			filters->AddFilter(0x43, 0xa8, 0xfc);
+			filters->AddFilter(0x44, 0xa8, 0xfc);
+			filters->AddFilter(0x45, 0xa8, 0xfc);
+			filters->AddFilter(0x46, 0xa8, 0xfc);
+			filters->AddFilter(0x47, 0xa8, 0xfc);
 			break;
 		case DATA_FORMAT_MHW_1:
 			log_message(TRACE, "set up MediaHighway 1 filter");
-			add_filter(0x14, 0x70, 0xfc); // TOT && TDT
-			add_filter(0xd2, 0x90, 0xff);
-			add_filter(0xd3, 0x90, 0xff);
-			add_filter(0xd3, 0x91, 0xff);
-			add_filter(0xd3, 0x92, 0xff);
+			filters->AddFilter(0x14, 0x70, 0xfc); // TOT && TDT
+			filters->AddFilter(0xd2, 0x90, 0xff);
+			filters->AddFilter(0xd3, 0x90, 0xff);
+			filters->AddFilter(0xd3, 0x91, 0xff);
+			filters->AddFilter(0xd3, 0x92, 0xff);
 			break;
 		case DATA_FORMAT_MHW_2:
 			log_message(TRACE, "set up MediaHighway 2 filter");
-			add_filter(0x14, 0x70, 0xfc); // TOT && TDT
-			add_filter(0x231, 0xc8, 0xff);
-			add_filter(0x234, 0xe6, 0xff);
-			add_filter(0x236, 0x96, 0xff);
+			filters->AddFilter(0x14, 0x70, 0xfc); // TOT && TDT
+			filters->AddFilter(0x231, 0xc8, 0xff);
+			filters->AddFilter(0x234, 0xe6, 0xff);
+			filters->AddFilter(0x236, 0x96, 0xff);
 			break;
 		default:
 			log_message(ERROR, "did not set up any filter!");
 			break;
-		}
-		if (!start_filters(fd_epg)) {
-			close(fd_epg);
-			return -1;
-		}
-
-		for (to = timeout; to > 0; to--) {
-			int res;
-
-			ufd.fd = fd_epg;
-			ufd.events = POLLIN;
-			res = poll(&ufd, 1, 1000);
-			if (0 == res) {
-				continue;
-			}
-			if (1 == res) {
-				found = true;
-				break;
-			}
-			log_message(ERROR, "error polling for data");
-			close(fd_epg);
-			return -1;
-		}
-		if (!found) {
-			log_message(ERROR, "timeout - try tuning to a multiplex");
-			close(fd_epg);
-			return -1;
 		}
 
 		signal(SIGALRM, finish_up);
@@ -446,9 +423,6 @@ static int openInput(int format) {
 		// disable alarm timeout for normal files
 		timeout = 0;
 	}
-
-	dup2(fd_epg, STDIN_FILENO);
-	close(fd_epg);
 
 	return 0;
 }
@@ -510,7 +484,7 @@ int main(int argc, char **argv) {
 			log_message(ERROR, "unable to get event data from multiplex");
 			exit(1);
 		}
-		readEventTables(format);
+		readEventTables(format, filters);
 		writeChannels(format);
 		break;
 	case DATA_FORMAT_FREESAT:
@@ -518,7 +492,7 @@ int main(int argc, char **argv) {
 			log_message(ERROR, "unable to get event data from multiplex");
 			exit(1);
 		}
-		readEventTables(format);
+		readEventTables(format, filters);
 		writeChannels(format);
 		break;
 	case DATA_FORMAT_SKY_AU:
@@ -528,6 +502,8 @@ int main(int argc, char **argv) {
 		epgGrabber.Grab();
 		break;
 	}
+	if (filters)
+		delete filters;
 	footer();
 	return 0;
 }

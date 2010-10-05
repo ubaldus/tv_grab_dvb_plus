@@ -8,6 +8,7 @@ tv_grab_dvb_plus_SOURCES = \
 	dvb_epg.cpp \
 	dvb_info.cpp \
 	dvb_text.cpp \
+	dvb_parse.cpp \
 	filter.cpp \
 	freesat_huffman.cpp \
 	freesat_tables.cpp \
@@ -23,6 +24,7 @@ tv_grab_dvb_plus_SOURCES = \
 	dvb_epg.h \
 	dvb_info.h \
 	dvb_text.h \
+	dvb_parse.h \
 	filter.h \
 	formats.h \
 	freesat_epg.h \

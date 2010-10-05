@@ -23,14 +23,54 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-struct filter_t {
-	unsigned short int pid;
-	unsigned char tid;
-	unsigned char mask;
-};
+#include <poll.h>
+#include <linux/dvb/frontend.h>
+#include <linux/dvb/dmx.h>
+#include "constants.h"
 
-extern void add_filter(unsigned short int pid, unsigned char tid,
-		unsigned char mask);
-extern int start_filters(int fd);
+#define MAX_ACTIVE_FILTERS2 MAX_FILTERS
 
+class cFilter 
+{
+private:
+    typedef struct
+    {
+      int Fd;
+      int Step;
+      unsigned short int Pid;
+      unsigned char Tid;
+      unsigned char Mask;
+    } sFilter;
+
+    typedef struct
+    {
+      int Fd;
+      int FilterId;
+      bool IsBusy;
+    } sActiveFilter;
+
+    struct pollfd PFD[MAX_FILTERS];
+    int nFilters;
+    sFilter Filters[MAX_FILTERS];
+    int nActiveFilters;
+    sActiveFilter ActiveFilters[MAX_ACTIVE_FILTERS2];
+
+    bool started;
+    const char* demux;
+    bool IsError;
+    int pollindex;
+
+public:
+    cFilter(const char* demux);
+    ~cFilter();
+
+    void AddFilter( unsigned short int Pid, unsigned char Tid = 0x00, unsigned char Mask = 0xff );
+    void StartFilter( int FilterId );
+    void StopFilter( int ActiveFilterId );
+    int Poll(int Timeout, int * pid);  // returns filterid or -1 for done
+
+private:
+    bool Start();
+ };
+ 
 #endif
