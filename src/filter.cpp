@@ -107,7 +107,7 @@ bool cFilter::Start()
     for (int i = 0; i < nFilters; i++) {
         if (nActiveFilters < MAX_ACTIVE_FILTERS2) {
             File = open(demux, O_RDWR | O_NONBLOCK);
-            if (File) {
+            if (File > 0) {
                 ActiveFilters[nActiveFilters].Fd = File;
                 ActiveFilters[nActiveFilters].FilterId = -1;
                 ActiveFilters[nActiveFilters].IsBusy = false;
