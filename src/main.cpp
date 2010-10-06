@@ -361,6 +361,7 @@ static int openInput(int format) {
 	}
 	close(fd_epg);
 	if (S_ISCHR(stat_buf.st_mode)) {
+		filters = new cFilter(demux);
 		switch (format) {
 		case DATA_FORMAT_DVB:
 			log_message(TRACE, "set up DVB filter");

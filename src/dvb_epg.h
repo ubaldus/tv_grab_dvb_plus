@@ -20,7 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define DVB_SDT_PID 17
 #define DVB_EIT_PID 18
+#define DVB_TDT_PID 20
 
 class cFilter;
 extern void readEventTables(int format, cFilter * filters);

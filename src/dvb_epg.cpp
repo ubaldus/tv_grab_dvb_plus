@@ -26,6 +26,8 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/time.h>
+#include <sys/errno.h>
 
 #include "libsi/util.h"
 #include "sitables.h"
@@ -70,6 +72,20 @@ enum CR {
 enum ER {
 	TITLE, SUB_TITLE
 };
+
+int64_t getTime()
+{
+	struct timeval tv;
+	if (gettimeofday(&tv, NULL) == 0)
+		return tv.tv_sec*1000000LL + tv.tv_usec;
+	return 0;
+}
+
+int64_t finishTime;
+void setTimeoutDeadline()
+{
+	finishTime = getTime() + timeout*1000000LL;
+}
 
 /*
  * Parse 0x4D Short Event Descriptor
@@ -475,7 +491,10 @@ static void parseEIT(u_char *data, size_t len) {
 
 		/* we have more data, refresh alarm */
 		if (timeout)
-			alarm(timeout);
+		{
+			setTimeoutDeadline();
+			//alarm(timeout);
+		}
 
 		// No program info at end! Just skip it
 		if (GetEITDescriptorsLoopLength(evt) == 0)
@@ -544,23 +563,54 @@ void readEventTables(int format, cFilter* filters)
 	int compressed;
 	int uncompressed;
 	float ratio;
+	int64_t lastReadTime = 0;
+
+	if (filters)
+	{
+		alarm(0);
+		setTimeoutDeadline();
+		lastReadTime = getTime();
+	}
 
 	while (1) {
 		int pid = DVB_EIT_PID;
 		if (filters)
 		{
+			if ((getTime() - finishTime) >= 0) {
+				log_message(DEBUG, "timeout occurred");
+				break;
+			}
 			r = 0;
 			int fd = filters->Poll(5000, &pid);
 			if (fd > 0)
 			{
 				r = read(fd, buf, sizeof(buf));
+				if (r > 0)
+				{
+					lastReadTime = getTime();
+				}
+				else if (r == 0)
+				{
+					if ((getTime() - lastReadTime) > 2000)
+					{
+						log_message(DEBUG, "did not read any more");
+						break;
+					}
+				}
+				else
+				{
+					if (errno != ETIMEDOUT)
+						log_message(ERROR, "pid read error %d", errno);
+				}
 			}
 		}
 		else
+		{
 			r = read(STDIN_FILENO, buf, sizeof(buf));
-		if (r < 0) {
-			log_message(DEBUG, "did not read any more");
-			break;
+			if (r < 0) {
+				log_message(DEBUG, "did not read any more");
+				break;
+			}
 		}
 		packet_count++;
 		struct si_tab *tab = (struct si_tab *) buf;
@@ -570,18 +620,21 @@ void readEventTables(int format, cFilter* filters)
 		l = sizeof(struct si_tab) + GetSectionLength(tab);
 		log_message(TRACE, "tableid %d len %d totallen %d.", GetTableId(tab), l, r);
 		if (!SI::CRC32::isValid((const char *) buf, r)) {
-			log_message(ERROR, "data or length is wrong for pid %d tableid %d. skipping packet.",pid, GetTableId(tab));
+			log_message(ERROR, "data or length is wrong for pid %d (0x%x) tableid %d (0x%x), len %d. skipping packet.",pid, pid, GetTableId(tab), GetTableId(tab), r);
 			crcerr_count++;
+			if (pid == DVB_TDT_PID && GetTableId(tab) == 112)
+			{
+			}
 		} else {
 			switch (pid)
 			{
 				case DVB_EIT_PID:
 					parseEIT(buf, l);
 					break;
-				case 0x11:
+				case DVB_SDT_PID:
 					parseSDT(buf, l, &fullChannels);
 					break;
-				case 0x14:
+				case DVB_TDT_PID:
 					break;
 			}
 		}
