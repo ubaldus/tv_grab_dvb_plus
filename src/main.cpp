@@ -71,6 +71,11 @@ bool print_stats = false;
 char demux[32] = "/dev/dvb/adapter0/demux0";
 char conf[1024] = "/usr/share/xmltv/tv_grab_dvb_plus";
 
+const char * defaultxmltvidformat = "%s.dvb.guide";
+const char * defaultfreesatxmltvidformat = "%s.dvb.guide";
+const char * defaultskyxmltvidformat = "%s.%p.dvb.guide";
+char * xmltvidformat = NULL;
+
 #define TUNECONF "tune.conf"
 char* tuneconf = NULL;
 int frequency = -1;
@@ -98,6 +103,11 @@ static void usage() {
 				"\t                          (same as -d error)\n"
 				"\t-S (--stats)              output runtime statistics (default false)\n"
 				"\t-x (--short-xml)          output short xml ids (default false)\n"
+				"\t-X (--xmltvidformat)      specify xmltvid format as format string, specifiers:\n"
+				"\t                            %%s - sid\n"
+				"\t                            %%c - channel number\n"
+				"\t                            %%n - channel name\n"
+				"\t                            %%p - provider name\n"
 				"\t-u (--updated-info)       output updated info (will result in repeated information) (default false)\n"
 				"\t-a (--adapter) adapter#   change the adapter number (default 0)\n"
 				"\t-F (--freq)    freq       frequency to tune in Hz (default don't tune)\n"
@@ -170,14 +180,17 @@ static int do_options(int arg_count, char **arg_strings) {
 			{"tunefile", 1, 0, 'C'},
 			{"updated-info", 0, 0, 'u'},
 			{"short-xml", 0, 0, 'x'},
+			{"xmltvidformat", 1, 0, 'X'},
 			{0, 0, 0, 0}
 	};
     int Option_Index = 0;
 	int fd;
 
+	xmltvidformat = strdup(defaultxmltvidformat);
+
 	while (1) {
 		int c = getopt_long(arg_count, arg_strings,
-				"a:C:cDd:F:f:H:hIi:kn:O:o:pqSs:Tt:ux", Long_Options, &Option_Index);
+				"a:C:cDd:F:f:H:hIi:kn:O:o:pqSs:Tt:uxX:", Long_Options, &Option_Index);
 		if (c == EOF)
 			break;
 		switch (c) {
@@ -269,7 +282,7 @@ static int do_options(int arg_count, char **arg_strings) {
 			preferredmethod();
 			break;
 		case 'q':
-	    log_level((char*)"ERROR");
+			log_level((char*)"ERROR");
 			break;
 		case 'S':
 			print_stats = true;
@@ -293,6 +306,9 @@ static int do_options(int arg_count, char **arg_strings) {
 			break;
 		case 'x':
 			use_shortxmlids = true;
+			break;
+		case 'X':
+			asprintf(&xmltvidformat, "%s", optarg);
 			break;
 		case 0:
 		default:
@@ -513,6 +529,8 @@ int main(int argc, char **argv) {
 	header();
 	switch (format) {
 	case DATA_FORMAT_DVB:
+		if (xmltvidformat == NULL)
+			xmltvidformat = strdup(defaultxmltvidformat);
 		if (openInput(format) != 0) {
 			log_message(ERROR, "unable to get event data from multiplex");
 			exit(1);
@@ -521,6 +539,8 @@ int main(int argc, char **argv) {
 		writeChannels(format);
 		break;
 	case DATA_FORMAT_FREESAT:
+		if (xmltvidformat == NULL)
+			xmltvidformat = strdup(defaultfreesatxmltvidformat);
 		if (openInput(format) != 0) {
 			log_message(ERROR, "unable to get event data from multiplex");
 			exit(1);
@@ -531,6 +551,8 @@ int main(int argc, char **argv) {
 	case DATA_FORMAT_SKY_AU:
 	case DATA_FORMAT_SKY_IT:
 	case DATA_FORMAT_SKY_UK:
+		if (xmltvidformat == NULL)
+			xmltvidformat = strdup(defaultskyxmltvidformat);
 		EPGGrabber epgGrabber;
 		epgGrabber.Grab();
 		break;

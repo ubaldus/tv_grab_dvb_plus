@@ -34,6 +34,7 @@
 
 extern bool use_chanidents;
 extern bool use_shortxmlids;
+extern char * xmltvidformat;
 
 struct str_lookup_table *channelid_table;
 
@@ -72,7 +73,7 @@ const char *dvbxmltvid(int chanid) {
  * For Sky, the string is "sid,skynumber" which is unique
  * If the key is not found then return a manufactured channel id
  */
-const char *skyxmltvid(int skynumber, int sid, char *shortname,
+const char *formattedxmltvid(int channelnumber, int sid, char *shortname,
 		char *providername) {
 	char *chanid;
 	char *returnstring;
@@ -82,26 +83,61 @@ const char *skyxmltvid(int skynumber, int sid, char *shortname,
 		asprintf(&returnstring, "%d.%s.%s.dvb.guide", sid, shortname,
 				providername);
 	} else {
-		asprintf(&chanid, "%d.%d", skynumber, sid);
+		asprintf(&chanid, "%d.%d", channelnumber, sid);
 		if (use_chanidents && channelid_table) {
 			c = slookup(channelid_table, chanid);
+			if (c == NULL)
+			{
+				free(chanid);
+				asprintf(&chanid, "%d", sid);
+				c = slookup(channelid_table, chanid);
+			}
 			if (c) {
 				log_message(
 						TRACE,
-						"found match (%s) for skynumber=%d sid=%d shortname=\"%s\" providername=\"%s\"",
-						c, skynumber, sid, shortname, providername);
+						"found match (%s) for channelnumber=%d sid=%d shortname=\"%s\" providername=\"%s\"",
+						c, channelnumber, sid, shortname, providername);
 				free(chanid);
 				return c;
 			} else {
 				log_message(
 						TRACE,
-						"did not find match for skynumber=%d sid=%d shortname=\"%s\" providername=\"%s\"",
-						skynumber, sid, shortname, providername);
+						"did not find match for channelnumber=%d sid=%d shortname=\"%s\" providername=\"%s\"",
+						channelnumber, sid, shortname, providername);
 				free(chanid);
 				return NULL;
 			}
 		}
-		asprintf(&returnstring, "%s.%s.dvb.guide", chanid, providername);
+		int maxlen = 10+10 + strlen(xmltvidformat) + strlen(providername);
+		if (shortname != NULL)
+			maxlen += strlen(shortname);
+		//asprintf(&returnstring, "%s.%s.dvb.guide", chanid, providername);
+		returnstring = (char*)calloc(1, maxlen+10);
+		char *p = xmltvidformat;
+		char *d = returnstring;
+		char c;
+		while ((c=*p++))
+		{
+			switch (c)
+			{
+				case '%':
+					switch ((c=*p++))
+					{
+						case '%': *d++ = c; break;
+						case 's': d += sprintf(d, "%d", sid); break;
+						case 'c': d += sprintf(d, "%d", channelnumber); break;
+						case 'n': if (shortname) { d += sprintf(d, "%s", shortname); } break;
+						case 'p': if (providername) { d += sprintf(d, "%s", providername); } break;
+						default: 
+							log_message(ERROR, "invalid xmltv format specifier '%c'", c);
+							break;
+					}
+					break;
+				default:
+					*d++ = c; break;
+					break;
+			}
+		}
 		free(chanid);
 	}
 	return returnstring;

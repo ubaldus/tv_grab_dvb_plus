@@ -24,7 +24,7 @@
 
 extern int load_channel_table(char *chanidfile);
 extern const char *dvbxmltvid(int chanid);
-extern const char *skyxmltvid(int skynumber, int sid, char *shortname,
+extern const char *formattedxmltvid(int skynumber, int sid, char *shortname,
 		char *provider);
 
 #endif
