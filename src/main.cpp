@@ -44,6 +44,8 @@
 #include "stats.h"
 #include "log.h"
 #include "freesat_test.h" // only required during test mode
+#include "tuner.h"
+
 char *ProgName;
 
 int adapter = 0;
@@ -69,6 +71,10 @@ bool print_stats = false;
 char demux[32] = "/dev/dvb/adapter0/demux0";
 char conf[1024] = "/usr/share/xmltv/tv_grab_dvb_plus";
 
+#define TUNECONF "tune.conf"
+char* tuneconf = NULL;
+int frequency = -1;
+
 cFilter * filters = NULL;
 
 #define SECONDS_PER_DAY 86400
@@ -80,7 +86,7 @@ cFilter * filters = NULL;
 static void usage() {
 	fprintf(
 			stderr,
-			"usage: %s [-h] [-c] [-D] [-d] [-I] [-k] [-p] [-q] [-S] [-u] [-x] [-a adapter] [-f format] [-h hours] [-i file] [-n days] [-O days] [-o file] [-s sharedir] [-t timeout]\n\n"
+			"usage: %s [-h] [-c] [-D] [-d] [-I] [-k] [-p] [-q] [-S] [-u] [-x] [-a adapter] [-C file] [-f format] [-F freq] [-h hours] [-i file] [-n days] [-O days] [-o file] [-s sharedir] [-t timeout]\n\n"
 				"\t-h (--help)               output this help text\n"
 				"\t-c (--chanids)            use channel identifiers from file 'chanidents'\n"
 				"\t                          (default sidnumber.dvb.guide)\n"
@@ -94,6 +100,8 @@ static void usage() {
 				"\t-x (--short-xml)          output short xml ids (default false)\n"
 				"\t-u (--updated-info)       output updated info (will result in repeated information) (default false)\n"
 				"\t-a (--adapter) adapter#   change the adapter number (default 0)\n"
+				"\t-F (--freq)    freq       frequency to tune in Hz (default don't tune)\n"
+				"\t-C (--tuneconf) file      file to load for tuning details, from w_scan or dvbtools (default sharedir/tune.conf\n"
 				"\t-d (--debug)   level      output debug infoi (none|trace|debug|warning|error) (default error)\n"
 				"\t-f (--format)  format     format of incoming data (dvb|freesat|skyXX|mhw1|mhw2) (default dvb)\n"
 				"\t                          (XX can be AU, IT or UK - case insensitive)\n"
@@ -144,6 +152,7 @@ static int do_options(int arg_count, char **arg_strings) {
 			{"chanids", 0, 0, 'c'},
 			{"description", 0, 0, 'D'},
 			{"debug", 1, 0, 'd'},
+			{"freq", 1, 0, 'F'},
 			{"format", 1, 0, 'f'},
 			{"hours", 1, 0, 'H'},
 			{"help", 0, 0, 'h'},
@@ -158,6 +167,7 @@ static int do_options(int arg_count, char **arg_strings) {
 			{"stats", 0, 0, 'S'},
 			{"sharedir", 1, 0, 's'},
 			{"timeout", 1, 0, 't'},
+			{"tunefile", 1, 0, 'C'},
 			{"updated-info", 0, 0, 'u'},
 			{"short-xml", 0, 0, 'x'},
 			{0, 0, 0, 0}
@@ -167,13 +177,19 @@ static int do_options(int arg_count, char **arg_strings) {
 
 	while (1) {
 		int c = getopt_long(arg_count, arg_strings,
-				"a:cDd:f:H:hIi:kn:O:o:pqSs:Tt:ux", Long_Options, &Option_Index);
+				"a:C:cDd:F:f:H:hIi:kn:O:o:pqSs:Tt:ux", Long_Options, &Option_Index);
 		if (c == EOF)
 			break;
 		switch (c) {
 		case 'a':
 			adapter = atoi(optarg);
 			sprintf(demux, "/dev/dvb/adapter%d/demux%d", adapter, demuxno);
+			break;
+		case 'C':
+			if (strchr(optarg, '/') != NULL)
+				asprintf(&tuneconf, "%s", optarg);
+			else
+				asprintf(&tuneconf, "%s/%s", conf, optarg);
 			break;
 		case 'c':
 			use_chanidents = true;
@@ -183,6 +199,9 @@ static int do_options(int arg_count, char **arg_strings) {
 			break;
 		case 'd':
 			log_level(optarg);
+			break;
+		case 'F':
+			frequency = atoi(optarg);
 			break;
 		case 'f':
 			if (strcasecmp(optarg, "dvb") == 0) {
@@ -476,6 +495,19 @@ int main(int argc, char **argv) {
 		if (use_chanidents && !load_channel_table(chanidfile)) {
 			log_message(WARNING, "error loading %s, continuing", chanidfile);
 		}
+	}
+
+	if (frequency > 0)
+	{
+		if (tuneconf == NULL)
+			asprintf(&tuneconf, "%s/%s", conf, TUNECONF);
+		if (!tune(frequency, adapter, 0))
+		{
+			log_message(ERROR, "failed to tune to %s, aborting", frequency);
+			free(tuneconf);
+			exit(2);
+		}
+		free(tuneconf);
 	}
 
 	header();

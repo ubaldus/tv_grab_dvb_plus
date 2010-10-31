@@ -64,6 +64,7 @@ struct transponder *alloc_transponder(uint32_t frequency);
  */
 void print_transponder(char * dest, struct transponder * t);
 
+bool tune(int freq, int adapter, int frontend);
 
 #endif
 

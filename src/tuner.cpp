@@ -3,11 +3,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string.h>
 #include <linux/dvb/dmx.h>
 #include <linux/dvb/version.h>
 #include <linux/dvb/frontend.h>
 #include "tuner.h"
 #include "log.h"
+#include "parse-dvbscan.h"
+#include "dvb_scan.h"
 
 static struct dvb_frontend_info fe_info; // = {.type = -1};
 
@@ -35,6 +41,96 @@ struct w_scan_flags flags = {
 	0x0302,		// assuming DVB API version 3.2
 };
 
+const char * xine_modulation_name(int modulation) 
+{
+	switch(modulation) {    
+		case QPSK       : return "QPSK";        
+		case QAM_16     : return "QAM_16"; 
+		case QAM_32     : return "QAM_32"; 
+		case QAM_64     : return "QAM_64"; 
+		case QAM_128    : return "QAM_128"; 
+		case QAM_256    : return "QAM_256"; 
+		case QAM_AUTO   : return "QAM_AUTO";    
+		case VSB_8      : return "VSB_8"; 
+		case VSB_16     : return "VSB_16"; 
+		case PSK_8      : return "PSK_8"; 
+		case APSK_16    : return "APSK_16";
+		case APSK_32    : return "APSK_32";
+		case DQPSK      : return "DQPSK";
+		default         : return "QAM_AUTO";
+	}
+}
+
+const char * vdr_inversion_name(int inversion) {
+	switch(inversion) {
+		case INVERSION_OFF: return "0";
+		case INVERSION_ON:  return "1";
+		default:            return "999";
+	}
+}
+
+const char * vdr_fec_name(int fec) {
+	switch(fec) {
+		case FEC_NONE:  return "0";
+		case FEC_1_2:   return "12";
+		case FEC_2_3:   return "23";
+		case FEC_3_4:   return "34";
+		case FEC_4_5:   return "45";
+		case FEC_5_6:   return "56";
+		case FEC_6_7:   return "67";
+		case FEC_7_8:   return "78";
+		case FEC_8_9:   return "89";
+		case FEC_3_5:   return "35";
+		case FEC_9_10:  return "910";
+		default:        return "999";
+	}
+}
+
+const char * vdr_bandwidth_name (int bandwidth) {
+	switch(bandwidth) {               
+		case BANDWIDTH_8_MHZ : return "8";
+		case BANDWIDTH_7_MHZ : return "7";
+		case BANDWIDTH_6_MHZ : return "6";
+#ifdef BANDWIDTH_5_MHZ
+		// not defined in Linux DVB API
+		case BANDWIDTH_5_MHZ : return "5";
+#endif
+		default              : return "999";
+	}                         
+}
+
+const char * vdr_transmission_mode_name (int transmission_mode) {
+	switch(transmission_mode) {               
+		case TRANSMISSION_MODE_2K : return "2";
+		case TRANSMISSION_MODE_8K : return "8";
+#ifdef TRANSMISSION_MODE_4K
+									// not defined in Linux DVB API
+		case TRANSMISSION_MODE_4K : return "4";
+#endif
+		default                   : return "999";
+	}                         
+}  
+
+const char * vdr_guard_name (int guard_interval) {
+	switch(guard_interval) {                  
+		case GUARD_INTERVAL_1_32 : return "32";
+		case GUARD_INTERVAL_1_16 : return "16";
+		case GUARD_INTERVAL_1_8  : return "8";
+		case GUARD_INTERVAL_1_4  : return "4";
+		default                  : return "999";
+	}                         
+}  
+
+const char * vdr_hierarchy_name (int hierarchy) {
+	switch(hierarchy) {               
+		case HIERARCHY_NONE     : return "0";
+		case HIERARCHY_1        : return "1";
+		case HIERARCHY_2        : return "2";
+		case HIERARCHY_4        : return "4";
+		default                 : return "999";
+	}                         
+}
+
 /* According to the DVB standards, the combination of network_id and
  * transport_stream_id should be unique, but in real life the satellite
  * operators and broadcasters don't care enough to coordinate
@@ -55,49 +151,48 @@ struct transponder *alloc_transponder(uint32_t frequency)
 	return tp;
 }
 
-void print_transponder(char * dest, struct transponder * t) {
-#if 0
+void print_transponder(char * dest, struct transponder * t) 
+{
 	memset(dest, 0, sizeof(dest));
 	switch (t->type) {
 		case FE_OFDM:
 			sprintf(dest, "%-8s f = %6d kHz I%sB%sC%sD%sT%sG%sY%s",
-				xine_modulation_name(t->param.u.ofdm.constellation),
-				t->param.frequency/1000,
-				vdr_inversion_name(t->param.inversion),
-				vdr_bandwidth_name(t->param.u.ofdm.bandwidth),
-				vdr_fec_name(t->param.u.ofdm.code_rate_HP),
-				vdr_fec_name(t->param.u.ofdm.code_rate_LP),
-				vdr_transmission_mode_name(t->param.u.ofdm.transmission_mode),
-				vdr_guard_name(t->param.u.ofdm.guard_interval),
-				vdr_hierarchy_name(t->param.u.ofdm.hierarchy_information));
+					xine_modulation_name(t->param.u.ofdm.constellation),
+					t->param.frequency/1000,
+					vdr_inversion_name(t->param.inversion),
+					vdr_bandwidth_name(t->param.u.ofdm.bandwidth),
+					vdr_fec_name(t->param.u.ofdm.code_rate_HP),
+					vdr_fec_name(t->param.u.ofdm.code_rate_LP),
+					vdr_transmission_mode_name(t->param.u.ofdm.transmission_mode),
+					vdr_guard_name(t->param.u.ofdm.guard_interval),
+					vdr_hierarchy_name(t->param.u.ofdm.hierarchy_information));
 			break;
 		case FE_ATSC:
 			sprintf(dest, "%-8s f=%d kHz",
-				atsc_mod_to_txt(t->param.u.vsb.modulation),
-				t->param.frequency/1000);
+					atsc_mod_to_txt(t->param.u.vsb.modulation),
+					t->param.frequency/1000);
 			break;
 		case FE_QAM:
 			sprintf(dest, "%-8s f = %d kHz S%dC%s",
-				xine_modulation_name(t->param.u.qam.modulation),
-				t->param.frequency/1000,
-				t->param.u.qam.symbol_rate/1000,
-				vdr_fec_name(t->param.u.qam.fec_inner));
+					xine_modulation_name(t->param.u.qam.modulation),
+					t->param.frequency/1000,
+					t->param.u.qam.symbol_rate/1000,
+					vdr_fec_name(t->param.u.qam.fec_inner));
 			break;
 		case FE_QPSK:
 			sprintf(dest, "%-2s f = %d kHz %s SR = %5d %4s 0,%s %5s",
-				qpsk_delivery_system_to_txt(t->param.u.qpsk.modulation_system),
-				t->param.frequency/1000,
-				qpsk_pol_to_txt(t->param.u.qpsk.polarization),
-				t->param.u.qpsk.symbol_rate/1000,
-				qpsk_fec_to_txt(t->param.u.qpsk.fec_inner),
-				qpsk_rolloff_to_txt(t->param.u.qpsk.rolloff),
-				qpsk_mod_to_txt(t->param.u.qpsk.modulation_type));
-		
-	break;
+					qpsk_delivery_system_to_txt(t->param.u.qpsk.modulation_system),
+					t->param.frequency/1000,
+					qpsk_pol_to_txt(t->param.u.qpsk.polarization),
+					t->param.u.qpsk.symbol_rate/1000,
+					qpsk_fec_to_txt(t->param.u.qpsk.fec_inner),
+					qpsk_rolloff_to_txt(t->param.u.qpsk.rolloff),
+					qpsk_mod_to_txt(t->param.u.qpsk.modulation_type));
+
+			break;
 		default:
-			warning("unimplemented frontend type %d\n", t->type);
-		}
-#endif
+			log_message(WARNING, "unimplemented frontend type %d\n", t->type);
+	}
 }
 
 /*
@@ -365,6 +460,7 @@ static int __tune_to_transponder (int frontend_fd, struct transponder *t, int v)
 
 	if ((is_logging(DEBUG)) && (v > 0)) {
 		char * buf = (char *) malloc(128); // paranoia, max = 52
+		memset(buf, 0, 128);
 		print_transponder(buf, t);
 		log_message(DEBUG, "tune to: %s %s",
 			buf, t->last_tuning_failed?" (no signal)\n":"\n");
@@ -444,5 +540,65 @@ int check_frontend (int fd, int verbose) {
 void tuner_init()
 {
 	fe_info.type = (fe_type_t)-1;
+}
+
+extern char* tuneconf;
+bool tune(int freq, int adapter, int frontend)
+{
+	struct list_head *pos;
+	struct transponder * tp = NULL;
+	int frontend_fd = -1;
+	char *frontend_devname = NULL;
+
+	tuner_init();
+
+	if (!dvbscan_parse_tuningdata(tuneconf, &flags))
+	{
+		log_message(ERROR, "TUNER: failed to read %s", tuneconf);
+		return false;
+	}
+
+	// find the frequency
+	list_for_each(pos, &new_transponders)
+	{
+		struct transponder * tp1 = list_entry(pos, struct transponder, list);
+		if (tp1->param.frequency == (uint)freq)
+		{
+			tp = tp1;
+			break;
+		}
+	}
+	if (tp == NULL)
+	{
+		log_message(ERROR, "TUNER: failed to fine freq %d", freq);
+		return false;
+	}
+
+	int fe_open_mode = O_RDWR;
+	asprintf (&frontend_devname, "/dev/dvb/adapter%i/frontend%i", adapter, frontend);
+	if ((frontend_fd = open (frontend_devname, fe_open_mode)) < 0)
+	{
+		log_message(ERROR, "failed to open '%s': %d %m\n", frontend_devname, errno);
+		free(frontend_devname);
+		return false;
+	}
+	free(frontend_devname);
+	log_message(DEBUG, "-_-_-_-_ Getting frontend capabilities-_-_-_-_");
+	/* determine FE type and caps */
+	if (ioctl(frontend_fd, FE_GET_INFO, &fe_info) == -1)
+	{
+		log_message(ERROR, "FE_GET_INFO failed: %d %m", errno);
+		return false;
+	}
+	flags.fe_type = fe_info.type;
+
+
+	if (tune_to_transponder(frontend_fd, tp) == 0)
+	{
+		if (check_frontend(frontend_fd, 1))
+			return true;
+	}
+
+	return false;
 }
 
