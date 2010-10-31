@@ -2419,7 +2419,7 @@ void cTaskLoadepg::CreateEpgXml(void) {
 												if (colon != NULL) {
 													*colon = 0;
 													printf(
-															"\t<subtitle lang=\"%s\">%s</subtitle>\n",
+															"\t<sub-title lang=\"%s\">%s</sub-title>\n",
 															/*xmllang(&levt->lang_code1) */
 															"en", d);
 													d = colon + 2;
