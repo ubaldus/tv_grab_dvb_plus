@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -Wall -I@top_srcdir@/include -g
+AM_CPPFLAGS = -Wall -I@top_srcdir@/include -g -fpermissive
 
 bin_PROGRAMS = tv_grab_dvb_plus
 
@@ -9,6 +9,9 @@ tv_grab_dvb_plus_SOURCES = \
 	dvb_info.cpp \
 	dvb_text.cpp \
 	dvb_parse.cpp \
+	dvb_scan.cpp \
+	parse-dvbscan.cpp \
+	tuner.cpp \
 	filter.cpp \
 	freesat_huffman.cpp \
 	freesat_tables.cpp \
@@ -25,6 +28,9 @@ tv_grab_dvb_plus_SOURCES = \
 	dvb_info.h \
 	dvb_text.h \
 	dvb_parse.h \
+	dvb_scan.h \
+	parse-dvbscan.h \
+	tuner.h \
 	filter.h \
 	formats.h \
 	freesat_epg.h \
