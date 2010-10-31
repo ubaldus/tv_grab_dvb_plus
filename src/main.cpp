@@ -108,6 +108,8 @@ static void usage() {
 				"\t                            %%c - channel number\n"
 				"\t                            %%n - channel name\n"
 				"\t                            %%p - provider name\n"
+				"\t                            %%N - lowercase channel name\n"
+				"\t                            %%P - lowercase provider name\n"
 				"\t-u (--updated-info)       output updated info (will result in repeated information) (default false)\n"
 				"\t-a (--adapter) adapter#   change the adapter number (default 0)\n"
 				"\t-F (--freq)    freq       frequency to tune in Hz (default don't tune)\n"

@@ -27,6 +27,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 #include "constants.h"
 #include "lookup.h"
@@ -108,7 +109,9 @@ const char *formattedxmltvid(int channelnumber, int sid, char *shortname,
 				return NULL;
 			}
 		}
-		int maxlen = 10+10 + strlen(xmltvidformat) + strlen(providername);
+		int maxlen = 10+10 + strlen(xmltvidformat);
+		if (providername != NULL)
+			maxlen += strlen(providername);
 		if (shortname != NULL)
 			maxlen += strlen(shortname);
 		//asprintf(&returnstring, "%s.%s.dvb.guide", chanid, providername);
@@ -127,7 +130,9 @@ const char *formattedxmltvid(int channelnumber, int sid, char *shortname,
 						case 's': d += sprintf(d, "%d", sid); break;
 						case 'c': d += sprintf(d, "%d", channelnumber); break;
 						case 'n': if (shortname) { d += sprintf(d, "%s", shortname); } break;
+						case 'N': if (shortname) { for(const char*s=shortname;s && *s;) *d++ = tolower(*s++); } break;
 						case 'p': if (providername) { d += sprintf(d, "%s", providername); } break;
+						case 'P': if (providername) { for(const char*s=providername;s && *s;) *d++ = tolower(*s++); } break;
 						default: 
 							log_message(ERROR, "invalid xmltv format specifier '%c'", c);
 							break;
