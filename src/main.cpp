@@ -106,6 +106,7 @@ static void usage() {
 				"\t-X (--xmltvidformat)      specify xmltvid format as format string, specifiers:\n"
 				"\t                            %%s - sid\n"
 				"\t                            %%c - channel number\n"
+				"\t                            %%i - channel id\n"
 				"\t                            %%n - channel name\n"
 				"\t                            %%p - provider name\n"
 				"\t                            %%N - lowercase channel name\n"

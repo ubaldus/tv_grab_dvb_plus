@@ -74,8 +74,13 @@ const char *dvbxmltvid(int chanid) {
  * For Sky, the string is "sid,skynumber" which is unique
  * If the key is not found then return a manufactured channel id
  */
-const char *formattedxmltvid(int channelnumber, int sid, char *shortname,
-		char *providername) {
+const char *formattedxmltvid(
+		int channelnumber, 
+		int channelid, 
+		int sid, 
+		char *shortname,
+		char *providername)
+{
 	char *chanid;
 	char *returnstring;
 	const char *c;
@@ -109,7 +114,7 @@ const char *formattedxmltvid(int channelnumber, int sid, char *shortname,
 				return NULL;
 			}
 		}
-		int maxlen = 10+10 + strlen(xmltvidformat);
+		int maxlen = 10+10+10 + strlen(xmltvidformat);
 		if (providername != NULL)
 			maxlen += strlen(providername);
 		if (shortname != NULL)
@@ -129,6 +134,7 @@ const char *formattedxmltvid(int channelnumber, int sid, char *shortname,
 						case '%': *d++ = c; break;
 						case 's': d += sprintf(d, "%d", sid); break;
 						case 'c': d += sprintf(d, "%d", channelnumber); break;
+						case 'i': d += sprintf(d, "%d", channelid); break;
 						case 'n': if (shortname) { d += sprintf(d, "%s", shortname); } break;
 						case 'N': if (shortname) { for(const char*s=shortname;s && *s;) *d++ = tolower(*s++); } break;
 						case 'p': if (providername) { d += sprintf(d, "%s", providername); } break;

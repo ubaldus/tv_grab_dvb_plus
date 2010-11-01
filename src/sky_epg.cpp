@@ -904,7 +904,7 @@ const char *get_channelident(sChannel * C) {
 		if (providername == NULL) {
 			providername = (char*)"SKY";
 		}
-		return formattedxmltvid(C->SkyNumber, C->Sid, C->shortname, providername);
+		return formattedxmltvid(C->SkyNumber, C->ChannelId, C->Sid, C->shortname, providername);
 	}
 }
 
