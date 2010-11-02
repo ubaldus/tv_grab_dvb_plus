@@ -1,11 +1,17 @@
-2009-04-06 Mark Spieth <mark@digivation.com.au>
+2010-11-02 Mark Spieth <mark@digivation.com.au>
 
-	* First release
+	* xmltvid format string
+	* initial tuner support
+
+2009-04-09 Simon Kenyon <simon@teilifis.com>
+
+	* Added DVB and Freesat processing
 
 2009-04-08 Simon Kenyon <simon@teilifis.com>
 
 	* Convert to use autoconf and friends
 
-2009-04-09 Simon Kenyon <simon@teilifis.com>
+2009-04-06 Mark Spieth <mark@digivation.com.au>
 
-	* Added DVB and Freesat processing
+	* First release
+
