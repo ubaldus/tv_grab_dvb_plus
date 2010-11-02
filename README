@@ -64,3 +64,17 @@ sky_xx.themes This file is table themes.
 
 In the above xx can be au, uk or it.
 Currently au is the same as uk.
+
+Example Usage
+-------------
+
+for DVB
+
+tv_grab_dvb_plus -s ./conf -a 3 -o guide.xmltv -F 177500000 -C ./tune.conf
+
+for Sky/Foxtel
+
+tv_grab_dvb_plus -s ./conf -a 0 -f skyAU -o foxtel.xmltv -F 626000000 -C ./au-foxtel
+tv_grab_dvb_plus -s ./conf -a 1 -d trace -f skyAU -X "%N%.R%.P" -o foxtel.xmltv -F 626000000 -C ./au-foxtel
+
+
