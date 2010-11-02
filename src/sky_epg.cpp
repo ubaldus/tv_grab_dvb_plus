@@ -896,6 +896,8 @@ void cTaskLoadepg::LoadFromSatellite(void) {
 
 const char *get_channelident(sChannel * C) {
 	char *providername;
+	char *name;
+	char  nameb[15];
 
 	if (C == NULL) {
 		return NULL;
@@ -904,7 +906,20 @@ const char *get_channelident(sChannel * C) {
 		if (providername == NULL) {
 			providername = (char*)"SKY";
 		}
-		return formattedxmltvid(C->SkyNumber, C->ChannelId, C->Sid, C->shortname, providername);
+		name = C->name;
+		if ((name == NULL) || !*name)
+		{
+			name = nameb;
+			sprintf(nameb, "%d", C->Sid);
+		}
+		return formattedxmltvid(
+				C->SkyNumber, 
+				C->ChannelId, 
+				C->Sid, 
+				C->RegionID, 
+				(C->shortname && *C->shortname)?C->shortname:name, 
+				name, 
+				providername);
 	}
 }
 
@@ -946,8 +961,8 @@ void cTaskLoadepg::CreateXmlChannels() {
 						"CreateXmlChannels: channel not found Sid=%d", C->Sid);
 			} else {
 				printf(
-						"<channel id=\"%s\" type=\"0x%x\" flags=\"0x%x\" bouquet=\"%d\" region=\"%d\">",
-						channelid, C->ChannelType, C->Flags, C->BouquetID,
+						"<channel id=\"%s\" number=\"%d\" type=\"0x%x\" flags=\"0x%x\" bouquet=\"%d\" region=\"%d\">",
+						channelid, C->SkyNumber, C->ChannelType, C->Flags, C->BouquetID,
 						C->RegionID);
 				printf("<display-name>%s</display-name>", xmlify(ServiceName));
 				printf("</channel>\n");
@@ -1379,8 +1394,12 @@ void cTaskLoadepg::SupplementChannelsSKYBOX(int FilterId, unsigned char *Data,
 			switch (d->getDescriptorTag()) {
 			case SI::ServiceDescriptorTag: {
 				SI::ServiceDescriptor * sd = (SI::ServiceDescriptor *) d;
-				switch (sd->getServiceType()) {
+				switch (sd->getServiceType() & 7) {
 				case 0x01: // digital television service
+				case 0x11: // hd digital television service
+				case 0x19: // ???hd digital television service
+				case 0x00: // ??? digital television service
+				case 0x90: // ??? digital television service
 				case 0x02: // digital radio sound service
 				case 0x04: // NVOD reference service
 				case 0x05: // NVOD time-shifted service

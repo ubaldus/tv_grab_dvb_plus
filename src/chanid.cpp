@@ -78,7 +78,9 @@ const char *formattedxmltvid(
 		int channelnumber, 
 		int channelid, 
 		int sid, 
+		int regionid, 
 		char *shortname,
+		char *name,
 		char *providername)
 {
 	char *chanid;
@@ -114,7 +116,7 @@ const char *formattedxmltvid(
 				return NULL;
 			}
 		}
-		int maxlen = 10+10+10 + strlen(xmltvidformat);
+		int maxlen = 11+11+11+11 + strlen(xmltvidformat);
 		if (providername != NULL)
 			maxlen += strlen(providername);
 		if (shortname != NULL)
@@ -124,21 +126,54 @@ const char *formattedxmltvid(
 		char *p = xmltvidformat;
 		char *d = returnstring;
 		char c;
+		const char * prefix;
+		const char * postfix;
 		while ((c=*p++))
 		{
 			switch (c)
 			{
 				case '%':
+					prefix = "";
+					postfix = "";
+doagain:
 					switch ((c=*p++))
 					{
 						case '%': *d++ = c; break;
-						case 's': d += sprintf(d, "%d", sid); break;
-						case 'c': d += sprintf(d, "%d", channelnumber); break;
-						case 'i': d += sprintf(d, "%d", channelid); break;
-						case 'n': if (shortname) { d += sprintf(d, "%s", shortname); } break;
-						case 'N': if (shortname) { for(const char*s=shortname;s && *s;) *d++ = tolower(*s++); } break;
-						case 'p': if (providername) { d += sprintf(d, "%s", providername); } break;
-						case 'P': if (providername) { for(const char*s=providername;s && *s;) *d++ = tolower(*s++); } break;
+						case '-':
+							switch ((c=*p++))
+							{
+								case '.':
+									postfix = ".";
+									goto doagain;
+							}
+							break;
+						case '.':
+							prefix = ".";
+							goto doagain;
+							break;
+						case 's': d += sprintf(d, "%s%d%s", prefix, sid, postfix); break;
+						case 'c': d += sprintf(d, "%s%d%s", prefix, channelnumber, postfix); break;
+						case 'i': d += sprintf(d, "%s%d%s", prefix, channelid, postfix); break;
+						case 'r': d += sprintf(d, "%s%d%s", prefix, regionid, postfix); break;
+						case 'R': if (regionid > 0) { d += sprintf(d, "%s%d%s", prefix, regionid, postfix); } break;
+						case 'x': if (shortname) { d += sprintf(d, "%s%s%s", prefix, shortname, postfix); } break;
+						case 'X': if (shortname) { 
+									  for(const char*s=prefix;s && *s;) *d++ = tolower(*s++); 
+									  for(const char*s=shortname;s && *s;) *d++ = tolower(*s++); 
+									  for(const char*s=postfix;s && *s;) *d++ = tolower(*s++); 
+								  } break;
+						case 'n': if (name) { d += sprintf(d, "%s%s%s", prefix, name, postfix); } break;
+						case 'N': if (name) { 
+									  for(const char*s=prefix;s && *s;) *d++ = tolower(*s++); 
+									  for(const char*s=name;s && *s;) if (isalnum(*s)) *d++ = tolower(*s++); else s++; 
+									  for(const char*s=postfix;s && *s;) *d++ = tolower(*s++); 
+								  } break;
+						case 'p': if (providername) { d += sprintf(d, "%s%s%s", prefix, providername, postfix); } break;
+						case 'P': if (providername) { 
+									  for(const char*s=prefix;s && *s;) *d++ = tolower(*s++); 
+									  for(const char*s=providername;s && *s;) *d++ = tolower(*s++); 
+									  for(const char*s=postfix;s && *s;) *d++ = tolower(*s++); 
+								  } break;
 						default: 
 							log_message(ERROR, "invalid xmltv format specifier '%c'", c);
 							break;

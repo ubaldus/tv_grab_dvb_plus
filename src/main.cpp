@@ -108,9 +108,14 @@ static void usage() {
 				"\t                            %%c - channel number\n"
 				"\t                            %%i - channel id\n"
 				"\t                            %%n - channel name\n"
+				"\t                            %%r - region id\n"
+				"\t                            %%R - region id, omit if 0\n"
+				"\t                            %%x - short channel name (if exists)\n"
 				"\t                            %%p - provider name\n"
 				"\t                            %%N - lowercase channel name\n"
+				"\t                            %%X - lowercase short channel name\n"
 				"\t                            %%P - lowercase provider name\n"
+				"\t                            optional . modifier, e.g. %%.r or %%-.r adds . before or after parameter\n"
 				"\t-u (--updated-info)       output updated info (will result in repeated information) (default false)\n"
 				"\t-a (--adapter) adapter#   change the adapter number (default 0)\n"
 				"\t-F (--freq)    freq       frequency to tune in Hz (default don't tune)\n"
@@ -522,7 +527,7 @@ int main(int argc, char **argv) {
 			asprintf(&tuneconf, "%s/%s", conf, TUNECONF);
 		if (!tune(frequency, adapter, 0))
 		{
-			log_message(ERROR, "failed to tune to %s, aborting", frequency);
+			log_message(ERROR, "failed to tune to %d, aborting", frequency);
 			free(tuneconf);
 			exit(2);
 		}
