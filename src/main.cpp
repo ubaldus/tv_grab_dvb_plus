@@ -34,6 +34,7 @@
 #include <linux/dvb/dmx.h>
 #include <linux/dvb/frontend.h>
 
+#include "../config.h"
 #include "constants.h"
 #include "filter.h"
 #include "dvb_epg.h"
@@ -45,6 +46,9 @@
 #include "log.h"
 #include "freesat_test.h" // only required during test mode
 #include "tuner.h"
+
+#define STRINGIFY2(a) #a						/**< Helper for #STRINGIFY */
+#define STRINGIFY(a) STRINGIFY2(a)				/**< Convert \a a into a quoted string */
 
 char *ProgName;
 
@@ -253,6 +257,9 @@ static int do_options(int arg_count, char **arg_strings) {
 			break;
 		case 'h':
 		case '?':
+
+//#define VERSION 0.2
+			fprintf(stderr, "tv_grab_dvb_plus v" VERSION "\n");
 			usage();
 			break;
 		case 'I':
