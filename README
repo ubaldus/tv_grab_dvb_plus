@@ -76,5 +76,6 @@ for Sky/Foxtel
 
 tv_grab_dvb_plus -s ./conf -a 0 -f skyAU -o foxtel.xmltv -F 626000000 -C ./au-foxtel
 tv_grab_dvb_plus -s ./conf -a 1 -d trace -f skyAU -X "%N%.R%.P" -o foxtel.xmltv -F 626000000 -C ./au-foxtel
+tv_grab_dvb_plus -s ./conf -a 1 -d trace -f skyAU -X "%N%.R%.P" -b "Residential" -o foxtel.xmltv -F 626000000 -C ./au-foxtel
 
 
