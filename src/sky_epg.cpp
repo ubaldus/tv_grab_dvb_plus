@@ -149,6 +149,19 @@ void hexdump(const unsigned char * buf, int len) {
 
 // }}}
 
+static int qsortBouquets(const void *A, const void *B) {
+	sBouquet *BouquetA = (sBouquet *) A;
+	sBouquet *BouquetB = (sBouquet *) B;
+
+	if (BouquetA->BouquetId > BouquetB->BouquetId) {
+		return 1;
+	}
+	if (BouquetA->BouquetId < BouquetB->BouquetId) {
+		return -1;
+	}
+	return 0;
+}
+
 static int qsortChannels(const void *A, const void *B) {
 	sChannel *ChannelA = (sChannel *) A;
 	sChannel *ChannelB = (sChannel *) B;
@@ -512,6 +525,7 @@ void cTaskLoadepg::Action(void) {
 		}
 		log_message(TRACE, "tuned transponder with adapter number=%i", adapter);
 		LoadFromSatellite();
+		ShowSelectedInfo();
 	default:
 		break;
 	}
@@ -911,6 +925,36 @@ void cTaskLoadepg::LoadFromSatellite(void) {
 	}
 	if (!IsError) {
 		CreateEpgXml();
+	}
+}
+// }}}
+
+// cTaskLoadepg::ShowSelectedInfo {{{
+void cTaskLoadepg::ShowSelectedInfo(void) 
+{
+	if (show_bouquets)
+	{
+		sBouquet* B;
+		int maxlen = 0;
+		for (int i = 0; i < nBouquets; i++) 
+		{
+			B = (lBouquets + i);
+			int len = strlen(B->Name);
+			if (len > maxlen) maxlen = len;
+		}
+		maxlen += 4;
+		qsort(lBouquets, nBouquets, sizeof(sBouquet), &qsortBouquets);
+		fprintf(stderr, "Bouquet  %-*s  Code\n", maxlen, "Name");
+		const char * minuss = "-----------------------------------------------------------------";
+		fprintf(stderr, "%.*s\n", maxlen + 9 + 4, minuss);
+		for (int i = 0; i < nBouquets; i++) 
+		{
+			B = (lBouquets + i);
+			char * name2;
+			asprintf(&name2, "'%s'", B->Name);
+			fprintf(stderr, "%-5d    %-*s'%s'\n", B->BouquetId, maxlen, name2, B->Code);
+			free(name2);
+		}
 	}
 }
 // }}}

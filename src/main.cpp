@@ -80,6 +80,7 @@ const char * defaultfreesatxmltvidformat = "%s.dvb.guide";
 const char * defaultskyxmltvidformat = "%s.%p.dvb.guide";
 char * xmltvidformat = NULL;
 char * bouquet_filter = NULL;
+bool show_bouquets = false;
 
 #define TUNECONF "tune.conf"
 char* tuneconf = NULL;
@@ -98,6 +99,8 @@ static void usage() {
 			stderr,
 			"usage: %s [-h] [-c] [-D] [-d] [-I] [-k] [-p] [-q] [-S] [-u] [-x] [-a adapter] [-C file] [-f format] [-F freq] [-h hours] [-i file] [-n days] [-O days] [-o file] [-s sharedir] [-t timeout]\n\n"
 				"\t-h (--help)               output this help text\n"
+				"\t-b (--bouquet) name       use a name for bouquet filter\n"
+				"\t-B (--show-bouquets)      show all bouquets\n"
 				"\t-c (--chanids)            use channel identifiers from file 'chanidents'\n"
 				"\t                          (default sidnumber.dvb.guide)\n"
 				"\t-D (--description)        output a description which identified the grabber\n"
@@ -173,6 +176,7 @@ static int do_options(int arg_count, char **arg_strings) {
 	static const struct option Long_Options[] = {
 			{"adapter", 1, 0, 'a'},
 			{"bouquet", 1, 0, 'b'},
+			{"show-bouquets", 0, 0, 'B'},
 			{"chanids", 0, 0, 'c'},
 			{"description", 0, 0, 'D'},
 			{"debug", 1, 0, 'd'},
@@ -204,7 +208,7 @@ static int do_options(int arg_count, char **arg_strings) {
 
 	while (1) {
 		int c = getopt_long(arg_count, arg_strings,
-				"a:b:C:cDd:F:f:H:hIi:kn:O:o:pqSs:Tt:uxX:", Long_Options, &Option_Index);
+				"a:b:BC:cDd:F:f:H:hIi:kn:O:o:pqSs:Tt:uxX:", Long_Options, &Option_Index);
 		if (c == EOF)
 			break;
 		switch (c) {
@@ -214,6 +218,9 @@ static int do_options(int arg_count, char **arg_strings) {
 			break;
 		case 'b':
 			bouquet_filter = strdup(optarg);
+			break;
+		case 'B':
+			show_bouquets = true;
 			break;
 		case 'C':
 			if (strchr(optarg, '/') != NULL)

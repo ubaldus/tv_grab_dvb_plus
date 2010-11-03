@@ -247,6 +247,7 @@ public:
 	~cTaskLoadepg();
 	void LoadFromSatellite(void);
 	void LoadFromCable(void);
+	void ShowSelectedInfo(void);
 	void Stop();
 	bool IsLoopRunning() const {
 		return IsRunning;
@@ -261,5 +262,6 @@ public:
 };
 
 extern char * bouquet_filter;
+extern bool show_bouquets;
 
 #endif
