@@ -115,9 +115,9 @@ public:
 	unsigned short int SkyCount;
 	unsigned short int SkyNumber;
 	unsigned short int BouquetID;
-	unsigned short int RegionID;
-	unsigned char ChannelType;
 	unsigned short Flags;
+	unsigned int RegionMask;
+	unsigned char ChannelType;
 	char * name;
 	char * shortname;
 	char * providername;
@@ -143,6 +143,8 @@ typedef struct {
 	unsigned short int BouquetId;
 	short int SectionNumber[256];
 	short int LastSectionNumber;
+	const char * Name;
+	const char * Code;
 } sBouquet;
 
 typedef struct {
@@ -257,5 +259,7 @@ public:
 	~EPGGrabber();
 	void Grab();
 };
+
+extern char * bouquet_filter;
 
 #endif

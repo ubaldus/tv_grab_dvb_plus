@@ -126,6 +126,27 @@ static char *GetStringMJD(int MJD) {
 	return Buffer;
 }
 
+void hexdump(const unsigned char * buf, int len) {
+
+	int i, n;
+	char sbuf[80];
+
+	n = 0;
+	for (i = 0; i < len; i++) 
+	{
+		if ((i & 15) == 0)
+			n = sprintf(sbuf, " %04x:", i);
+		n += sprintf(&sbuf[n], " %02x", buf[i]);
+		if ((i & 15) == 15)
+		{
+			log_message(DEBUG, sbuf);
+			n = 0;
+		}
+	}
+	if (n != 0)
+		log_message(DEBUG, sbuf);
+}
+
 // }}}
 
 static int qsortChannels(const void *A, const void *B) {
@@ -916,7 +937,7 @@ const char *get_channelident(sChannel * C) {
 				C->SkyNumber, 
 				C->ChannelId, 
 				C->Sid, 
-				C->RegionID, 
+				C->RegionMask, 
 				(C->shortname && *C->shortname)?C->shortname:name, 
 				name, 
 				providername);
@@ -961,10 +982,10 @@ void cTaskLoadepg::CreateXmlChannels() {
 						"CreateXmlChannels: channel not found Sid=%d", C->Sid);
 			} else {
 				printf(
-						"<channel id=\"%s\" number=\"%d\" type=\"0x%x\" flags=\"0x%x\" bouquet=\"%d\" region=\"%d\">",
+						"<channel id=\"%s\" <!-- number=\"%d\" type=\"0x%x\" flags=\"0x%x\" bouquet=\"%d\" region=\"%x\" sid=\"%d\" -->>\n",
 						channelid, C->SkyNumber, C->ChannelType, C->Flags, C->BouquetID,
-						C->RegionID);
-				printf("<display-name>%s</display-name>", xmlify(ServiceName));
+						C->RegionMask, C->Sid);
+				printf("\t<display-name>%s</display-name>\n", xmlify(ServiceName));
 				printf("</channel>\n");
 			}
 			free(ServiceName);
@@ -1488,7 +1509,8 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data,
 	unsigned short int BouquetID;
 	unsigned short int RegionID;
 
-	if (SectionNumber == 0x00 && nBouquets == 0) {
+	//if (SectionNumber == 0x00 && nBouquets == 0) {
+	if (LastSectionNumber == 0x00 && nBouquets == 0) {
 		return;
 	}
 	// Table BAT
@@ -1498,11 +1520,87 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data,
 			log_message(TRACE, "endbat");
 			return;
 		}
+		char bouquetname[50] = {0};
+		char bouquetcode[50] = {0};
 		BouquetID = (Data[3] << 8) | Data[4];
 		int BouquetDescriptorsLength = ((Data[8] & 0x0f) << 8) | Data[9];
 		int TransportStreamLoopLength = ((Data[BouquetDescriptorsLength + 10]
 				& 0x0f) << 8) | Data[BouquetDescriptorsLength + 11];
 		int p1 = (BouquetDescriptorsLength + 12);
+		//log_message(TRACE, "BAT %d len %d tlen %d", BouquetID, BouquetDescriptorsLength, TransportStreamLoopLength);
+		//hexdump(&Data[0], p1);
+		sBouquet *B;
+		if (BouquetDescriptorsLength > 0)
+		{
+			uint l1 = Data[11];
+			if (l1 > (sizeof(bouquetname)-1)) l1 = sizeof(bouquetname)-1;
+			strncpy(bouquetname, (const char*)&Data[12], l1); bouquetname[l1] = 0;
+			uint l2 = Data[12+Data[11]+1];
+			if (l2 > (sizeof(bouquetcode)-1)) l2 = sizeof(bouquetcode)-1;
+			memset(bouquetcode, 0, sizeof(bouquetcode));
+			strncpy(bouquetcode, (const char*)&Data[12+Data[11]+1+2], l2-1);
+			for (int i = 0; i < nBouquets; i++) 
+			{
+				B = (lBouquets + i);
+				if (B->BouquetId == BouquetID) 
+				{
+					if (B->Name == NULL)
+						B->Name = strdup(bouquetname);
+					if (B->Code == NULL)
+						B->Code = strdup(bouquetcode);
+					goto foundbouquet;
+				}
+			}
+			B = (lBouquets + nBouquets);
+			B->BouquetId = BouquetID;
+			for (int i = 0; i <= LastSectionNumber; i++) {
+				B->SectionNumber[i] = -1;
+			}
+			B->LastSectionNumber = LastSectionNumber;
+			B->Name = NULL;
+			B->Code = NULL;
+			if (bouquetname[0])
+				B->Name = strdup(bouquetname);
+			if (bouquetcode[0])
+				B->Code = strdup(bouquetcode);
+			nBouquets++;
+foundbouquet:
+			if (is_logging(TRACE))
+			{
+				log_message(TRACE, "BAT %d len %d tlen %d l1=%d l2=%d name '%s' code '%s'", 
+						BouquetID, BouquetDescriptorsLength, TransportStreamLoopLength, 
+						Data[11],
+						Data[12+Data[11]+1],
+						bouquetname, bouquetcode);
+				hexdump(&Data[0], p1);
+			}
+			goto hasbouquetalready;
+		}
+		for (int i = 0; i < nBouquets; i++) 
+		{
+			B = (lBouquets + i);
+			if (B->BouquetId == BouquetID) 
+			{
+				if (B->Name)
+					goto hasbouquetalready;
+				return;
+			}
+		}
+		goto createbouquet;
+hasbouquetalready:
+		if (bouquet_filter)
+		{
+			if (!(B && B->Name && (strcmp(bouquet_filter, B->Name)==0)))
+				goto CheckBouquetSections;
+		}
+		if (is_logging(TRACE))
+		{
+			if (BouquetDescriptorsLength == 0)
+			{
+				log_message(TRACE, "BAT %d len %d tlen %d", BouquetID, BouquetDescriptorsLength, TransportStreamLoopLength);
+				hexdump(&Data[0], p1);
+			}
+		}
 		while (TransportStreamLoopLength > 0) {
 			unsigned short int Tid = (Data[p1] << 8) | Data[p1 + 1];
 			unsigned short int Nid = (Data[p1 + 2] << 8) | Data[p1 + 3];
@@ -1517,105 +1615,126 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data,
 				int p3 = (p2 + 2);
 				p2 += (DescriptorLength + 2);
 				TransportDescriptorsLength -= (DescriptorLength + 2);
+				if (is_logging(TRACE))
+				{
+					log_message(TRACE, "bat %d,%d,%d tag 0x%02x len %d", BouquetID, Nid, Tid, DescriptorTag, DescriptorLength);
+					hexdump(&Data[p3], DescriptorLength);
+				}
 				switch (DescriptorTag) {
 				case 0x41: // service_list
+					// sid[2] type[1]
+					// set service type 01, 02, 04, 05, 11, 19, 90
 					break;
 				case 0x5f: // private data specifier indicates BSkyB
+					// select register addr[4]
+					// e.g. 00000002, 
+					//      00362275 (u@6) channel number to use
 					break;
 				case 0x93: // unknown private
+					// set register sid[2] val[2] ...
+					// actually sky channel number
 					break;
 				case 0xb1:
+					RegionID = (Data[p3] << 8) + Data[p3 + 1];
 					p3 += 2;
 					DescriptorLength -= 2;
-					RegionID = Data[p2 + 3];
 					while (DescriptorLength > 0) {
-						// 0x01 = Video Channel
-						// 0x02 = Audio Channel
-						// 0x05 = Other Channel
-						//if( Data[p3+2] == 0x01 || Data[p3+2] == 0x02 || Data[p3+2] == 0x05 )
-						//{
-						//
-						//full decoding from firmware left for ref
-						//
 						unsigned short Sid = (Data[p3] << 8) | Data[p3 + 1];
-						unsigned char ChannelType = Data[p3 + 2];
-						unsigned short ChannelId = (Data[p3 + 3] << 8)
-								| Data[p3 + 4];
-						unsigned short SkyNumber = (Data[p3 + 5] << 8)
-								| Data[p3 + 6];
-						unsigned short Flags = (Data[p3 + 7] << 8) | Data[p3
-								+ 8];
+						unsigned char ChannelType = Data[p3 + 2];	// 01, 02, 05
+						unsigned short ChannelId = (Data[p3 + 3] << 8) | Data[p3 + 4];
+						unsigned short SkyNumber = 0;
+						unsigned short Flags = (Data[p3 + 7] << 8) | Data[p3 + 8];
+						SkyNumber = (Data[p3 + 5] << 8) | Data[p3 + 6];
+						if ((Flags >> 4) == SkyNumber)
+							Flags &= 0xf;
 						//unsigned short unkval = Flags >> 4;
 						//int unkflag1 = (Flags & 8) >> 3;
 						//int unkflag2 = (Flags & 4) >> 2;
 						//int unkflag3 = (Flags & 2) >> 1;
 						//int unkflag4 = (Flags & 1);
-						/*
-						 *
-						 */
-						if (1/*SkyNumber > 100 && SkyNumber < 1000*/) {
-							if (ChannelId > 0) {
-								sChannel Key, *C;
-								Key.ChannelId = ChannelId;
-								Key.Nid = Nid;
-								Key.Tid = Tid;
-								Key.Sid = Sid;
-								C = (sChannel *) bsearch(&Key, lChannels,
-										nChannels, sizeof(sChannel),
-										&bsearchChannelByChID);
-								if (C == NULL) {
-									C = (lChannels + nChannels);
-									C->ChannelId = ChannelId;
-									C->Nid = Nid;
-									C->Tid = Tid;
-									C->Sid = Sid;
+						if (ChannelId > 0) {
+							sChannel Key, *C;
+							Key.ChannelId = ChannelId;
+							Key.Nid = Nid;
+							Key.Tid = Tid;
+							Key.Sid = Sid;
+							C = (sChannel *) bsearch(&Key, lChannels,
+									nChannels, sizeof(sChannel),
+									&bsearchChannelByChID);
+							if (C == NULL) {
+								C = (lChannels + nChannels);
+								C->ChannelId = ChannelId;
+								C->Nid = Nid;
+								C->Tid = Tid;
+								C->Sid = Sid;
+								if (ChannelId != SkyNumber)
 									C->SkyNumber = SkyNumber;
-									C->BouquetID = BouquetID;
-									C->RegionID = RegionID;
-									C->ChannelType = ChannelType;
-									C->Flags = Flags;
-									C->pData = 0;
-									C->lenData = 0;
-									C->IsFound = false;
-									nChannels++;
-									incr_stat("channels.count");
-									if (nChannels >= MAX_CHANNELS) {
-										log_message(ERROR,
-												"channels found more than %i",
-												MAX_CHANNELS);
-										IsError = true;
-										return;
-									}
-									qsort(lChannels, nChannels,
-											sizeof(sChannel),
-											&qsortChannelsByChID);
-								} else {
-									if ((ChannelId != C->ChannelId) || (Nid
-											!= C->Nid) || (Tid != C->Tid)
-											|| (Sid != C->Sid) || (SkyNumber
-											!= C->SkyNumber)) {
-										log_message(
-												DEBUG,
-												"channel found ChannelId=%d(%d) Nid=%d(%d) Tid=%d(%d) Sid=%5d(%5d) SkyNumber=%5d(%5d) Flags=%04x(%04x)",
-												ChannelId, C->ChannelId, Nid,
-												C->Nid, Tid, C->Tid, Sid,
-												C->Sid, SkyNumber,
-												C->SkyNumber, Flags, C->Flags);
-									}
+								C->BouquetID = BouquetID;
+								if (RegionID != 0xffff)
+									C->RegionMask |= (1 << (RegionID & 0x1f));
+								C->ChannelType = ChannelType;
+								C->Flags = Flags;
+								C->pData = 0;
+								C->lenData = 0;
+								C->IsFound = false;
+								nChannels++;
+								incr_stat("channels.count");
+								if (nChannels >= MAX_CHANNELS) {
+									log_message(ERROR,
+											"channels found more than %i",
+											MAX_CHANNELS);
+									IsError = true;
+									return;
 								}
-							} else {
 								log_message(
 										DEBUG,
-										"invalid channelId ChannelId=%d Nid=%d Tid=%d Sid=%d SkyNumber=%d",
-										ChannelId, Nid, Tid, Sid, SkyNumber);
+										"new channel found ChannelId=%d(%d) Nid=%d(%d) Tid=%d(%d) Sid=%5d(%5d) "
+										"SkyNumber=%5d(%5d) Region=%x(%x) Flags=%04x(%04x) Bqet=%d name=%s",
+										ChannelId, C->ChannelId, 
+										Nid, C->Nid, 
+										Tid, C->Tid, 
+										Sid, C->Sid, 
+										SkyNumber, C->SkyNumber, 
+										1 << (RegionID & 0x1f), C->RegionMask, 
+										Flags, C->Flags,
+										BouquetID,
+										C->name?C->name:"unknown");
+								qsort(lChannels, nChannels,
+										sizeof(sChannel),
+										&qsortChannelsByChID);
+							} else {
+								if ((ChannelId != C->ChannelId) 
+										|| (Nid != C->Nid) 
+										|| (Tid != C->Tid)
+										|| (Sid != C->Sid) 
+										|| (((1<<(RegionID & 0x1f)) & C->RegionMask) == 0)
+										|| (SkyNumber != C->SkyNumber)) 
+								{
+									log_message(
+											DEBUG,
+											"channel region ChannelId=%d(%d) Nid=%d(%d) Tid=%d(%d) Sid=%5d(%5d) "
+											"SkyNumber=%5d(%5d) Region=%x(%x) Flags=%04x(%04x) Bqet=%d name=%s",
+											ChannelId, C->ChannelId, 
+											Nid, C->Nid, 
+											Tid, C->Tid, 
+											Sid, C->Sid, 
+											SkyNumber, C->SkyNumber, 
+											1<<(RegionID & 0x1f), C->RegionMask, 
+											Flags, C->Flags,
+											BouquetID,
+											C->name?C->name:"unknown");
+								}
+								if (ChannelId != SkyNumber)
+									C->SkyNumber = SkyNumber;
+								if (RegionID != 0xffff)
+									C->RegionMask |= (1 << (RegionID & 0x1f));
 							}
 						} else {
 							log_message(
 									DEBUG,
-									"invalid SkyNumber ChannelId=%d Nid=%d Tid=%d Sid=%d SkyNumber=%d",
+									"invalid channelId ChannelId=%d Nid=%d Tid=%d Sid=%d SkyNumber=%d",
 									ChannelId, Nid, Tid, Sid, SkyNumber);
 						}
-						//}
 						p3 += 9;
 						DescriptorLength -= 9;
 					}
@@ -1627,19 +1746,25 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data,
 				}
 			}
 		}
-		sBouquet *B;
 		for (int i = 0; i < nBouquets; i++) {
 			B = (lBouquets + i);
 			if (B->BouquetId == BouquetID) {
 				goto CheckBouquetSections;
 			}
 		}
+createbouquet:
 		B = (lBouquets + nBouquets);
 		B->BouquetId = BouquetID;
 		for (int i = 0; i <= LastSectionNumber; i++) {
 			B->SectionNumber[i] = -1;
 		}
 		B->LastSectionNumber = LastSectionNumber;
+		B->Name = NULL;
+		B->Code = NULL;
+		if (bouquetname[0])
+			B->Name = strdup(bouquetname);
+		if (bouquetcode[0])
+			B->Code = strdup(bouquetcode);
 		nBouquets++;
 		CheckBouquetSections: ;
 		B->SectionNumber[SectionNumber] = SectionNumber;

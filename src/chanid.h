@@ -28,7 +28,7 @@ extern const char *formattedxmltvid(
 		int skynumber, 
 		int channelid, 
 		int sid, 
-		int regionid, 
+		unsigned int regionmask, 
 		char *shortname,
 		char *name,
 		char *provider);

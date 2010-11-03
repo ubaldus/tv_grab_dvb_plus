@@ -78,7 +78,7 @@ const char *formattedxmltvid(
 		int channelnumber, 
 		int channelid, 
 		int sid, 
-		int regionid, 
+		unsigned int regionmask, 
 		char *shortname,
 		char *name,
 		char *providername)
@@ -154,8 +154,8 @@ doagain:
 						case 's': d += sprintf(d, "%s%d%s", prefix, sid, postfix); break;
 						case 'c': d += sprintf(d, "%s%d%s", prefix, channelnumber, postfix); break;
 						case 'i': d += sprintf(d, "%s%d%s", prefix, channelid, postfix); break;
-						case 'r': d += sprintf(d, "%s%d%s", prefix, regionid, postfix); break;
-						case 'R': if (regionid > 0) { d += sprintf(d, "%s%d%s", prefix, regionid, postfix); } break;
+						case 'r': d += sprintf(d, "%s%x%s", prefix, regionmask, postfix); break;
+						case 'R': if (regionmask != 0) { d += sprintf(d, "%s%x%s", prefix, regionmask, postfix); } break;
 						case 'x': if (shortname) { d += sprintf(d, "%s%s%s", prefix, shortname, postfix); } break;
 						case 'X': if (shortname) { 
 									  for(const char*s=prefix;s && *s;) *d++ = tolower(*s++); 

@@ -79,6 +79,7 @@ const char * defaultxmltvidformat = "%s.dvb.guide";
 const char * defaultfreesatxmltvidformat = "%s.dvb.guide";
 const char * defaultskyxmltvidformat = "%s.%p.dvb.guide";
 char * xmltvidformat = NULL;
+char * bouquet_filter = NULL;
 
 #define TUNECONF "tune.conf"
 char* tuneconf = NULL;
@@ -171,6 +172,7 @@ static void preferredmethod() {
 static int do_options(int arg_count, char **arg_strings) {
 	static const struct option Long_Options[] = {
 			{"adapter", 1, 0, 'a'},
+			{"bouquet", 1, 0, 'b'},
 			{"chanids", 0, 0, 'c'},
 			{"description", 0, 0, 'D'},
 			{"debug", 1, 0, 'd'},
@@ -202,13 +204,16 @@ static int do_options(int arg_count, char **arg_strings) {
 
 	while (1) {
 		int c = getopt_long(arg_count, arg_strings,
-				"a:C:cDd:F:f:H:hIi:kn:O:o:pqSs:Tt:uxX:", Long_Options, &Option_Index);
+				"a:b:C:cDd:F:f:H:hIi:kn:O:o:pqSs:Tt:uxX:", Long_Options, &Option_Index);
 		if (c == EOF)
 			break;
 		switch (c) {
 		case 'a':
 			adapter = atoi(optarg);
 			sprintf(demux, "/dev/dvb/adapter%d/demux%d", adapter, demuxno);
+			break;
+		case 'b':
+			bouquet_filter = strdup(optarg);
 			break;
 		case 'C':
 			if (strchr(optarg, '/') != NULL)
