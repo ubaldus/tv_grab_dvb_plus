@@ -998,7 +998,7 @@ void cTaskLoadepg::CreateXmlChannels() {
 		sChannel *C = (lChannels + i);
 		if (C->Nid > 0 && C->Tid > 0 && C->Sid > 0) {
 			if (C->providername == NULL) {
-				log_message(DEBUG,
+				log_message(TRACE,
 						"CreateXmlChannels: providername is NULL Sid=%d",
 						C->Sid);
 				//continue;
@@ -1008,13 +1008,13 @@ void cTaskLoadepg::CreateXmlChannels() {
 			//continue;
 			//}
 			if (!C->IsFound) {
-				log_message(DEBUG, "CreateXmlChannels: !IsFound Sid=%d", C->Sid);
+				log_message(TRACE, "CreateXmlChannels: !IsFound Sid=%d", C->Sid);
 				//continue;
 			}
 			if (C->name) {
 				asprintf(&ServiceName, "%s", C->name);
 			} else {
-				log_message(DEBUG, "CreateXmlChannels: name is NULL Sid=%d",
+				log_message(TRACE, "CreateXmlChannels: name is NULL Sid=%d",
 						C->Sid);
 				asprintf(&ServiceName, "[%d.%d.%s]", C->SkyNumber, C->Sid,
 						C->providername);
@@ -1259,10 +1259,22 @@ void cTaskLoadepg::ReadBuffer(int FilterId, int Fd) {
 				case 0xa3:
 					GetTitlesSKYBOX(FilterId, Buffer, Bytes - 4);
 					break;
+				case 0xa4:
+				case 0xa5:
+				case 0xa6:
+				case 0xa7:
+					// extra I think means starts in X min or something like that
+					// code 0xbc
+					//GetExtraSKYBOX(FilterId, Buffer, Bytes - 4);
+					break;
 				case 0xa8:
 				case 0xa9:
 				case 0xaa:
 				case 0xab:
+				//case 0xac:
+				//case 0xad:
+				//case 0xae:
+				//case 0xaf:
 					GetSummariesSKYBOX(FilterId, Buffer, Bytes - 4);
 					break;
 				default:
@@ -1472,10 +1484,9 @@ void cTaskLoadepg::SupplementChannelsSKYBOX(int FilterId, unsigned char *Data,
 					char NameBuf[1024];
 					char ShortNameBuf[1024];
 					char ProviderNameBuf[1024];
-					log_message(TRACE, "B %02x %x-%x %x-%x %x-%x",
-							sd->getServiceType(), Key.Nid, lChannels[10].Nid,
-							Key.Tid, lChannels[10].Tid, Key.Sid,
-							lChannels[10].Sid);
+					log_message(TRACE, "B %02x %x %x %x",
+							sd->getServiceType(), Key.Nid, 
+							Key.Tid, Key.Sid);
 					sd->serviceName.getText(NameBuf, ShortNameBuf,
 							sizeof(NameBuf), sizeof(ShortNameBuf));
 					char *pn = compactspace(NameBuf);
@@ -1488,12 +1499,12 @@ void cTaskLoadepg::SupplementChannelsSKYBOX(int FilterId, unsigned char *Data,
 							asprintf(&C->providername, "%s", provname);
 						} else {
 							log_message(
-									DEBUG,
+									TRACE,
 									"C->name != NULL Sid=%d providername=\"%s\"",
 									Key.Sid, provname);
 						}
 					} else {
-						log_message(DEBUG,
+						log_message(TRACE,
 								"C is NULL Sid=%d providername=\"%s\"",
 								Key.Sid, provname);
 					}
@@ -1600,6 +1611,7 @@ void cTaskLoadepg::GetChannelsSKYBOX(int FilterId, unsigned char *Data,
 			for (int i = 0; i <= LastSectionNumber; i++) {
 				B->SectionNumber[i] = -1;
 			}
+			B->SectionNumber[SectionNumber]--;	// let it see this one twice
 			B->LastSectionNumber = LastSectionNumber;
 			B->Name = NULL;
 			B->Code = NULL;
@@ -1802,6 +1814,7 @@ createbouquet:
 		for (int i = 0; i <= LastSectionNumber; i++) {
 			B->SectionNumber[i] = -1;
 		}
+		B->SectionNumber[SectionNumber]--;	// let it see this one twice
 		B->LastSectionNumber = LastSectionNumber;
 		B->Name = NULL;
 		B->Code = NULL;
@@ -1811,12 +1824,15 @@ createbouquet:
 			B->Code = strdup(bouquetcode);
 		nBouquets++;
 		CheckBouquetSections: ;
-		B->SectionNumber[SectionNumber] = SectionNumber;
+		//B->SectionNumber[SectionNumber] = SectionNumber;
+		B->SectionNumber[SectionNumber]++;
 		EndBAT = true;
 		for (int i = 0; i < nBouquets; i++) {
 			B = (lBouquets + i);
 			for (int ii = 0; ii <= B->LastSectionNumber; ii++) {
-				if (B->SectionNumber[ii] == -1) {
+				//if (B->SectionNumber[ii] == -1)
+				if (B->SectionNumber[ii] < 0) 
+				{
 					EndBAT = false;
 					break;
 				}
@@ -2556,7 +2572,7 @@ void cTaskLoadepg::CreateEpgXml(void) {
 								channelIdent = get_channelident(C);
 								if (channelIdent == NULL) {
 									log_message(
-											DEBUG,
+											TRACE,
 											"CreateEpgXml: C is null ChannelId=%d",
 											ChannelId);
 								} else {
