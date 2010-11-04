@@ -29,7 +29,7 @@ struct w_scan_flags flags = {
 	//ATSC_VSB,	// default for ATSC scan
 	0,		// need 2nd generation frontend
 	0, //DE,		// country index or sat index
-	1,		// tuning speed {1 = fast, 2 = medium, 3 = slow}
+	2,		// tuning speed {1 = fast, 2 = medium, 3 = slow}
 	0,		// filter timeout {0 = default, 1 = long} 
 	1,		// get_other_nits, atm always
 	1,		// add_frequencies, atm always
@@ -592,11 +592,14 @@ bool tune(int freq, int adapter, int frontend)
 	}
 	flags.fe_type = fe_info.type;
 
-
 	if (tune_to_transponder(frontend_fd, tp) == 0)
 	{
-		if (check_frontend(frontend_fd, 1))
-			return true;
+		for (int checks = 0; checks < 5; checks++)
+		{
+			if (check_frontend(frontend_fd, 1))
+				return true;
+			usleep(500000);
+		}
 	}
 
 	return false;
