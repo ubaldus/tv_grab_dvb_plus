@@ -191,7 +191,7 @@ void print_transponder(char * dest, struct transponder * t)
 
 			break;
 		default:
-			log_message(WARNING, "unimplemented frontend type %d\n", t->type);
+			log_message(WARNING, "unimplemented frontend type %d", t->type);
 	}
 }
 
@@ -463,7 +463,7 @@ static int __tune_to_transponder (int frontend_fd, struct transponder *t, int v)
 		memset(buf, 0, 128);
 		print_transponder(buf, t);
 		log_message(DEBUG, "tune to: %s %s",
-			buf, t->last_tuning_failed?" (no signal)\n":"\n");
+			buf, t->last_tuning_failed?" (no signal)":"");
 		free(buf);
 		}
 
@@ -578,7 +578,7 @@ bool tune(int freq, int adapter, int frontend)
 	asprintf (&frontend_devname, "/dev/dvb/adapter%i/frontend%i", adapter, frontend);
 	if ((frontend_fd = open (frontend_devname, fe_open_mode)) < 0)
 	{
-		log_message(ERROR, "failed to open '%s': %d %m\n", frontend_devname, errno);
+		log_message(ERROR, "failed to open '%s': %d %m", frontend_devname, errno);
 		free(frontend_devname);
 		return false;
 	}

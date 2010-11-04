@@ -144,7 +144,7 @@ int dvbscan_parse_tuningdata(const char * tuningdata, struct w_scan_flags * flag
 		log_message(ERROR, "could not open initial tuning data: file name is NULL");
 		return 0; // err
 		}
-	log_message(WARNING, "parsing initial tuning data \"%s\"..\n", tuningdata);
+	log_message(WARNING, "parsing initial tuning data \"%s\"..", tuningdata);
 	initdata = fopen(tuningdata, "r");
 	if (initdata == NULL) {
 		log_message(ERROR, "cannot open '%s': error %d %m", tuningdata, errno);
@@ -335,13 +335,13 @@ int dvbscan_parse_tuningdata(const char * tuningdata, struct w_scan_flags * flag
 		copy = NULL;
 		memset(buf, 0, sizeof(buf));
 		print_transponder(buf, tn);
-		log_message(WARNING, "\ttransponder %s\n", buf);
+		log_message(TRACE, "\ttransponder %s", buf);
 		memset(buf, 0, sizeof(buf));		
 		}
 	free(buf);
 	fclose(initdata);
 	if (count == 0) {
-		log_message(WARNING, "Unexpected end of file..\n");
+		log_message(WARNING, "Unexpected end of tuning file");
 		return 0;
 		}
 	return 1; // success
@@ -492,13 +492,13 @@ int dvbscan_parse_rotor_positions(const char * positiondata) {
 	int count = 0;
 
 	if (positiondata == NULL) {
-		log_message(ERROR, "could not open rotor position tuning data: file name is NULL\n");
+		log_message(ERROR, "could not open rotor position tuning data: file name is NULL");
 		return 0; // err
 		}
-	log_message(WARNING, "parsing rotor data \"%s\"..\n", positiondata);
+	log_message(WARNING, "parsing rotor data \"%s\"..", positiondata);
 	data = fopen(positiondata, "r");
 	if (data == NULL) {
-		log_message(ERROR, "cannot open '%s': error %d %m\n", positiondata, errno);
+		log_message(ERROR, "cannot open '%s': error %d %m", positiondata, errno);
 		return 0; // err
 		}
 	memset(buf, 0, sizeof(buf));
@@ -597,16 +597,16 @@ int dvbscan_parse_rotor_positions(const char * positiondata) {
 #if 0
 		if (item.position > 0) {
 			if (txt_to_satellite(item.id) < 0) {
-				log_message(WARNING, "Satellite ID \"%s\" not defined.\n", item.id);
+				log_message(WARNING, "Satellite ID \"%s\" not defined.", item.id);
 				goto err;
 				}
 			if (item.position > 255) {
-				log_message(WARNING, "Invalid satellite position %d.\n", item.position);
+				log_message(WARNING, "Invalid satellite position %d.", item.position);
 				goto err;
 				}
 			sat_list[txt_to_satellite(item.id)].rotor_position = item.position;
 			count++;	
-			log_message(WARNING, "\trotor position %3d = %6s\n", item.position, item.id);
+			log_message(WARNING, "\trotor position %3d = %6s", item.position, item.id);
 			}
 #endif
 		memset(buf, 0, sizeof(buf));		
@@ -616,13 +616,13 @@ int dvbscan_parse_rotor_positions(const char * positiondata) {
 	free(buf);
 	fclose(data);
 	if (count == 0) {
-		log_message(WARNING, "Unexpected end of file..\n");
+		log_message(WARNING, "Unexpected end of file..");
 		return 0;
 		}
 	return 1; // success
 err:
 	// clean up and leave with error.
-	log_message(WARNING, "line causing error was \n\"%s\n", buf);
+	log_message(WARNING, "line causing error was \"%s", buf);
 	if (item.id)
 		free(item.id);
 	free(buf);
