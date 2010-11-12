@@ -1,0 +1,77 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+configure: configure-stamp
+
+configure-stamp: configure.ac
+	dh_testdir
+
+	[ -f "configure" ] || sh bootstrap.sh --noconf
+
+	./configure --prefix=/usr
+
+	touch configure-stamp
+
+build: configure build-stamp
+
+build-stamp:
+	dh_testdir
+
+	$(MAKE)
+
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	debconf-updatepo
+	rm -f build-stamp configure-stamp
+
+	[ ! -f Makefile ] || $(MAKE) distclean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs -A etc/tvgrabdvbplus
+
+	$(MAKE) DESTDIR=$(CURDIR)/debian/tvgrabdvbplus install
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installdocs -A README AUTHORS INSTALL NEWS COPYING
+	dh_installdebconf
+	dh_installexamples
+	dh_installmenu
+	dh_installinfo
+	dh_installchangelogs 
+	#dh_strip --dbg-package=tvgrabdvbplus-debug -Xusr/lib/debug
+	dh_link
+	#dh_compress -X.pl -X.py
+	dh_fixperms
+	dh_makeshlibs
+	dh_installdeb
+	dh_shlibdeps -- --ignore-missing-info
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary-indep:
+
+#%:
+#	dh $@ 
+
+binary: binary-indep binary-arch
+
+.PHONY: build clean binary-indep binary-arch binary install configure
+

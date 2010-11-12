@@ -1,0 +1,15 @@
+Source: tvgrabdvbplus
+Section: interpreters
+Priority: extra
+Maintainer: Mark Spieth <mspieth@digivation.com.au>
+Build-Depends: debhelper (>= 7.0.50~), autotools-dev
+Standards-Version: 3.8.4
+Homepage: https://sourceforge.net/projects/tvgrabeit/
+Vcs-Svn: https://tvgrabeit.svn.sourceforge.net/svnroot/tvgrabeit
+Vcs-Browser: http://tvgrabeit.svn.sourceforge.net/viewvc/tvgrabeit/
+
+Package: tvgrabdvbplus
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Multi EPG grabber from DVB, Freesat, SKY and other live sources
+ tv_grab_dvb_plus is a fast multi-format EPG grabber which outputs in xmltv format.
