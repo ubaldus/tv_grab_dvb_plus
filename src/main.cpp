@@ -30,6 +30,7 @@
 #include <signal.h>
 #include <poll.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 
 #include <linux/dvb/dmx.h>
 #include <linux/dvb/frontend.h>
