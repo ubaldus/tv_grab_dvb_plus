@@ -25,7 +25,7 @@
 
 #include <strings.h>
 #include <linux/dvb/frontend.h>
-#include "scan.h"
+#include "tuner.h"
 #include "extended_frontend.h"
 #include "dvb_scan.h"
 
