@@ -41,4 +41,6 @@ tv_grab_dvb_plus_SOURCES = \
 	log.h \
 	lookup.h \
 	sitables.h \
+	list.h \
+	extended_frontend.h \
 	stats.h
