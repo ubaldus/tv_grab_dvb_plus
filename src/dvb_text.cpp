@@ -141,6 +141,7 @@ const char *convert_text(const char *s) {
 	char *outbuf = (char *) buf;
 	size_t outbytesleft = sizeof(buf);
 	ret = iconv(cd, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
+	*outbuf = 0;
 	// FIXME: handle errors
 	return xmlify(buf);
 }
