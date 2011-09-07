@@ -1,5 +1,5 @@
 AC_PREREQ([2.63])
-AC_INIT([tv_grab_dvb_plus], [0.2], [tv_grab_dvb_plus@teilifis.com])
+AC_INIT([tv_grab_dvb_plus], [0.2.1], [tv_grab_dvb_plus@teilifis.com])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_PROG_CXX
 AC_PROG_RANLIB
