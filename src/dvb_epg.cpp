@@ -665,7 +665,7 @@ void writeChannels(int format) {
 				printf("<channel id=\"%s\">\n", xmltvid);
 				printf("\t<!-- number>%d</number -->\n", c->ChannelId);
 				printf("\t<!-- provider>%s</provider -->\n", c->providername);
-				printf("\t<display-name>%s</display-name>\n", c->name);
+				printf("\t<display-name>%s</display-name>\n", xmlify(c->name));
 				printf("</channel>\n");
 			}
 		}
